@@ -1,0 +1,99 @@
+.layout { display: grid; grid-template-columns: minmax(0, 1fr) 480px; gap: var(--gap); align-items: start; }
+.layoutFull { grid-template-columns: minmax(0, 1fr); }
+.aside { position: sticky; top: 20px; }
+
+.filters { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.filter { padding: 8px 14px; font-size: 13px; }
+.search {
+  margin-left: auto; display: flex; align-items: center; gap: 8px; padding: 0 12px; height: 36px; width: 260px; border-radius: var(--radius-sm);
+  background: var(--surface); border: var(--card-border); color: var(--ink-3);
+}
+.search input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; font-size: 13px; color: var(--ink); }
+.search button { display: flex; border: 0; background: transparent; color: var(--ink-3); cursor: pointer; padding: 2px; }
+
+/* ---------- Návrhy ---------- */
+.sugg { display: flex; flex-direction: column; gap: 10px; padding: 16px 18px; border-radius: var(--radius); background: var(--accent-soft); }
+.suggTitle { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; }
+.suggNote { font-weight: 500; color: var(--ink-2); }
+.suggGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
+.suggCard { display: flex; flex-direction: column; gap: 8px; padding: 12px 14px; border-radius: var(--radius-sm); background: var(--surface); }
+.suggRule { font-size: 13px; font-weight: 700; }
+.suggWhy { font-size: 12px; color: var(--ink-2); }
+.suggActions { display: flex; gap: 6px; }
+.suggOk { background: var(--ink) !important; color: var(--surface) !important; border-color: var(--ink) !important; }
+
+/* ---------- Tabulka ---------- */
+.table { overflow: hidden; }
+.grid { display: grid; grid-template-columns: 44px minmax(0, 1fr) 160px 76px 44px; gap: 12px; align-items: center; }
+.thead { padding: 12px 16px; border-bottom: 1px solid var(--line); font-size: 12px; font-weight: 600; color: var(--ink-3); }
+.row { padding: 12px 16px; border-top: 1px solid var(--line); background: var(--surface); cursor: pointer; outline-offset: -2px; }
+.thead + .row { border-top: 0; }
+.row:hover { background: color-mix(in oklch, var(--surface-2) 50%, var(--surface)); }
+.rowOn, .rowOn:hover { background: color-mix(in oklch, var(--accent) 9%, var(--surface)); box-shadow: inset 3px 0 0 var(--accent); }
+.rowOff > :not(.toggle) { opacity: .55; }
+
+.prio { display: flex; flex-direction: column; align-items: center; cursor: default; }
+.arrow { display: flex; padding: 1px 6px; border: 0; background: transparent; color: var(--ink-3); cursor: pointer; border-radius: 6px; }
+.arrow:hover:not(:disabled) { color: var(--ink); background: var(--surface-2); }
+.arrow:disabled { opacity: .3; cursor: default; }
+.prioNum { font-size: 12px; font-weight: 800; color: var(--ink-2); }
+
+.when { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.conds, .acts { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.join { font-size: 11px; font-weight: 700; color: var(--ink-3); }
+.cond { font-size: 12px; padding: 3px 8px; border-radius: 6px; background: var(--surface-2); white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.cond b { font-weight: 700; }
+.act { display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); white-space: nowrap; }
+.actDot { width: 7px; height: 7px; border-radius: 9px; flex-shrink: 0; }
+.conflict {
+  display: flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px;
+  background: color-mix(in oklch, var(--warn) 16%, var(--surface)); color: var(--warn); white-space: nowrap;
+}
+
+.used { display: flex; flex-direction: column; gap: 4px; }
+.hist { display: flex; gap: 2px; align-items: flex-end; height: 14px; }
+.hist span { width: 8px; border-radius: 2px; background: var(--c1); opacity: .7; }
+.last { font-size: 11px; color: var(--ink-3); }
+.source { display: flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; color: var(--ink-3); }
+.toggle { display: flex; justify-content: flex-end; cursor: default; }
+.footNote { padding: 12px 16px; border-top: 1px solid var(--line); font-size: 12px; color: var(--ink-3); }
+
+/* ---------- Mobil ---------- */
+.mList { display: flex; flex-direction: column; gap: 10px; }
+.mCard {
+  display: flex; flex-direction: column; gap: 8px; padding: 14px 16px; border-radius: var(--radius); background: var(--surface); border: var(--card-border);
+  cursor: pointer;
+}
+.mTop { display: flex; align-items: flex-start; gap: 8px; }
+.mPrio { font-size: 12px; font-weight: 800; color: var(--ink-3); padding-top: 3px; }
+.mConds { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; gap: 4px; }
+.mActs { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 12px; }
+.mAct { display: flex; align-items: center; gap: 5px; font-weight: 600; }
+.mUses { margin-left: auto; color: var(--ink-3); }
+.mConflict { font-size: 11px; font-weight: 700; color: var(--warn); }
+.mobileDetail { display: flex; flex-direction: column; gap: 8px; }
+.back {
+  align-self: flex-start; display: flex; align-items: center; gap: 2px; min-height: 44px; padding: 0 8px 0 0; border: 0; background: transparent;
+  font-size: 15px; font-weight: 600; color: var(--ink-2); cursor: pointer;
+}
+
+@media (max-width: 1280px) {
+  .layout { grid-template-columns: minmax(0, 1fr) 420px; }
+  .grid { grid-template-columns: 40px minmax(0, 1fr) 130px 70px 44px; gap: 10px; }
+}
+@media (max-width: 1100px) {
+  .layout { grid-template-columns: 1fr; }
+  .aside { position: static; }
+}
+@media (max-width: 767px) {
+  .filters { flex-wrap: nowrap; overflow-x: auto; width: 100%; scrollbar-width: none; }
+  .filter { min-height: 40px; }
+  .search { margin-left: 0; width: 100%; height: 44px; }
+  .search input { font-size: 15px; }
+  .sugg { padding: 14px; gap: 8px; }
+  .suggTitle { font-size: 13px; }
+  .suggGrid { grid-template-columns: 1fr; gap: 8px; }
+  .suggCard { flex-direction: row; align-items: center; padding: 10px 12px; }
+  .suggRule { flex: 1; font-weight: 600; }
+  .suggActions > * { width: 40px; height: 40px; }
+}

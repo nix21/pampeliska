@@ -236,16 +236,20 @@ public class RecurringService(AppDbContext db, FxService fx, TimeProvider time)
             .ToListAsync();
         var existing = await db.RecurringPayments.AsNoTracking().ToListAsync();
         var n = 0;
-        foreach (var g in txs.GroupBy(t => (t.AccountId, Key: Text.MerchantKey(t.Counterparty), Sign: Math.Sign(t.Amount))).Where(g => g.Key.Key.Length >= 3))
+        // Příchozí strana převodu mezi vlastními účty se nenavrhuje (pravidelná je odchozí platba)
+        foreach (var g in txs.Where(t => !(t.Kind == TransactionKind.Transfer && t.Amount > 0))
+                     .GroupBy(t => (t.AccountId, Key: Text.MerchantKey(t.Counterparty), Sign: Math.Sign(t.Amount))).Where(g => g.Key.Key.Length >= 3))
         {
             var items = g.OrderBy(t => t.Date).ToList();
-            if (items.Select(t => (t.Date.Year, t.Date.Month)).Distinct().Count() < 2) continue;
+            var months = items.Select(t => (t.Date.Year, t.Date.Month)).Distinct().Count();
+            if (months < 2) continue;
             var median = items.Select(t => Math.Abs(t.Amount)).OrderBy(x => x).ElementAt(items.Count / 2);
-            var similar = items.Where(t => Math.Abs(Math.Abs(t.Amount) - median) <= median * 0.2m).ToList();
+            var similar = items.Where(t => Math.Abs(Math.Abs(t.Amount) - median) <= median * 0.15m).ToList();
             if (similar.Count < 2) continue;
             var gaps = similar.Zip(similar.Skip(1), (a, b) => b.Date.DayNumber - a.Date.DayNumber).ToList();
             var avg = gaps.Average();
-            Frequency? freq = avg is >= 26 and <= 35 && gaps.All(x => x is >= 20 and <= 40) ? Frequency.Monthly
+            // Měsíčně: nejvýš jedna platba za měsíc (nákupy v supermarketu několikrát měsíčně nejsou pravidelná platba)
+            Frequency? freq = avg is >= 26 and <= 35 && gaps.All(x => x is >= 20 and <= 40) && items.Count <= months + 1 ? Frequency.Monthly
                 : avg is >= 6 and <= 8 && gaps.All(x => x is >= 5 and <= 9) ? Frequency.Weekly : null;
             if (freq is null) continue;
             if (existing.Any(r => r.AccountId == g.Key.AccountId && Text.Normalize(r.MatchPattern).Contains(g.Key.Key))) continue;
@@ -260,6 +264,7 @@ public class RecurringService(AppDbContext db, FxService fx, TimeProvider time)
                 VariancePct = variable ? (int)Math.Ceiling((amounts.Max() - amounts.Min()) / median * 100) : 10,
                 Frequency = freq.Value, AnchorDate = last.Date, ToleranceDays = 3, IsTransfer = last.Kind == TransactionKind.Transfer,
                 Status = RecurringStatus.Suggested, Source = RecurringSource.Detected, CreatedAt = time.GetUtcNow(),
+                Note = $"{similar.Count} {(similar.Count is >= 2 and <= 4 ? "platby" : "plateb")}, naposledy {last.Date:d. M.}",
             });
             n++;
         }

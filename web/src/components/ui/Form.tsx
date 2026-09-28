@@ -75,7 +75,9 @@ export function NumberInput({ value, onChange, suffix, decimals = 2, className, 
 /** Datum jako text („28. 9. 2026“), hodnota ISO. */
 export function DateInput({ value, onChange, ...rest }: { value: string | null; onChange: (iso: string | null) => void } & Omit<InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange'>) {
   const [text, setText] = useState(value ? dateLong(value) : '')
-  useEffect(() => setText(value ? dateLong(value) : ''), [value])
+  useEffect(() => {
+    setText(value ? dateLong(value) : '')
+  }, [value])
   const valid = text === '' || parseDateInput(text) != null
   return (
     <TextInput

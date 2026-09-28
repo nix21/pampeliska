@@ -1,0 +1,158 @@
+/* ---------- Pruh čerpání ---------- */
+.bar { position: relative; border-radius: 9px; background: var(--surface-2); }
+.barFill { position: absolute; inset: 0; display: flex; border-radius: inherit; overflow: hidden; }
+.barFill > span { flex-shrink: 0; height: 100%; }
+.limitMark { position: absolute; top: -3px; bottom: -3px; width: 1.5px; background: var(--ink-3); transform: translateX(-50%); }
+.paceMark { position: absolute; top: -3px; bottom: -3px; width: 2px; border-radius: 1px; background: var(--ink); transform: translateX(-50%); }
+.barLg .limitMark, .barLg .paceMark { top: -4px; bottom: -4px; }
+
+.status { display: inline-flex; align-items: center; gap: 4px; justify-self: start; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: var(--radius-pill); white-space: nowrap; }
+.statusLg { padding: 3px 9px; }
+
+.legend { margin-left: auto; display: flex; align-items: center; gap: 14px; font-size: 12px; color: var(--ink-2); }
+.legend span { display: flex; align-items: center; gap: 6px; }
+.legendHatch { width: 14px; height: 8px; border-radius: 2px; background: repeating-linear-gradient(135deg, var(--ink-3) 0 2px, transparent 2px 4px); }
+.legendPace { width: 2px; height: 12px; background: var(--ink); }
+
+/* ---------- Přepínač měsíce ---------- */
+.month { display: inline-flex; align-items: center; gap: 2px; padding: 3px; border-radius: var(--radius-sm); background: var(--surface); border: var(--card-border); }
+.monthArrow { display: flex; align-items: center; justify-content: center; padding: 6px; border: 0; background: transparent; color: var(--ink-2); cursor: pointer; border-radius: 8px; }
+.monthArrow:disabled { color: var(--line); cursor: default; }
+.monthArrow:hover:not(:disabled) { background: var(--surface-2); }
+.monthButton { display: flex; align-items: center; gap: 10px; padding: 3px 10px; min-width: 160px; border: 0; background: transparent; cursor: pointer; text-align: left; border-radius: 8px; color: var(--ink); }
+.monthButton:hover { background: var(--surface-2); }
+.monthText { display: flex; flex-direction: column; flex: 1; }
+.monthText b { font-size: 14px; font-weight: 700; }
+.monthText small { font-size: 11px; color: var(--ink-3); }
+.monthChips { display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* ---------- KPI ---------- */
+.kpis { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 16px; }
+.kpi { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.kpiLabel { font-size: 12px; font-weight: 600; color: var(--ink-2); }
+.kpiValue { font-family: var(--font-display); font-weight: var(--display-weight); letter-spacing: var(--display-tracking); font-size: 24px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.kpiNote { font-size: 11px; color: var(--ink-3); }
+
+.summaryHead { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; color: var(--ink-2); }
+.summaryValue { font-family: var(--font-display); font-weight: var(--display-weight); letter-spacing: var(--display-tracking); font-size: 38px; line-height: 1; font-variant-numeric: tabular-nums; }
+
+/* ---------- Tabulka ---------- */
+.table { background: var(--surface); border: var(--card-border); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+.grid { display: grid; grid-template-columns: minmax(0, 1fr) 200px 88px 132px; gap: 14px; align-items: center; }
+.thead { padding: 12px 18px; border-bottom: 1px solid var(--line); font-size: 12px; font-weight: 600; color: var(--ink-3); }
+.right { text-align: right; }
+.row { padding: 0 18px; border-top: 1px solid var(--line); background: var(--surface); cursor: pointer; outline: none; }
+.thead + .row { border-top: 0; }
+.row:hover { background: color-mix(in oklch, var(--surface-2) 45%, var(--surface)); }
+.row:focus-visible { box-shadow: inset 0 0 0 2px var(--accent); }
+.rowTop { min-height: 60px; }
+.rowSub { min-height: 52px; }
+.rowYear { padding-top: 12px; padding-bottom: 12px; }
+.rowOn, .rowOn:hover { background: color-mix(in oklch, var(--accent) 9%, var(--surface)); box-shadow: inset 3px 0 0 var(--accent); }
+.nameCell { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.chev { display: flex; align-items: center; justify-content: center; width: 20px; height: 24px; flex-shrink: 0; padding: 0; border: 0; background: transparent; color: var(--ink-3); cursor: pointer; border-radius: 6px; transition: transform .15s; }
+.chev:hover { color: var(--ink); background: var(--surface-2); }
+.chevOpen { transform: rotate(90deg); }
+.chevHidden { visibility: hidden; }
+.dot { flex-shrink: 0; border-radius: 9px; }
+.names { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.note { font-size: 11px; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.barCell { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.amounts { font-size: 12px; color: var(--ink-2); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.free { font-size: 13px; font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.yearHead { display: flex; align-items: baseline; gap: 10px; padding: 14px 18px 10px; }
+.yearHead b { font-size: 14px; font-weight: 800; flex: 1; }
+.yearHead span { font-size: 12px; color: var(--ink-3); }
+.addRow { display: flex; padding: 10px 18px 14px; border-top: 1px solid var(--line); }
+
+/* ---------- Mobilní seznam ---------- */
+.mRow { display: flex; flex-direction: column; gap: 8px; padding: 14px 16px; border-top: 1px solid var(--line); cursor: pointer; }
+.mRow:first-child { border-top: 0; }
+.mRow:active { background: var(--surface-2); }
+.mRowHead { display: flex; align-items: center; gap: 8px; }
+.mRowHead .name { flex: 1; font-size: 15px; font-weight: 700; }
+.mRowFoot { display: flex; justify-content: space-between; gap: 10px; font-size: 12px; color: var(--ink-2); }
+.mYear { display: flex; flex-direction: column; gap: 6px; padding: 12px 16px; border-top: 1px solid var(--line); cursor: pointer; }
+.mYear:first-child { border-top: 0; }
+.mSection { display: flex; justify-content: space-between; padding: 4px 4px 0; font-size: 12px; font-weight: 700; color: var(--ink-2); }
+
+/* ---------- Detail ---------- */
+.detail { background: var(--surface); border: var(--card-border); border-radius: var(--radius); box-shadow: var(--shadow); padding: var(--pad); display: flex; flex-direction: column; gap: 16px; position: sticky; top: 20px; min-width: 0; }
+.detailHead { display: flex; flex-direction: column; gap: 4px; }
+.detailPath { font-size: 12px; color: var(--ink-3); }
+.detailTitle { display: flex; align-items: center; gap: 10px; }
+.detailTitle h2 { font-family: var(--font-display); font-weight: var(--display-weight); letter-spacing: var(--display-tracking); font-size: 24px; flex: 1; min-width: 0; margin: 0; line-height: 1.15; }
+.stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.stat { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border-radius: var(--radius-sm); background: var(--surface-2); min-width: 0; }
+.stat span { font-size: 11px; color: var(--ink-3); }
+.stat b { font-size: 15px; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.share { font-size: 12px; color: var(--ink-2); margin-top: -8px; }
+.block { display: flex; flex-direction: column; gap: 8px; }
+.blockTitle { font-size: 13px; font-weight: 700; }
+.chartHead { display: flex; justify-content: space-between; gap: 10px; font-size: 12px; }
+.chartHead b { font-weight: 700; }
+.chartHead span { color: var(--ink-3); text-align: right; }
+.chart { position: relative; width: 100%; }
+.chart svg { display: block; overflow: visible; }
+.axis { position: relative; height: 16px; font-size: 11px; color: var(--ink-3); }
+.axis span { position: absolute; top: 0; transform: translateX(-50%); white-space: nowrap; }
+.axis span:first-child { transform: none; }
+.axis .axisNow { font-weight: 700; color: var(--ink-2); }
+.axis .axisEnd { transform: translateX(-100%); }
+.caption { font-size: 11px; color: var(--ink-3); }
+
+.kid { display: grid; grid-template-columns: minmax(0, 1fr) 80px auto; gap: 10px; align-items: center; font-size: 12px; padding: 2px 0; border: 0; background: transparent; text-align: left; color: var(--ink); cursor: pointer; border-radius: 6px; }
+.kid:hover .kidName { text-decoration: underline; }
+.kidName { display: flex; align-items: center; gap: 6px; min-width: 0; font-weight: 600; }
+.kidBar { position: relative; height: 6px; border-radius: 9px; background: var(--surface-2); overflow: hidden; }
+.kidBar > span { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 9px; }
+.kidAmt { text-align: right; font-variant-numeric: tabular-nums; color: var(--ink-2); white-space: nowrap; }
+.rest { display: flex; justify-content: space-between; padding: 8px 10px; border-radius: var(--radius-sm); border: 1px dashed var(--line); font-size: 12px; }
+.rest span { color: var(--ink-2); }
+.rest b { font-weight: 800; }
+
+.res { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: var(--radius-sm); font-size: 12px;
+  background: repeating-linear-gradient(135deg, var(--surface-2) 0 6px, var(--surface) 6px 12px); }
+.res svg { color: var(--ink-3); flex-shrink: 0; }
+.resName { flex: 1; min-width: 0; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.resDate { color: var(--ink-3); white-space: nowrap; }
+.resAmt { font-weight: 800; white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+.editor { display: flex; flex-direction: column; gap: 10px; padding-top: 12px; border-top: 1px solid var(--line); }
+.limitRow { display: grid; grid-template-columns: 1fr 150px; gap: 10px; align-items: center; }
+.limitLabel { font-size: 13px; font-weight: 600; color: var(--ink-2); }
+.editor .limitInput { height: 36px; font-size: 14px; background: var(--surface-2); }
+.carry { display: flex; align-items: center; gap: 10px; font-size: 13px; cursor: pointer; }
+.carryText { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.carryText small { font-size: 11px; color: var(--ink-3); }
+.editorFoot { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 11px; color: var(--ink-3); }
+.linkBtn { border: 0; background: transparent; padding: 4px 0; font-size: 12px; font-weight: 600; color: var(--ink-2); cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+.linkBtn:hover { color: var(--neg); }
+
+.mBack { display: flex; align-items: center; gap: 2px; min-height: 44px; padding: 0 8px 0 0; border: 0; background: transparent; font-size: 15px; font-weight: 600; color: var(--ink-2); cursor: pointer; align-self: flex-start; }
+.card { background: var(--surface); border: var(--card-border); border-radius: var(--radius); padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+
+@media (max-width: 767px) {
+  .legend { display: none; }
+  .month { width: 100%; }
+  .monthButton { flex: 1; min-width: 0; justify-content: center; }
+  .monthButton > svg { display: none; }
+  .monthText { align-items: center; }
+  .monthText b { font-size: 15px; }
+  .monthArrow { width: 44px; height: 44px; }
+  .detail { position: static; background: transparent; border: 0; box-shadow: none; padding: 0; }
+  .stat { background: var(--surface); padding: 8px; }
+  .stat b { font-size: 14px; }
+  .kid { grid-template-columns: 1fr auto; font-size: 13px; padding: 4px 0; }
+  .kidBar { grid-column: 1 / -1; }
+  .res { min-height: 40px; padding: 0 12px; font-size: 13px; background: var(--surface); }
+  .limitRow { grid-template-columns: 1fr; }
+  .editor .limitInput { font-size: 17px; height: 48px; background: var(--surface); }
+  .carry { min-height: 48px; font-size: 14px; }
+}
+
+@media (max-width: 1180px) and (min-width: 768px) {
+  .kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .grid { grid-template-columns: minmax(0, 1fr) 170px 84px 120px; gap: 10px; }
+}

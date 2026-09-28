@@ -6,7 +6,8 @@ namespace Pampeliska.Core.Services;
 
 public enum InboxFilter { All, AiUnsure, NoSuggestion, SplitSuggestion, Duplicates }
 
-public record InboxItem(TxRow Tx, string? RawText, string? AiReason, IReadOnlyList<AiAlternative> Alternatives, string? Rule, TxRef? DuplicateOf);
+public record InboxItem(TxRow Tx, string? RawText, string? AiReason, IReadOnlyList<AiAlternative> Alternatives, string? Rule, TxRef? DuplicateOf,
+    string? BatchSource, DateTimeOffset? ImportedAt);
 
 public record InboxCounts(int All, int AiUnsure, int NoSuggestion, int SplitSuggestion, int Duplicates);
 
@@ -32,7 +33,7 @@ public class InboxService(AppDbContext db, TransactionService txs)
 
     public async Task<InboxResult> ListAsync(InboxFilter filter, int? memberId, string? search)
     {
-        var all = await Base(memberId).Include(t => t.Splits).Include(t => t.Shares)
+        var all = await Base(memberId).Include(t => t.Splits).Include(t => t.Shares).Include(t => t.Batch)
             .OrderByDescending(t => t.Date).ThenByDescending(t => t.Id).ToListAsync();
         if (!string.IsNullOrWhiteSpace(search))
         {
@@ -59,7 +60,8 @@ public class InboxService(AppDbContext db, TransactionService txs)
         var dups = (await db.Transactions.AsNoTracking().Include(t => t.Batch).Where(t => dupIds.Contains(t.Id)).ToListAsync())
             .ToDictionary(t => t.Id, x => new TxRef(x.Id, x.Date, x.AccountId, x.Counterparty, x.Amount, x.Currency, x.AmountCzk, x.RawText, x.BatchId, x.Batch?.Source.ToString()));
         var items = filtered.Select(t => new InboxItem(TransactionService.ToRow(t), t.RawText, t.AiReason, TransactionService.ParseAlternatives(t.AiAlternatives),
-            t.AppliedRuleId is { } r ? rules.GetValueOrDefault(r) : null, t.SuspectedDuplicateOfId is { } d ? dups.GetValueOrDefault(d) : null)).ToList();
+            t.AppliedRuleId is { } r ? rules.GetValueOrDefault(r) : null, t.SuspectedDuplicateOfId is { } d ? dups.GetValueOrDefault(d) : null,
+            t.Batch?.Source.ToString(), t.Batch?.CreatedAt ?? t.CreatedAt)).ToList();
         return new InboxResult(items, counts);
     }
 

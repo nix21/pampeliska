@@ -1,0 +1,85 @@
+.panel { display: flex; flex-direction: column; gap: 18px; }
+.head { display: flex; flex-direction: column; gap: 8px; }
+.path { font-size: 12px; color: var(--ink-3); }
+.nameRow { display: flex; align-items: center; gap: 10px; }
+.bigDot { width: 14px; height: 14px; flex-shrink: 0; border-radius: 9px; }
+.name {
+  flex: 1; min-width: 0; padding: 6px 8px; margin-left: -8px; border-radius: var(--radius-sm); border: 1px solid transparent; background: transparent;
+  font-family: var(--font-display); font-weight: var(--display-weight); letter-spacing: var(--display-tracking); font-size: 24px; color: var(--ink); outline: 0;
+}
+.name:hover { border-color: var(--line); }
+.name:focus { border-color: var(--ink-3); background: var(--surface); }
+.pen { color: var(--ink-3); flex-shrink: 0; }
+.stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.stat { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border-radius: var(--radius-sm); background: var(--surface-2); min-width: 0; }
+.statLabel { font-size: 11px; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.statValue { font-size: 15px; font-weight: 700; }
+
+.section { display: flex; flex-direction: column; gap: 8px; }
+.label { font-size: 13px; font-weight: 600; color: var(--ink-2); }
+.labelNote { font-weight: 500; color: var(--ink-3); }
+.hint { font-size: 12px; color: var(--ink-3); line-height: 1.45; }
+
+.colors { display: flex; flex-wrap: wrap; gap: 8px; }
+.swatch { width: 28px; height: 28px; border-radius: 999px; border: 0; padding: 0; cursor: pointer; }
+.swatchOn { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--ink); }
+
+.select {
+  display: flex; align-items: center; gap: 8px; padding: 9px 12px; border-radius: var(--radius-sm); border: 1px solid var(--line);
+  background: var(--surface); font-size: 14px; font-weight: 600; cursor: pointer; min-width: 0;
+}
+.select:hover { border-color: var(--ink-3); }
+.smallDot { width: 8px; height: 8px; border-radius: 9px; flex-shrink: 0; }
+
+.options { display: flex; flex-direction: column; max-height: 220px; overflow: auto; padding: 4px; border-radius: var(--radius-sm); background: var(--surface-2); }
+.option {
+  display: flex; align-items: center; gap: 8px; min-height: 32px; padding: 0 8px; border: 0; border-radius: 6px; background: transparent;
+  font-size: 13px; cursor: pointer; text-align: left; flex-shrink: 0;
+}
+.option:hover { background: color-mix(in oklch, var(--surface) 60%, transparent); }
+.optionOn { background: var(--surface); }
+.optDot { width: 7px; height: 7px; border-radius: 9px; flex-shrink: 0; }
+
+.needGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 3px; border-radius: var(--radius-sm); background: var(--seg-bg); }
+.needOpt {
+  display: flex; align-items: center; gap: 7px; padding: 7px 10px; border: 0; border-radius: var(--radius-sm); background: transparent;
+  font-size: 13px; font-weight: 600; color: var(--ink-2); cursor: pointer;
+}
+.needOptOn { background: var(--seg-active-bg); box-shadow: var(--seg-active-shadow); color: var(--ink); }
+.needDot { width: 8px; height: 8px; border-radius: 9px; border: 1px solid var(--ink-3); flex-shrink: 0; }
+
+.budgetInput { height: 40px; font-size: 16px; font-weight: 700; text-align: right; padding-right: 92px !important; background: var(--surface-2); }
+.switchRow { display: flex; align-items: center; gap: 10px; font-size: 13px; cursor: pointer; }
+.kidsBox { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; border-radius: var(--radius-sm); border: 1px solid var(--line); font-size: 13px; }
+.kidsLine { display: flex; justify-content: space-between; gap: 8px; }
+
+.rulesHead { display: flex; justify-content: space-between; align-items: baseline; }
+.link { font-size: 12px; font-weight: 600; color: var(--ink-2); text-decoration: none; }
+.link:hover { color: var(--ink); }
+.rule { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: var(--radius-sm); background: var(--surface-2); font-size: 12px; text-decoration: none; color: var(--ink); }
+.rule:hover { box-shadow: inset 0 0 0 1px var(--line); }
+
+.merge { display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: var(--radius-sm); border: 1.5px solid var(--ink); }
+.mergeText { font-size: 12px; color: var(--ink-2); line-height: 1.5; }
+
+.actions { display: flex; gap: 8px; flex-wrap: wrap; padding-top: 12px; border-top: 1px solid var(--line); }
+.danger { color: var(--neg); }
+
+@media (max-width: 767px) {
+  .panel { gap: 20px; }
+  .name { height: 48px; margin-left: 0; padding: 0 10px; border-color: var(--line); background: var(--surface); font-size: 22px; }
+  .stat { background: var(--surface); }
+  .swatch { width: 40px; height: 40px; border-radius: 12px; }
+  .colors { gap: 10px; }
+  .select { min-height: 48px; font-size: 15px; background: var(--surface); }
+  .option { min-height: 44px; font-size: 14px; }
+  .options { max-height: 300px; }
+  .needOpt { min-height: 44px; justify-content: center; }
+  .budgetInput { height: 48px; font-size: 17px; background: var(--surface); }
+  .switchRow { min-height: 44px; font-size: 14px; }
+  .kidsBox { background: var(--surface); border: 0; }
+  .merge { background: var(--surface); }
+  .actions { display: grid; grid-template-columns: 1fr 1fr; border-top: 0; padding-top: 0; }
+  .actions > * { min-height: 48px; }
+  .actions > :last-child { grid-column: 1 / -1; }
+}

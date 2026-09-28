@@ -123,11 +123,14 @@ public class InvestmentService(AppDbContext db, FxService fx, TimeProvider time)
         var txs = (await db.Transactions.AsNoTracking().Where(t => ids.Contains(t.AccountId)).Select(t => new { t.AccountId, t.Date, t.Amount }).ToListAsync())
             .ToLookup(t => t.AccountId, t => (t.Date, t.Amount));
         var values = (await db.InvestmentValues.AsNoTracking().Where(v => ids.Contains(v.AccountId)).ToListAsync()).ToLookup(v => v.AccountId);
+        // Měsíce před začátkem evidence (nejstarší počáteční zůstatek) se nezobrazují – jinak by graf „skočil“ při založení účtů
+        var firstDate = accounts.Count == 0 ? today : accounts.Min(a => a.OpeningDate);
         var points = Enumerable.Range(0, months).Select(i =>
         {
             var d = new DateOnly(today.Year, today.Month, 1).AddMonths(i - months + 1);
             return i == months - 1 ? today : d.AddMonths(1).AddDays(-1);
-        }).ToList();
+        }).Where(d => d >= firstDate || d == today).ToList();
+        months = points.Count;
         var layers = new Dictionary<string, decimal[]> { ["Current"] = new decimal[months], ["Savings"] = new decimal[months], ["Foreign"] = new decimal[months], ["Investment"] = new decimal[months] };
         for (var i = 0; i < points.Count; i++)
         {

@@ -158,6 +158,13 @@ export function UiProvider({ me, household, children }: { me: Me; household: Hou
     return () => mq.removeEventListener('change', l)
   }, [])
   const base = s.theme === 'Dark' ? 'dark' : s.theme === 'System' ? (sysDark ? 'dark' : 'light') : 'light'
+  // Změna motivu v Nastavení zruší lokální přebití z hlavičky
+  const [themeSeen, setThemeSeen] = useState(s.theme)
+  if (themeSeen !== s.theme) {
+    setThemeSeen(s.theme)
+    setModeOverride(undefined)
+    save('pampeliska.mode', undefined)
+  }
   const mode = modeOverride ?? base
   useEffect(() => {
     document.documentElement.dataset.mode = mode

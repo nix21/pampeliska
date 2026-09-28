@@ -986,6 +986,10 @@ namespace Pampeliska.Core.Data.Migrations
                         .HasColumnType("numeric(18,4)")
                         .HasColumnName("amount");
 
+                    b.Property<DateOnly?>("AmountAlertDismissedFor")
+                        .HasColumnType("date")
+                        .HasColumnName("amount_alert_dismissed_for");
+
                     b.Property<int>("AmountKind")
                         .HasColumnType("integer")
                         .HasColumnName("amount_kind");

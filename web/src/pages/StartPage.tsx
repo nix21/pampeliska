@@ -97,7 +97,19 @@ export default function StartPage() {
             ))}
           </div>
           <div className={s.progress}>{STEPS.map((_, i) => <span key={i} style={{ background: i <= step ? 'var(--accent)' : 'var(--line)' }} />)}</div>
-          <span className={s.asideNote}>Všechno jde později změnit v Nastavení, Účtech a Kategoriích.</span>
+          <span className={s.asideNote}>
+            Všechno jde později změnit v Nastavení, Účtech a Kategoriích.
+            {import.meta.env.DEV && (
+              <button type="button" className={s.demo} onClick={async () => {
+                try {
+                  await api.post('/testing/demo')
+                  await qc.invalidateQueries()
+                } catch (e) {
+                  notifyError(e)
+                }
+              }}>Otevřít s ukázkovými daty</button>
+            )}
+          </span>
         </aside>
 
         <main className={s.main}>

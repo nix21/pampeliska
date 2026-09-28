@@ -51,6 +51,9 @@ public static class McpSetup
             .WithHttpTransport(o => o.Stateless = true)
             .AddAuthorizationFilters()
             .WithTools<HouseholdTools>(JsonOptions)
+            .WithTools<TransactionTools>(JsonOptions)
+            .WithTools<CategoryTools>(JsonOptions)
+            .WithTools<PlanningTools>(JsonOptions)
             .WithRequestFilters(f => f.AddCallToolFilter(next => async (request, ct) =>
             {
                 var services = request.Services!;

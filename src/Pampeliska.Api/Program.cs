@@ -33,6 +33,7 @@ builder.Services.AddDataProtection()
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<CurrentUser>();
+builder.Services.AddScoped<DemoSeeder>();
 builder.Services.AddPampeliskaCore();
 builder.Services.AddHttpClient<CnbRates>(c => { c.BaseAddress = new Uri(CnbRates.BaseUrl); c.Timeout = TimeSpan.FromSeconds(15); });
 builder.Services.AddMemoryCache();

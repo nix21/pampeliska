@@ -1,0 +1,72 @@
+/* Detail účtu (panel vpravo / samostatná stránka na mobilu) a graf vývoje. */
+.detail { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.detailHead { display: flex; align-items: flex-start; gap: 12px; }
+.detailName { font-family: var(--font-display); font-weight: var(--display-weight); letter-spacing: var(--display-tracking); font-size: 24px; line-height: 1.15; }
+.detailSub { font-size: 12px; color: var(--ink-3); }
+.detailBalance { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.bigNum { font-family: var(--font-display); font-weight: var(--display-weight); letter-spacing: var(--display-tracking); font-size: 36px; line-height: 1.05; }
+
+.chartCard { display: flex; flex-direction: column; gap: 8px; }
+.chartLegend { display: flex; align-items: center; gap: 12px; font-size: 11px; color: var(--ink-2); white-space: nowrap; }
+.chartTitle { font-weight: 700; color: var(--ink); flex: 1; font-size: 12px; overflow: hidden; text-overflow: ellipsis; }
+.legendItem { display: inline-flex; align-items: center; gap: 5px; }
+.legendItem > span { display: inline-block; flex-shrink: 0; }
+.chart { display: flex; flex-direction: column; gap: 6px; }
+.chartAxis { position: relative; height: 16px; font-size: 11px; color: var(--ink-3); }
+.chartAxis > span { position: absolute; top: 0; white-space: nowrap; }
+
+.warn { display: flex; gap: 10px; padding: 10px 12px; border-radius: var(--radius-sm); background: color-mix(in oklch, var(--neg) 10%, var(--surface)); font-size: 13px; line-height: 1.45; }
+
+.conds { display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--line); background: var(--surface); }
+.condsHead { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.condBar { height: 6px; border-radius: var(--radius-pill); background: var(--surface-2); overflow: hidden; }
+.condBar > span { display: block; height: 100%; border-radius: var(--radius-pill); }
+
+.actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.short { display: none; }
+
+.kor {
+  display: flex; flex-direction: column; gap: 12px; padding: 14px; border-radius: var(--radius-sm); border: 1.5px dashed var(--ink-3);
+  background: repeating-linear-gradient(135deg, var(--surface-2) 0 8px, var(--surface) 8px 16px);
+}
+.korGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.korLabel { display: flex; flex-direction: column; gap: 4px; font-size: 11px; color: var(--ink-3); font-weight: 600; }
+
+.recent { display: flex; flex-direction: column; }
+.recentHead { display: flex; justify-content: space-between; align-items: center; padding-bottom: 6px; }
+.recentAll { display: inline-flex; align-items: center; gap: 2px; font-size: 12px; font-weight: 600; color: var(--ink-2); text-decoration: none; }
+.recentAll:hover { color: var(--ink); }
+.recentRow { display: grid; grid-template-columns: 50px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 8px 0; border-top: 1px solid var(--line); }
+.recentDate { font-size: 12px; color: var(--ink-3); }
+.recentDateMobile { display: none; }
+.recentName { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; min-width: 0; }
+.dotDashed { width: 7px; height: 7px; flex-shrink: 0; border-radius: 9px; border: 1px dashed var(--ink-3); }
+.dotTransfer { width: 7px; height: 7px; flex-shrink: 0; border-radius: 9px; background: var(--ink-3); }
+
+.meta { display: flex; flex-direction: column; gap: 6px; padding-top: 12px; border-top: 1px solid var(--line); font-size: 12px; color: var(--ink-2); }
+.meta > div { display: flex; justify-content: space-between; gap: 12px; }
+.meta b { font-weight: 700; color: var(--ink); text-align: right; }
+
+@media (max-width: 767px) {
+  .hideMobile { display: none !important; }
+  .detailName { font-size: 22px; }
+  .bigNum { font-size: 38px; }
+  .detailBalance { flex-direction: column; align-items: flex-start; gap: 2px; }
+  .chartCard { padding: 14px; border-radius: var(--radius); background: var(--surface); border: var(--card-border); }
+  .actions { display: grid; grid-template-columns: 1fr 1fr; }
+  .actions > button { min-height: 48px; font-size: 14px; }
+  .long { display: none; }
+  .short { display: inline; }
+  .kor { background: var(--surface); }
+  .korGrid { grid-template-columns: 1fr; }
+  .kor input { height: 48px; font-size: 17px; }
+  .kor button { min-height: 48px; }
+  .recent { background: var(--surface); border: var(--card-border); border-radius: var(--radius); padding: 4px 14px; }
+  .recentHead { padding: 10px 0 6px; }
+  .recentRow { grid-template-columns: minmax(0, 1fr) auto; min-height: 52px; padding: 6px 0; }
+  .recentRow > .recentDate { display: none; }
+  .recentName { flex-wrap: wrap; font-size: 14px; row-gap: 0; }
+  .recentName > .ellipsis { flex: 1; }
+  .recentDateMobile { display: block; width: 100%; padding-left: 13px; font-size: 12px; font-weight: 500; color: var(--ink-3); }
+  .meta { padding: 12px 4px 0; }
+}

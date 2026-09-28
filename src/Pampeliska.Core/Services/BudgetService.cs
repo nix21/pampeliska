@@ -46,6 +46,9 @@ public class BudgetService(AppDbContext db, StatsService stats, RecurringService
         var allLines = await stats.LinesAsync(new StatsFilter(new DateRange(histFrom, range.To), null, confirmedOnly), allCats);
         var memberLines = memberId is null ? null : await stats.LinesAsync(new StatsFilter(new DateRange(histFrom, range.To), memberId, confirmedOnly), allCats);
 
+        // Přenos se počítá až od prvního měsíce s pohyby (jinak by se „přenesly“ měsíce před začátkem evidence)
+        var firstTx = await db.Transactions.AsNoTracking().OrderBy(t => t.Date).Select(t => (DateOnly?)t.Date).FirstOrDefaultAsync();
+        var carryFrom = firstTx is { } ft ? new DateOnly(ft.Year, ft.Month, 1) : range.From;
         var reservations = await ReservationsAsync(today > range.From ? today.AddDays(1) : range.From, range.To, cats);
         var yearRange = DateRange.Year(month.Year);
         var yearReservations = await ReservationsAsync(today > yearRange.From ? today.AddDays(1) : yearRange.From, yearRange.To, cats);
@@ -78,7 +81,8 @@ public class BudgetService(AppDbContext db, StatsService stats, RecurringService
         {
             if (!Carry(c) || OwnLimit(c, BudgetPeriod.Monthly).own is not { } limit) return 0;
             decimal carry = 0;
-            for (var m = range.From.AddMonths(-11); m < range.From; m = m.AddMonths(1))
+            var start = range.From.AddMonths(-11) > carryFrom ? range.From.AddMonths(-11) : carryFrom;
+            for (var m = start; m < range.From; m = m.AddMonths(1))
             {
                 var spent = Spent(lines, descendants[c.Id], DateRange.MonthOf(m));
                 carry = Math.Max(0, limit + carry - spent);
@@ -108,6 +112,15 @@ public class BudgetService(AppDbContext db, StatsService stats, RecurringService
                 monthly.Add(new BudgetLine(c.Id, c.ParentId, node.Depth, c.Name, BudgetPeriod.Monthly, limit, own, ChildSum(c, BudgetPeriod.Monthly), Carry(c),
                     carried, Math.Max(0, limit - spent), spent, spentMember, reserved, closed ? [] : res,
                     Status(c.IsFixed, limit, spent, reserved, pace), needs, c.IsFixed, isPersonal, limit - spent - reserved));
+            }
+            else if (c.ParentId is { } pid && monthly.Any(l => l.CategoryId == pid))
+            {
+                // Podkategorie bez vlastního limitu pod rozpočtovanou kategorií (Kavárny pod Jídlem) – „Bez limitu“
+                var spentAll = Spent(allLines, descendants[c.Id], range);
+                var spentMember = memberLines is null ? (decimal?)null : Spent(memberLines, descendants[c.Id], range);
+                var needs = StatsService.Needs(lines.Where(l => l.CategoryId is { } lc && descendants[c.Id].Contains(lc) && range.Contains(l.Date)));
+                monthly.Add(new BudgetLine(c.Id, c.ParentId, node.Depth, c.Name, BudgetPeriod.Monthly, null, null, 0, false, 0, 0, spentAll, spentMember, 0, [],
+                    BudgetStatus.NoLimit, needs, c.IsFixed, false, 0));
             }
             var yLimit = OwnLimit(c, BudgetPeriod.Yearly).own;
             if (yLimit is { } yl)
@@ -150,20 +163,21 @@ public class BudgetService(AppDbContext db, StatsService stats, RecurringService
             .Select(o => (recs[o.RecurringId].CategoryId, new Reservation(o.RecurringId, recs[o.RecurringId].Name, o.Due, -o.AmountCzk))).ToList();
     }
 
-    /// <summary>Denní kumulativní útrata kategorie v měsíci (graf „Čerpání v čase“).</summary>
-    public async Task<BudgetSeries> SeriesAsync(int categoryId, DateOnly month, int? memberId, bool confirmedOnly)
+    /// <summary>Denní kumulativní útrata kategorie v měsíci (u ročního rozpočtu v roce) – graf „Čerpání v čase“.</summary>
+    public async Task<BudgetSeries> SeriesAsync(int categoryId, DateOnly month, int? memberId, bool confirmedOnly, bool yearly = false)
     {
-        var range = DateRange.MonthOf(month);
+        var range = yearly ? DateRange.Year(month.Year) : DateRange.MonthOf(month);
         var today = time.Today();
         var (lines, cats) = await stats.LinesAsync(new StatsFilter(range, memberId, confirmedOnly));
         var ids = CategoryService.WithDescendants(cats, categoryId);
-        var byDay = lines.Where(l => l.CategoryId is { } c && ids.Contains(c)).GroupBy(l => l.Date.Day).ToDictionary(g => g.Key, g => g.Sum(StatsService.ExpenseOf));
-        var lastDay = range.To < today ? range.Days : Math.Min(range.Days, today.Day);
+        var byDay = lines.Where(l => l.CategoryId is { } c && ids.Contains(c)).GroupBy(l => l.Date.DayNumber - range.From.DayNumber + 1)
+            .ToDictionary(g => g.Key, g => g.Sum(StatsService.ExpenseOf));
+        var lastDay = range.To < today ? range.Days : Math.Min(range.Days, today.DayNumber - range.From.DayNumber + 1);
         var cum = new List<decimal>();
         decimal sum = 0;
         for (var d = 1; d <= lastDay; d++) { sum += byDay.GetValueOrDefault(d); cum.Add(sum); }
         var overview = await OverviewAsync(month, memberId, confirmedOnly);
-        var limit = overview.Monthly.FirstOrDefault(l => l.CategoryId == categoryId)?.Limit;
+        var limit = (yearly ? overview.Yearly : overview.Monthly).FirstOrDefault(l => l.CategoryId == categoryId)?.Limit;
         var projection = lastDay > 0 ? sum / lastDay * range.Days : 0;
         return new BudgetSeries(cum, limit, Math.Round(projection, 2), lastDay, range.Days);
     }

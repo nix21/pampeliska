@@ -23,7 +23,8 @@ public record OverviewStats(decimal Income, decimal Expense, decimal Balance, de
 
 public record ExpenseTree(IReadOnlyList<CategoryAmount> Categories, decimal Total, decimal PrevTotal, IReadOnlyList<MonthPoint> Months, NeedSplit Needs);
 
-public record TxSummary(decimal Expense, decimal Refunds, decimal Income, int IncomeCount, int Transfers, int Excluded, int Corrections, int Count);
+public record TxSummary(decimal Expense, decimal Refunds, decimal Income, int IncomeCount, int Transfers, int Excluded, int Corrections, int Count,
+    int Split, int Unconfirmed, int Recurring);
 
 public record TransferSender(int? MemberId, int? FromAccountId, decimal Amount);
 public record TransferFlow(int AccountId, decimal Total, IReadOnlyList<TransferSender> Senders);
@@ -188,9 +189,10 @@ public class StatsService(AppDbContext db)
     }
 
     /// <summary>Souhrnné karty na stránce Pohyby (podle stejných filtrů jako seznam).</summary>
-    public async Task<TxSummary> SummaryAsync(DateRange range, int? accountId, int? memberId)
+    public async Task<TxSummary> SummaryAsync(DateRange range, int? accountId, int? memberId, bool confirmedOnly = false)
     {
-        var q = db.Transactions.AsNoTracking().Include(t => t.Shares).Where(t => t.Date >= range.From && t.Date <= range.To);
+        var q = db.Transactions.AsNoTracking().Include(t => t.Shares).Include(t => t.Splits).Where(t => t.Date >= range.From && t.Date <= range.To);
+        if (confirmedOnly) q = q.Where(t => t.Status == TransactionStatus.Confirmed);
         if (accountId is { } a) q = q.Where(t => t.AccountId == a);
         if (memberId is { } m) q = q.Where(t => t.Shares.Any(s => s.MemberId == m && s.Percent > 0));
         var txs = await q.ToListAsync();
@@ -203,7 +205,8 @@ public class StatsService(AppDbContext db)
             counted.Count(t => t.Kind == TransactionKind.Income),
             txs.Count(t => t.Kind is TransactionKind.Transfer or TransactionKind.InvestmentTransfer),
             txs.Count(t => t.ExcludeFromStats && t.Kind != TransactionKind.Correction),
-            txs.Count(t => t.Kind == TransactionKind.Correction), txs.Count);
+            txs.Count(t => t.Kind == TransactionKind.Correction), txs.Count,
+            txs.Count(t => t.IsSplit), txs.Count(t => t.Status == TransactionStatus.Suggested), txs.Count(t => t.IsRecurring));
     }
 
     /// <summary>„Kdo kolik poslal na účty“: příchozí převody podle cílového účtu a odesílatele (vlastník zdrojového účtu).</summary>

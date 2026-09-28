@@ -47,7 +47,7 @@ export const NAV: NavDef[] = [
 ]
 
 /** Hotové obrazovky (přibývají s milníky). */
-export const ENABLED = new Set<string>(['/ucty', '/clenove', '/nastaveni'])
+export const ENABLED = new Set<string>(['/ucty', '/pohyby', '/trideni', '/davky', '/kategorie', '/pravidla', '/pravidelne', '/rozpocty', '/usetrit', '/investice', '/clenove', '/nastaveni'])
 
 export const navItems = () => NAV.filter((n) => ENABLED.has(n.to))
 
@@ -66,7 +66,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <nav className={s.nav} aria-label="Hlavní navigace">
           {items.map((n, i) => {
             const prevGroup = items.slice(0, i).reverse().find((x) => x.group)?.group
-            const groupHeading = n.group ?? (i > 0 ? undefined : undefined)
+            const groupHeading = n.group
             const b = n.badge && badges ? badges[n.badge] : 0
             return (
               <div key={n.to} style={{ display: 'contents' }}>
@@ -137,7 +137,7 @@ export function PageHeader({ title, subtitle, actions, tools, back }: {
         {back && (
           <IconButton label="Zpět" plain className={s.back} onClick={() => nav(back)}><ChevronLeft size={22} /></IconButton>
         )}
-        <Link to="/" className="onlyMobile" style={{ display: 'flex', color: 'var(--ink)' }} aria-label="Přehled"><Logo size={26} /></Link>
+        <Link to="/" className={s.onlyMobile} style={{ display: 'flex', color: 'var(--ink)' }} aria-label="Přehled"><Logo size={26} /></Link>
         <div className={s.headerTitle}>
           <h1>{title}</h1>
           {subtitle && <span className={clsx(s.headerSub, s.hideMobile)}>{subtitle}</span>}
@@ -146,7 +146,7 @@ export function PageHeader({ title, subtitle, actions, tools, back }: {
         <ModeToggles />
       </div>
       {tools && <div className={s.headerTools}>{tools}</div>}
-      {actions && <div className="onlyMobile row wrap" style={{ gap: 8 }}>{actions}</div>}
+      {actions && <div className={clsx(s.onlyMobile, "row wrap")} style={{ gap: 8 }}>{actions}</div>}
     </header>
   )
 }

@@ -13,6 +13,15 @@ const MorePage = lazy(() => import('./pages/MorePage'))
 const AccountsPage = lazy(() => import('./pages/AccountsPage'))
 const MembersPage = lazy(() => import('./pages/MembersPage'))
 const SettingsPage = lazy(() => import('./pages/SettingsPage'))
+const TransactionsPage = lazy(() => import('./pages/TransactionsPage'))
+const InboxPage = lazy(() => import('./pages/InboxPage'))
+const BatchesPage = lazy(() => import('./pages/BatchesPage'))
+const CategoriesPage = lazy(() => import('./pages/CategoriesPage'))
+const RulesPage = lazy(() => import('./pages/RulesPage'))
+const RecurringPage = lazy(() => import('./pages/RecurringPage'))
+const BudgetsPage = lazy(() => import('./pages/BudgetsPage'))
+const SavingsPage = lazy(() => import('./pages/SavingsPage'))
+const InvestmentsPage = lazy(() => import('./pages/InvestmentsPage'))
 
 export default function App() {
   const qc = useQueryClient()
@@ -43,7 +52,9 @@ export default function App() {
 
 function MainRoutes() {
   const location = useLocation()
-  useEffect(() => window.scrollTo(0, 0), [location.pathname])
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [location.pathname])
   return (
     <AppShell>
       <Suspense fallback={<Spinner center />}>
@@ -51,6 +62,16 @@ function MainRoutes() {
           <Route path="/" element={<Navigate to="/ucty" replace />} />
           <Route path="/ucty" element={<AccountsPage />} />
           <Route path="/ucty/:id" element={<AccountsPage />} />
+          <Route path="/pohyby" element={<TransactionsPage />} />
+          <Route path="/trideni" element={<InboxPage />} />
+          <Route path="/davky" element={<BatchesPage />} />
+          <Route path="/davky/:id" element={<BatchesPage />} />
+          <Route path="/kategorie" element={<CategoriesPage />} />
+          <Route path="/pravidla" element={<RulesPage />} />
+          <Route path="/pravidelne" element={<RecurringPage />} />
+          <Route path="/rozpocty" element={<BudgetsPage />} />
+          <Route path="/usetrit" element={<SavingsPage />} />
+          <Route path="/investice" element={<InvestmentsPage />} />
           <Route path="/clenove" element={<MembersPage />} />
           <Route path="/nastaveni" element={<SettingsPage />} />
           <Route path="/vice" element={<MorePage />} />

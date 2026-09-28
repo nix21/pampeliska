@@ -25,8 +25,8 @@ public static class TransactionEndpoints
                 recurring == true, excluded == true, corrections == true, uncategorized == true, suspected == true, confirmedOnly == true, batch,
                 sort ?? TxSort.DateDesc, skip ?? 0, take ?? 200)));
 
-        api.MapGet("/transactions/summary", (StatsService svc, string period, int? account, int? member) =>
-            svc.SummaryAsync(DateRange.Parse(period), account, member));
+        api.MapGet("/transactions/summary", (StatsService svc, string period, int? account, int? member, bool? confirmedOnly) =>
+            svc.SummaryAsync(DateRange.Parse(period), account, member, confirmedOnly == true));
         api.MapGet("/transfers/flows", (StatsService svc, string period, int? account) => svc.TransferFlowsAsync(DateRange.Parse(period), account));
 
         api.MapGet("/transactions/{id:int}", (int id, TransactionService svc) => svc.GetAsync(id));

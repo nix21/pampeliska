@@ -1,0 +1,50 @@
+.editor { display: flex; flex-direction: column; gap: 18px; }
+.editorHead { display: flex; align-items: center; gap: 8px; }
+.editorTitle { flex: 1; font-family: var(--font-display); font-weight: var(--display-weight); letter-spacing: var(--display-tracking); font-size: 22px; }
+.meta { font-size: 12px; color: var(--ink-3); }
+.block { display: flex; flex-direction: column; gap: 10px; }
+.blockTitle { font-size: 13px; font-weight: 800; }
+.hint { font-size: 11px; color: var(--ink-3); line-height: 1.45; }
+
+.condRow { display: grid; grid-template-columns: 140px 112px minmax(0, 1fr) 28px; gap: 6px; align-items: center; }
+.condSelect { width: 100%; min-width: 0; }
+.valueInput { height: 32px; font-weight: 700; font-size: 13px; background: var(--surface-2); }
+.remove { display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border: 0; border-radius: 8px; background: transparent; color: var(--ink-3); cursor: pointer; }
+.remove:hover:not(:disabled) { background: var(--surface-2); color: var(--ink); }
+.remove:disabled { opacity: .35; cursor: default; }
+.addCond { align-self: flex-start; border: 0; background: transparent; padding: 2px 0; font-size: 13px; font-weight: 600; color: var(--ink-2); cursor: pointer; }
+.addCond:hover { color: var(--ink); }
+.condCard { display: flex; flex-direction: column; gap: 6px; padding: 12px; border-radius: var(--radius-sm); background: var(--surface); border: 1px solid var(--line); }
+.condCard .condSelect { flex: 1; height: 44px; }
+.condCard .valueInput { height: 48px; font-size: 16px; background: var(--surface); }
+.condCard .remove { width: 44px; height: 44px; flex-shrink: 0; }
+.addCondMobile { align-self: stretch; min-height: 44px; border-radius: var(--radius-sm); border: 1.5px dashed var(--ink-3); font-size: 14px; }
+
+.actGrid { display: grid; grid-template-columns: 70px minmax(0, 1fr); gap: 8px; align-items: center; }
+.actLabel { font-size: 12px; color: var(--ink-3); }
+.needDot { width: 6px; height: 6px; border-radius: 9px; display: inline-block; flex-shrink: 0; margin-right: 5px; vertical-align: middle; }
+
+.test { display: flex; flex-direction: column; gap: 8px; padding: 14px; border-radius: var(--radius-sm); background: var(--surface-2); }
+.testHead { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.testSum { font-size: 12px; color: var(--ink-2); }
+.match { display: grid; grid-template-columns: 76px minmax(0, 1fr) auto; gap: 8px; align-items: center; font-size: 12px; }
+.matchName { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.badge {
+  font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 9px; white-space: nowrap;
+  background: color-mix(in oklch, var(--warn) 16%, var(--surface)); color: var(--warn);
+}
+.applyRow { display: flex; align-items: center; gap: 10px; padding-top: 8px; border-top: 1px solid var(--line); font-size: 13px; cursor: pointer; }
+
+.saveRow { display: flex; gap: 8px; }
+.deleteBtn { color: var(--neg); }
+
+@media (max-width: 767px) {
+  .editor { gap: 20px; }
+  .editorHead { flex-direction: column; align-items: flex-start; gap: 2px; }
+  .editorTitle { font-size: 24px; }
+  .actGrid { grid-template-columns: 1fr; gap: 6px; }
+  .test { background: var(--surface); }
+  .match { grid-template-columns: 64px minmax(0, 1fr) auto; font-size: 13px; min-height: 28px; }
+  .applyRow { min-height: 44px; }
+  .saveRowMobile > * { min-height: 50px; }
+}

@@ -29,6 +29,13 @@ public static class TestingEndpoints
             return Results.NoContent();
         });
 
+        g.MapPost("/demo", async (DemoSeeder seeder, CurrentUser user) =>
+        {
+            await seeder.SeedAsync((await user.RequireMemberAsync()).Id);
+            app.Services.GetRequiredService<MemberDirectory>().Invalidate();
+            return Results.NoContent();
+        });
+
         g.MapPost("/reset", async (HouseholdService svc, AppDbContext db) =>
         {
             var h = await db.Households.FirstAsync();

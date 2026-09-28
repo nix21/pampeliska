@@ -1,0 +1,31 @@
+.nw { display: grid !important; grid-template-columns: 300px minmax(0, 1fr); gap: 28px; }
+.big { font-family: var(--font-display); font-weight: 800; letter-spacing: -0.03em; font-size: 44px; line-height: 1; }
+.part { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto 44px; gap: 10px; align-items: center; padding: 6px 0; font-size: 13px; }
+.grid { display: grid; grid-template-columns: minmax(0, 1fr) 460px; gap: var(--gap); align-items: start; }
+.chip { display: inline-flex; align-items: center; padding: 6px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); font-size: 12px; font-weight: 700; cursor: pointer; }
+.chipOn { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.stats > div { display: flex; flex-direction: column; gap: 3px; padding: 12px 14px; border-radius: var(--radius-sm); background: var(--surface-2); font-size: 12px; color: var(--ink-2); }
+.stats .faint { font-size: 11px; }
+.statV { font-size: 20px; font-weight: 800; letter-spacing: -0.02em; color: var(--ink); }
+.valueBox { display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--line); }
+.valueRow { display: grid; grid-template-columns: 150px minmax(0, 1fr) auto; gap: 8px; align-items: end; }
+.pos { display: grid; grid-template-columns: minmax(0, 1fr) 70px 90px 110px 60px; gap: 10px; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
+.pos > :not(:first-child) { text-align: right; }
+.posHead { font-size: 12px; font-weight: 600; color: var(--ink-3); }
+.tradeForm { display: flex; flex-direction: column; gap: 10px; margin: 0 18px 14px; padding: 14px; border-radius: var(--radius-sm); background: var(--surface-2); }
+.trade { display: flex; flex-direction: column; gap: 6px; padding: 12px 18px; border-top: 1px solid var(--line); }
+.tradeRow { display: grid; grid-template-columns: 48px 62px minmax(0, 1fr) auto 28px; gap: 10px; align-items: center; }
+.side { justify-self: start; font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 999px; }
+
+@media (max-width: 1100px) { .grid { grid-template-columns: 1fr; } }
+@media (max-width: 767px) {
+  .nw { grid-template-columns: 1fr; gap: 16px; }
+  .big { font-size: 36px; }
+  .stats { grid-template-columns: 1fr 1fr; }
+  .valueRow { grid-template-columns: 1fr; }
+  .pos { grid-template-columns: minmax(0, 1fr) 90px 50px; }
+  .pos > :nth-child(2), .pos > :nth-child(3) { display: none; }
+  .tradeRow { grid-template-columns: 56px minmax(0, 1fr) auto 28px; }
+  .tradeRow > :first-child { display: none; }
+}

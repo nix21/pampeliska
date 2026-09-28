@@ -53,7 +53,8 @@ public class BatchService(AppDbContext db, TimeProvider time)
         var ids = batches.Select(b => b.Id).ToList();
         var stats = await db.Transactions.AsNoTracking().Where(t => t.BatchId != null && ids.Contains(t.BatchId.Value))
             .GroupBy(t => new { t.BatchId, t.AccountId })
-            .Select(g => new { g.Key.BatchId, g.Key.AccountId, Count = g.Count(), Confirmed = g.Count(t => t.Status == TransactionStatus.Confirmed) })
+            .Select(g => new { g.Key.BatchId, g.Key.AccountId, Count = g.Count(), Confirmed = g.Count(t => t.Status == TransactionStatus.Confirmed),
+                Suspected = g.Count(t => t.SuspectedDuplicateOfId != null) })
             .ToListAsync();
         var accounts = await db.Accounts.AsNoTracking().Include(a => a.Institution).ToDictionaryAsync(a => a.Id);
         var members = await db.Members.AsNoTracking().ToDictionaryAsync(m => m.Id, m => m.Name);
@@ -64,7 +65,7 @@ public class BatchService(AppDbContext db, TimeProvider time)
             var count = s.Sum(x => x.Count);
             return new BatchSummary(b.Id, b.CreatedAt, b.Source, b.ClientName,
                 b.CreatedByMemberId is { } m ? members.GetValueOrDefault(m) : null, b.State, b.CategorizedAt, b.ConfirmedAt,
-                count, confirmed, count - confirmed, b.DuplicateCount, b.SuspectedCount,
+                count, confirmed, count - confirmed, b.DuplicateCount, s.Sum(x => x.Suspected),
                 s.Select(x => accounts.TryGetValue(x.AccountId, out var a) ? $"{a.Institution?.Abbrev ?? ""} {a.Name}".Trim() : "?").ToList(), b.Note);
         }).ToList();
     }

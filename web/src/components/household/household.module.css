@@ -1,0 +1,43 @@
+/* Členové domácnosti */
+.memberCard { background: var(--surface); border: var(--card-border); border-radius: var(--radius); box-shadow: var(--shadow); padding: var(--pad); display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.memberHead { display: flex; align-items: center; gap: 12px; }
+.memberName { font-family: var(--font-display); font-weight: var(--display-weight); letter-spacing: var(--display-tracking); font-size: 22px; line-height: 1.15; }
+.memberMail { font-size: 12px; color: var(--ink-3); overflow: hidden; text-overflow: ellipsis; }
+.role { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: var(--radius-pill); background: var(--surface-2); color: var(--ink-2); white-space: nowrap; }
+.roleInvited { background: var(--accent-soft); color: var(--ink); }
+.stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.stat { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--surface-2); min-width: 0; }
+.statLabel { font-size: 11px; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.statValue { font-size: 17px; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.acctChip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: var(--radius-pill); border: 1px solid var(--line); font-size: 12px; font-weight: 600; }
+.acctChipJoint { border-style: dashed; border-color: var(--ink-3); }
+.mobile { display: none; }
+
+.addCard { border-radius: var(--radius); border: 2px dashed color-mix(in oklch, var(--ink-3) 45%, var(--surface)); padding: var(--pad); display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.addLabel { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--ink-3); font-weight: 600; }
+.swatch { width: 24px; height: 24px; border-radius: 12px; border: 0; padding: 0; cursor: pointer; }
+.swatchOn { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--ink); }
+
+.cardTitle { font-size: 16px; font-weight: 800; }
+.joint { display: flex; flex-direction: column; gap: 8px; padding: 12px 14px; border-radius: var(--radius-sm); border: 1px solid var(--line); }
+.jointLegend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 12px; color: var(--ink-2); }
+.jointLegend b { color: var(--ink); font-weight: 800; }
+.legendSwatch { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; display: inline-block; }
+.splitBar { display: flex; height: 8px; border-radius: 9px; overflow: hidden; gap: 2px; background: var(--surface-2); }
+.mobileInline { display: none; }
+
+.catRow { display: grid; grid-template-columns: 150px minmax(0, 1fr) 90px; gap: 10px; align-items: center; font-size: 13px; }
+.catBar { display: flex; height: 12px; border-radius: 4px; overflow: hidden; gap: 1px; min-width: 4px; }
+
+@media (max-width: 767px) {
+  .memberCard { padding: 16px; gap: 12px; }
+  .memberName { font-size: 18px; }
+  .desktop { display: none !important; }
+  .mobile { display: block; }
+  .statValue { font-size: 16px; }
+  .addCard { padding: 16px; }
+  .addCard input { height: 44px; }
+  .desktopInline { display: none; }
+  .mobileInline { display: inline; }
+  .catRow { grid-template-columns: 110px minmax(0, 1fr) 80px; }
+}

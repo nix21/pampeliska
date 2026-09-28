@@ -1,0 +1,16 @@
+.page { display: flex; flex-direction: column; gap: var(--gap); min-width: 0; }
+.content { display: flex; flex-direction: column; gap: var(--gap); min-width: 0; transition: opacity .15s; }
+.layout { display: grid; grid-template-columns: minmax(0, 1fr) 390px; gap: var(--gap); align-items: start; }
+.lists { display: flex; flex-direction: column; gap: var(--gap); min-width: 0; }
+.desktopOnly { display: contents; }
+
+@media (max-width: 1180px) {
+  .layout { grid-template-columns: minmax(0, 1fr) 340px; }
+}
+@media (max-width: 1023px) {
+  .layout { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 767px) {
+  .page { gap: 12px; }
+  .desktopOnly { display: none; }
+}

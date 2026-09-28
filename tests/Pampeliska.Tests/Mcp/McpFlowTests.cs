@@ -167,6 +167,46 @@ public class McpFlowTests(PampeliskaFactory factory) : IClassFixture<PampeliskaF
         Assert.Equal("CZK", household.GetProperty("baseCurrency").GetString());
         Assert.Contains(household.GetProperty("members").EnumerateArray(), m => m.GetProperty("email").GetString() == "test@example.com");
 
+        // Účet → import výpisu → fronta → kategorie → návrh AI (nad prahem se potvrdí)
+        Assert.Contains("import_transactions", tools);
+        var account = await Call(mcp, "create_account", new()
+        {
+            ["account"] = new { name = "Běžný účet", kind = "Current", institutionKey = "fio", accountNumber = "2900111222/2010", currency = "CZK", joint = true },
+        });
+        var accountId = account.GetProperty("id").GetInt32();
+        var imported = await Call(mcp, "import_transactions", new()
+        {
+            ["accountId"] = accountId,
+            ["transactions"] = new object[]
+            {
+                new { date = "2026-09-20", amount = -1124.5m, counterparty = "LIDL DEKUJE ZA NAKUP", paymentType = "Card" },
+                new { date = "2026-09-21", amount = -329m, counterparty = "NETFLIX.COM" },
+            },
+            ["note"] = "Výpis 09/2026",
+        });
+        Assert.Equal(2, imported.GetProperty("created").GetInt32());
+        var again = await Call(mcp, "import_transactions", new()
+        {
+            ["accountId"] = accountId,
+            ["transactions"] = new object[] { new { date = "2026-09-20", amount = -1124.5m, counterparty = "LIDL DEKUJE ZA NAKUP" } },
+        });
+        Assert.Equal(1, again.GetProperty("skippedDuplicates").GetInt32());
+
+        var queue = await Call(mcp, "get_categorization_queue", new());
+        Assert.Equal(2, queue.GetArrayLength());
+        var food = await Call(mcp, "create_category", new() { ["name"] = "Jídlo", ["color"] = "c2", ["need"] = "Need" });
+        var shops = await Call(mcp, "create_category", new() { ["name"] = "Supermarkety", ["parentId"] = food.GetProperty("id").GetInt32() });
+        var lidlId = queue.EnumerateArray().First(q => q.GetProperty("counterparty").GetString()!.StartsWith("LIDL")).GetProperty("id").GetInt32();
+        var suggested = await Call(mcp, "suggest_categories", new()
+        {
+            ["suggestions"] = new object[] { new { transactionId = lidlId, categoryId = shops.GetProperty("id").GetInt32(), confidence = 95, reason = "Supermarket" } },
+        });
+        Assert.Equal(1, suggested.GetProperty("autoConfirmed").GetInt32());
+        var remaining = await Call(mcp, "get_categorization_queue", new());
+        Assert.Equal(1, remaining.GetArrayLength());
+        var summary = await Call(mcp, "get_summary", new() { ["period"] = "2026-09" });
+        Assert.Equal(1453.5m, summary.GetProperty("expense").GetDecimal());
+
         // Odpojení v Nastavení → token přestane platit
         var connectionId = connections.EnumerateArray().First(c => c.GetProperty("clientName").GetString() == "Test klient").GetProperty("id").GetInt32();
         Assert.Equal(HttpStatusCode.NoContent, (await browser.DeleteAsync($"/api/mcp/connections/{connectionId}")).StatusCode);

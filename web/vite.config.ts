@@ -11,6 +11,7 @@ export default defineConfig({
       '/api': api,
       '/auth': api,
       '/signin-google': api,
+      '/testing': api,
       // MCP + OAuth pro Claude: Host musí zůstat localhost:5174 (zkrácený zápis nastavuje changeOrigin: true),
       // jinak issuer a resource v metadatech neodpovídají adrese, na kterou se klient připojuje
       '/mcp': { target: api, changeOrigin: false },

@@ -52,8 +52,8 @@ public static class PlanningEndpoints
 
         api.MapGet("/budgets", (BudgetService svc, string? month, int? member, bool? confirmedOnly, TimeProvider time) =>
             svc.OverviewAsync(Month(month, time), member, confirmedOnly == true));
-        api.MapGet("/budgets/{categoryId:int}/series", (int categoryId, BudgetService svc, string? month, int? member, bool? confirmedOnly, TimeProvider time) =>
-            svc.SeriesAsync(categoryId, Month(month, time), member, confirmedOnly == true));
+        api.MapGet("/budgets/{categoryId:int}/series", (int categoryId, BudgetService svc, string? month, int? member, bool? confirmedOnly, bool? yearly, TimeProvider time) =>
+            svc.SeriesAsync(categoryId, Month(month, time), member, confirmedOnly == true, yearly == true));
         api.MapPut("/budgets", async (BudgetInput i, BudgetService svc) => { await svc.SetAsync(i); return Results.NoContent(); });
 
         api.MapGet("/savings", (SavingsService svc, string? month, int? member, bool? confirmedOnly, TimeProvider time) =>

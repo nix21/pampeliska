@@ -44,7 +44,7 @@ public record TxRef(int Id, DateOnly Date, int AccountId, string Counterparty, d
 
 public record TxDetail(TxRow Tx, string? RawText, string? CounterpartyAccount, string? Mcc, string? AiReason, IReadOnlyList<AiAlternative> AiAlternatives,
     string? AppliedRule, IReadOnlyList<TxEventDto> Events, TxRef? TransferPair, TxRef? RefundOf, TxRef? SuspectedDuplicateOf,
-    decimal? CnbRate, int? CardHolderMemberId, string? BatchLabel);
+    decimal? CnbRate, int? CardHolderMemberId, string? BatchLabel, bool CanDelete);
 
 public record TxPage(IReadOnlyList<TxRow> Items, int Total);
 
@@ -174,7 +174,8 @@ public class TransactionService(AppDbContext db, BatchService batches, RuleServi
             t.AiReason, ParseAlternatives(t.AiAlternatives), rule,
             t.Events.OrderBy(e => e.At).Select(e => new TxEventDto(e.At, e.Actor, e.Text)).ToList(),
             pair, await Ref(t.RefundOfId), await Ref(t.SuspectedDuplicateOfId), cnb, t.CardHolderMemberId,
-            t.Batch is null ? null : $"{(t.Batch.Source == BatchSource.Mcp ? "MCP" : t.Batch.Source == BatchSource.Manual ? "ručně" : "banka")} · {t.Batch.CreatedAt:d. M. yyyy}");
+            t.Batch is null ? null : $"{(t.Batch.Source == BatchSource.Mcp ? "MCP" : t.Batch.Source == BatchSource.Manual ? "ručně" : "banka")} · {t.Batch.CreatedAt:d. M. yyyy}",
+            t.Kind == TransactionKind.Correction || t.Batch?.Source == BatchSource.Manual);
     }
 
     public static List<AiAlternative> ParseAlternatives(string? json)

@@ -13,7 +13,7 @@ using Pampeliska.Core.Data;
 namespace Pampeliska.Core.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260928205128_Initial")]
+    [Migration("20260928212330_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -988,6 +988,10 @@ namespace Pampeliska.Core.Data.Migrations
                         .HasPrecision(18, 4)
                         .HasColumnType("numeric(18,4)")
                         .HasColumnName("amount");
+
+                    b.Property<DateOnly?>("AmountAlertDismissedFor")
+                        .HasColumnType("date")
+                        .HasColumnName("amount_alert_dismissed_for");
 
                     b.Property<int>("AmountKind")
                         .HasColumnType("integer")

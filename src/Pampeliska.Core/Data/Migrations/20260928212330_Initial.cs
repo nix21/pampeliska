@@ -313,6 +313,7 @@ namespace Pampeliska.Core.Data.Migrations
                     ended_at = table.Column<DateOnly>(type: "date", nullable: true),
                     marked_to_cancel = table.Column<bool>(type: "boolean", nullable: false),
                     note = table.Column<string>(type: "text", nullable: true),
+                    amount_alert_dismissed_for = table.Column<DateOnly>(type: "date", nullable: true),
                     created_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
