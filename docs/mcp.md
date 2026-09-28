@@ -35,5 +35,17 @@ Přes Vite (`http://localhost:5174/mcp`) to funguje také – proxy zachovává 
 
 ## Nástroje
 
-Aktuální seznam vrací `tools/list`; popisy nástrojů a parametrů jsou česky. Postup práce popisují instrukce serveru
-(`src/Pampeliska.Api/Mcp/McpSetup.cs`).
+Popisy nástrojů a parametrů jsou česky. Postup práce popisují instrukce serveru (`src/Pampeliska.Api/Mcp/McpSetup.cs`).
+
+| Oblast | Čtení (`pampeliska.read`) | Zápis (`pampeliska.write`) |
+|---|---|---|
+| Domácnost a účty | `get_household`, `list_accounts`, `get_account`, `list_institutions` | `create_account`, `update_account`, `add_balance_correction` |
+| Import a fronta | `get_categorization_queue`, `list_batches`, `get_batch`, `get_transactions`, `get_transaction` | `import_transactions`, `suggest_categories`, `categorize_transactions`, `confirm_transactions`, `resolve_duplicate`, `link_transfer`, `unlink_transfer`, `finish_batch_categorization` |
+| Kategorie | `list_categories` | `create_category`, `update_category`, `merge_category`, `delete_category` |
+| Pravidla | `list_rules`, `test_rule`, `get_rule_suggestions` | `create_rule`, `update_rule`, `move_rule`, `delete_rule`, `apply_rule_to_history` |
+| Souhrny | `get_summary`, `get_spending_by_month` | – |
+| Plánování | `list_recurring_payments`, `get_balance_forecast`, `get_conditions_status`, `get_budgets` | `create_recurring_payment`, `update_recurring_payment`, `confirm_recurring_suggestion`, `end_recurring_payment`, `pair_recurring_occurrence`, `set_budget` |
+| Majetek | `get_net_worth`, `get_investments` | `add_investment_value`, `add_investment_trade` |
+
+Typický tok importu: `list_accounts` → `import_transactions` (duplicity a převody řeší server) → `get_categorization_queue`
+→ `suggest_categories` (s jistotou; nad prahem domácnosti se potvrdí samo) → návrh pravidel `create_rule`.

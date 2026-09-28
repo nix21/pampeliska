@@ -47,7 +47,7 @@ export const NAV: NavDef[] = [
 ]
 
 /** Hotové obrazovky (přibývají s milníky). */
-export const ENABLED = new Set<string>(['/ucty', '/pohyby', '/trideni', '/davky', '/kategorie', '/pravidla', '/pravidelne', '/rozpocty', '/usetrit', '/investice', '/clenove', '/nastaveni'])
+export const ENABLED = new Set<string>(['/', '/vydaje', '/ucty', '/pohyby', '/trideni', '/davky', '/kategorie', '/pravidla', '/pravidelne', '/rozpocty', '/usetrit', '/investice', '/clenove', '/nastaveni'])
 
 export const navItems = () => NAV.filter((n) => ENABLED.has(n.to))
 

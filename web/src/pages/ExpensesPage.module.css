@@ -1,0 +1,109 @@
+/* Výdaje – souhrn s grafem, legenda se skrýváním kategorií, seznam plateb. */
+
+.toolsEnd { margin-left: auto; }
+.clickable { cursor: pointer; }
+
+/* ---------- Souhrn ---------- */
+.summary { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.crumbs {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-family: var(--font-label); font-size: var(--label-size);
+  font-weight: var(--label-weight); color: var(--ink-2);
+}
+.crumb { padding: 0; border: 0; background: transparent; font: inherit; cursor: pointer; }
+.crumb:hover:not(:disabled) { text-decoration: underline; }
+.crumb:disabled { cursor: default; }
+.big {
+  font-family: var(--font-display); font-weight: var(--display-weight); letter-spacing: var(--display-tracking); font-size: 34px;
+  line-height: 1; font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.offNote {
+  display: inline-flex; align-items: center; gap: 5px; padding: 0; border: 0; background: transparent; font-size: 12px; font-weight: 600;
+  color: var(--ink-3); cursor: pointer; align-self: flex-start;
+}
+.offNote:hover { color: var(--ink); }
+
+.chartGrid { display: grid; grid-template-columns: minmax(0, 1fr) 410px; gap: 32px; align-items: start; }
+.emptyChart {
+  display: flex; align-items: center; justify-content: center; min-height: 240px; border-radius: var(--radius-sm); background: var(--surface-2);
+  color: var(--ink-3); font-size: 14px; text-align: center; padding: 20px;
+}
+
+/* ---------- Legenda ---------- */
+.levelHead { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; height: 28px; font-size: 13px; min-width: 0; }
+.backBtn {
+  display: flex; align-items: center; justify-content: center; width: 22px; height: 22px; margin-right: 2px; flex-shrink: 0; padding: 0;
+  border-radius: var(--radius-sm); border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer;
+}
+.backBtn:hover { background: var(--surface-2); }
+.levelName { font-size: 15px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.legendHead { margin-left: auto; font-size: var(--label-size); font-weight: var(--label-weight); color: var(--ink-3); white-space: nowrap; }
+.legendRow {
+  display: grid; grid-template-columns: 12px minmax(0, 1fr) 96px 44px 56px 26px; gap: 10px; align-items: center; padding: 9px 6px;
+  border-top: 1px solid var(--line); border-radius: var(--radius-sm); font-size: 14px; transition: opacity .15s;
+}
+.legendRow.clickable:hover { background: var(--surface-2); }
+.legendRowOn { background: var(--surface-2); }
+.legendValue { font-size: 14px; font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.legendShare { font-size: 12px; color: var(--ink-3); text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.legendDelta { font-size: 12px; font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.eyeBtn {
+  display: flex; align-items: center; justify-content: center; width: 26px; height: 26px; padding: 0; border: 0; border-radius: var(--radius-sm);
+  background: transparent; color: var(--ink-3); opacity: .5; cursor: pointer;
+}
+.eyeBtn:hover, .eyeBtn:focus-visible { opacity: 1; background: var(--surface); color: var(--ink); }
+.eyeBtnOff { opacity: 1; color: var(--ink); }
+
+/* ---------- Platby ---------- */
+.payHead { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.payTitle { display: flex; align-items: baseline; gap: 12px; flex: 1; min-width: 0; flex-wrap: wrap; }
+.chips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.chip {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 34px; max-width: 100%; padding: 0 8px 0 12px; border-radius: 999px;
+  background: var(--surface-2); border: 1px solid var(--line); font-size: 13px; font-weight: 600; cursor: pointer;
+}
+.chip:hover { border-color: var(--ink-3); }
+.chipDot { width: 8px; height: 8px; flex-shrink: 0; border-radius: 999px; }
+.clearAll { display: inline-flex; align-items: center; min-height: 34px; padding: 0 8px; border: 0; background: transparent; font-size: 13px; font-weight: 600; color: var(--ink-2); cursor: pointer; }
+.clearAll:hover { color: var(--ink); }
+
+.monthHead {
+  display: flex; justify-content: space-between; padding: 16px 4px 6px; font-size: var(--label-size); font-weight: var(--label-weight); color: var(--ink-3);
+}
+.txWrap { display: flex; flex-direction: column; border-top: 1px solid var(--line); }
+.txWrapOpen { background: var(--surface-2); border-radius: var(--radius-sm); }
+.txRow {
+  display: grid; grid-template-columns: 56px minmax(0, 1fr) minmax(0, 1.15fr) 130px 20px; gap: 16px; align-items: center; padding: 10px 4px;
+  cursor: pointer; border-radius: var(--radius-sm);
+}
+.txRow:hover { background: var(--surface-2); }
+.txRowMobile { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; min-height: 56px; padding: 6px 0; cursor: pointer; }
+.txDate { font-size: 12px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.amountCol { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; }
+.unconfPill { font-size: 11px; font-weight: 600; padding: 1px 6px; border-radius: 999px; border: 1px dashed var(--ink-3); color: var(--ink-2); white-space: nowrap; }
+.unconfDot { width: 7px; height: 7px; flex-shrink: 0; border-radius: 999px; border: 1.5px dashed var(--ink-3); }
+.dot7, .dot10 { display: inline-block; flex-shrink: 0; border-radius: 999px; }
+.dot7 { width: 7px; height: 7px; }
+.dot10 { width: 10px; height: 10px; }
+.miniBar { display: flex; width: 44px; height: 8px; flex-shrink: 0; border-radius: 999px; overflow: hidden; gap: 1px; }
+.emptyList { padding: 28px 4px; text-align: center; font-size: 14px; color: var(--ink-3); border-top: 1px solid var(--line); }
+.moreBtn {
+  display: flex; align-items: center; justify-content: center; min-height: 40px; border-radius: var(--radius-sm); border: 1px solid var(--line);
+  background: var(--surface); font-size: 13px; font-weight: 700; cursor: pointer;
+}
+.moreBtn:hover { background: var(--surface-2); }
+
+@media (max-width: 1100px) {
+  .chartGrid { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 767px) {
+  .toolsEnd { margin-left: 0; }
+  .big { font-size: 34px; }
+  .levelHead { height: 44px; margin-bottom: 4px; }
+  .backBtn { width: 36px; height: 36px; margin-right: 4px; }
+  .legendRow { grid-template-columns: 10px minmax(0, 1fr) auto 46px 36px; gap: 8px; min-height: 44px; padding: 0 0 0 6px; }
+  .eyeBtn { width: 36px; height: 36px; }
+  .monthHead { padding: 14px 0 6px; }
+  .txWrapOpen { background: transparent; }
+  .moreBtn { min-height: 48px; font-size: 14px; }
+}

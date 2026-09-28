@@ -1,0 +1,50 @@
+/* Grafy: prstenec, treemap, skládané sloupce, pruhy. Jen tokeny var(--*). */
+
+.sunburst { position: relative; flex-shrink: 0; }
+.seg { stroke: var(--seg-stroke, var(--surface)); stroke-width: var(--seg-gap, 2px); transition: opacity .15s; }
+.seg:hover { filter: brightness(1.04); }
+.sunCenter {
+  position: absolute; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; gap: 3px; outline-offset: -4px;
+}
+
+.treemap { position: relative; width: 100%; border-radius: var(--radius-sm); overflow: hidden; background: var(--surface-2); }
+.tile {
+  position: absolute; box-sizing: border-box; box-shadow: inset 0 0 0 1px var(--surface); padding: 7px 8px;
+  display: flex; flex-direction: column; justify-content: flex-end; gap: 1px; overflow: hidden; transition: opacity .15s;
+}
+.tile:hover { box-shadow: inset 0 0 0 2px var(--ink); }
+.tileName { font-size: 12px; font-weight: 700; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tileValue { font-size: 12px; color: var(--ink-2); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.group {
+  position: absolute; box-sizing: border-box; border: 3px solid var(--surface); pointer-events: none; padding: 5px 6px;
+  display: flex; align-items: flex-start;
+}
+.groupChip {
+  display: flex; align-items: center; gap: 6px; max-width: 100%; box-sizing: border-box; padding: 2px 8px; border-radius: 999px;
+  background: var(--surface); font-size: 11px; font-weight: 800; white-space: nowrap; overflow: hidden;
+}
+.groupDot { width: 7px; height: 7px; flex-shrink: 0; border-radius: 999px; }
+.groupShare { font-weight: 600; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+
+.stack { display: flex; flex-direction: column; gap: 6px; }
+.stackPlot { position: relative; }
+.bar { stroke: var(--surface); stroke-width: 1; transition: opacity .15s; }
+.axisLabel {
+  position: absolute; left: 0; transform: translateY(-50%); font-size: 11px; color: var(--ink-3); white-space: nowrap; pointer-events: none;
+  font-variant-numeric: tabular-nums;
+}
+.avgLabel { font-weight: 800; color: var(--ink); }
+.stackMonths { display: flex; }
+.stackMonth {
+  flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 4px 0; border: 0;
+  border-radius: var(--radius-sm); background: transparent; cursor: pointer;
+}
+.stackMonth:hover { background: var(--surface-2); }
+.stackMonthOn { background: var(--surface-2); }
+.stackMonthName { font-size: 12px; font-weight: 600; color: var(--ink-2); }
+.stackMonthOn .stackMonthName { font-weight: 800; color: var(--ink); }
+.stackMonthTotal { font-size: 11px; color: var(--ink-3); white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+.segBar { display: flex; width: 100%; border-radius: 999px; overflow: hidden; box-sizing: border-box; }
+.segBar > span { min-width: 2px; }

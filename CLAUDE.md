@@ -44,3 +44,5 @@ cd web && npx tsc -b && npx oxlint
 ```
 
 Lokálně: Postgres na portu 55433 (viz README), `.claude/launch.json` spouští `api` (5290) a `web` (5174).
+Ukázková data: v průvodci odkaz „Otevřít s ukázkovými daty“ (jen dev) nebo `POST /testing/demo` po přihlášení (`DemoSeeder`);
+`POST /testing/reset` vrátí domácnost do průvodce. E2E: `cd web && E2E_BASE_URL=http://localhost:5174 npx playwright test`.

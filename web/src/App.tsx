@@ -22,6 +22,8 @@ const RecurringPage = lazy(() => import('./pages/RecurringPage'))
 const BudgetsPage = lazy(() => import('./pages/BudgetsPage'))
 const SavingsPage = lazy(() => import('./pages/SavingsPage'))
 const InvestmentsPage = lazy(() => import('./pages/InvestmentsPage'))
+const OverviewPage = lazy(() => import('./pages/OverviewPage'))
+const ExpensesPage = lazy(() => import('./pages/ExpensesPage'))
 
 export default function App() {
   const qc = useQueryClient()
@@ -59,7 +61,8 @@ function MainRoutes() {
     <AppShell>
       <Suspense fallback={<Spinner center />}>
         <Routes>
-          <Route path="/" element={<Navigate to="/ucty" replace />} />
+          <Route path="/" element={<OverviewPage />} />
+          <Route path="/vydaje" element={<ExpensesPage />} />
           <Route path="/ucty" element={<AccountsPage />} />
           <Route path="/ucty/:id" element={<AccountsPage />} />
           <Route path="/pohyby" element={<TransactionsPage />} />
