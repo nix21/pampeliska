@@ -12,6 +12,9 @@ public static class Endpoints
     {
         api.MapHouseholdEndpoints();
         api.MapAccountEndpoints();
+        api.MapTransactionEndpoints();
+        api.MapCategoryEndpoints();
+        api.MapPlanningEndpoints();
     }
 
     /// <summary>Zálohovací kontejner hlásí výsledek (chráněno sdíleným tokenem Backup:Token).</summary>

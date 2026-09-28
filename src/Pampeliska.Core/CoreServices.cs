@@ -21,6 +21,19 @@ public static class CoreServices
         services.AddScoped<AccountQueries>();
         services.AddScoped<BalanceService>();
         services.AddScoped<HouseholdService>();
+        services.AddScoped<RuleService>();
+        services.AddScoped<TransactionService>();
+        services.AddScoped<InboxService>();
+        services.AddScoped<StatsService>();
+        services.AddScoped<RecurringService>();
+        services.AddScoped<ForecastService>();
+        services.AddScoped<ConditionService>();
+        services.AddScoped<BudgetService>();
+        services.AddScoped<SavingsService>();
+        services.AddScoped<InvestmentService>();
+        services.AddScoped<NotificationService>();
+        services.AddScoped<IDailyCheck>(sp => sp.GetRequiredService<NotificationService>());
+        services.AddScoped<ExportService>();
         return services;
     }
 }

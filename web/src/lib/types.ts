@@ -137,3 +137,107 @@ export interface CategoryTemplate {
   expense: CategoryTemplateNode[]
   income: CategoryTemplateNode[]
 }
+
+// ---------- Pohyby ----------
+
+export interface SplitDto {
+  categoryId: number
+  /** Se znaménkem jako pohyb, v měně pohybu. */
+  amount: number
+  amountCzk: number
+  needOverride?: NeedType
+}
+
+export interface TxRow {
+  id: number
+  date: string
+  time?: string
+  accountId: number
+  /** Záporná = odchozí, v měně účtu. */
+  amount: number
+  currency: string
+  amountCzk: number
+  fxRate: number
+  counterparty: string
+  message?: string
+  kind: TransactionKind
+  status: TransactionStatus
+  categoryId?: number
+  needOverride?: NeedType
+  splits: SplitDto[]
+  shares: Share[]
+  sharesOverridden: boolean
+  isRecurring: boolean
+  excludeFromStats: boolean
+  categorySource?: CategorySource
+  aiConfidence?: number
+  transferPairId?: number
+  transferPairAccountId?: number
+  refundOfId?: number
+  suspectedDuplicateOfId?: number
+  batchId?: number
+  paymentType: PaymentType
+  recurringPaymentId?: number
+  note?: string
+}
+
+export interface TxRef {
+  id: number
+  date: string
+  accountId: number
+  counterparty: string
+  amount: number
+  currency: string
+  amountCzk: number
+  rawText?: string
+  batchId?: number
+  batchSource?: string
+}
+
+export interface TxDetail {
+  tx: TxRow
+  rawText?: string
+  counterpartyAccount?: string
+  mcc?: string
+  aiReason?: string
+  aiAlternatives: { categoryId: number; confidence: number }[]
+  appliedRule?: string
+  events: { at: string; actor: string; text: string }[]
+  transferPair?: TxRef
+  refundOf?: TxRef
+  suspectedDuplicateOf?: TxRef
+  cnbRate?: number
+  cardHolderMemberId?: number
+  batchLabel?: string
+}
+
+export interface TxPage {
+  items: TxRow[]
+  total: number
+}
+
+export interface SplitInput {
+  categoryId: number
+  amount: number
+  needOverride?: NeedType | null
+}
+
+/** PATCH /api/transactions/{id} – vynechané = beze změny. */
+export interface TxUpdate {
+  categoryId?: number | null
+  setCategory?: boolean
+  splits?: SplitInput[]
+  needOverride?: NeedType | null
+  setNeed?: boolean
+  memberId?: number | null
+  setMember?: boolean
+  shares?: Share[]
+  excludeFromStats?: boolean
+  isRecurring?: boolean
+  confirm?: boolean
+  note?: string
+  refundOfId?: number | null
+  setRefundOf?: boolean
+  createRule?: boolean
+  applyRuleToHistory?: boolean
+}

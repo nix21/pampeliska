@@ -29,6 +29,8 @@ public class RecurringPayment
     /// <summary>Kde ušetřit: uživatel si ji poznamenal ke zrušení.</summary>
     public bool MarkedToCancel { get; set; }
     public string? Note { get; set; }
+    /// <summary>Upozornění na jinou částku u platby z tohoto dne (a starší) uživatel odbyl „jednorázově“.</summary>
+    public DateOnly? AmountAlertDismissedFor { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
 }
 
