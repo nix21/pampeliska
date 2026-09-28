@@ -1,0 +1,52 @@
+.page { min-height: 100vh; display: flex; align-items: flex-start; justify-content: center; padding: 56px 16px; }
+.card {
+  width: min(1040px, 100%); display: grid; grid-template-columns: 280px minmax(0, 1fr); background: var(--surface);
+  border: var(--card-border); border-radius: var(--radius); box-shadow: 0 20px 60px rgba(40,30,0,.10); overflow: hidden;
+}
+.aside { background: var(--surface-2); padding: 32px 26px; display: flex; flex-direction: column; gap: 28px; }
+.asideNote { margin-top: auto; font-size: 12px; color: var(--ink-3); line-height: 1.5; }
+.steps { display: flex; flex-direction: column; gap: 4px; }
+.step { display: flex; align-items: flex-start; gap: 12px; padding: 10px 8px; border-radius: var(--radius-sm); border: 0; background: transparent; cursor: pointer; text-align: left; }
+.step:disabled { cursor: default; }
+.stepOn { background: var(--surface); }
+.stepDot {
+  width: 26px; height: 26px; flex-shrink: 0; border-radius: 13px; display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 800; border: 1.5px solid var(--line); background: var(--surface); color: var(--ink-3);
+}
+.stepDone { background: var(--pos); border-color: var(--pos); color: #fff; }
+.stepCurrent { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.progress { display: none; gap: 4px; }
+.progress span { flex: 1; height: 5px; border-radius: 3px; }
+.main { padding: 36px 40px; display: flex; flex-direction: column; gap: 22px; min-height: 620px; min-width: 0; }
+.foot { margin-top: auto; display: flex; align-items: center; gap: 10px; padding-top: 18px; border-top: 1px solid var(--line); }
+
+.memberRow, .accRow { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: var(--radius-sm); border: 1px solid var(--line); }
+.memberInputs { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.bare { flex: 1; min-width: 0; height: 32px; padding: 0 6px; border: 0; outline: 0; background: transparent; font-size: 15px; font-weight: 700; border-radius: 6px; }
+.bare:focus, .bareSmall:focus { background: var(--surface-2); }
+.bareSmall { height: 26px; padding: 0 6px; border: 0; outline: 0; background: transparent; font-size: 12px; color: var(--ink-2); border-radius: 6px; }
+.x { display: flex; padding: 6px; border: 0; background: transparent; color: var(--ink-3); cursor: pointer; border-radius: 6px; }
+.x:hover { color: var(--ink); background: var(--surface-2); }
+.toggle { display: inline-flex; align-items: center; justify-content: center; gap: 5px; height: 32px; padding: 0 10px; border-radius: var(--radius-sm); border: 0; background: var(--surface-2); font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+.toggle:hover { box-shadow: inset 0 0 0 1px var(--line); }
+.bankChip { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); font-size: 12px; font-weight: 600; cursor: pointer; }
+.bankChip:hover { border-color: var(--ink-3); }
+
+.tplGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.tpl { display: flex; flex-direction: column; gap: 6px; padding: 14px; border-radius: var(--radius-sm); border: 1.5px solid var(--line); background: var(--surface); cursor: pointer; text-align: left; }
+.tplOn { border-color: var(--ink); background: var(--surface-2); }
+.tree { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 20px; padding: 16px; border-radius: var(--radius-sm); background: var(--surface-2); }
+
+@media (max-width: 767px) {
+  .page { padding: 0; }
+  .card { grid-template-columns: 1fr; border-radius: 0; border: 0; box-shadow: none; min-height: 100vh; }
+  .aside { padding: 16px 20px 0; gap: 14px; background: transparent; }
+  .steps, .asideNote { display: none; }
+  .progress { display: flex; }
+  .main { padding: 16px 20px calc(24px + env(safe-area-inset-bottom)); min-height: 0; }
+  .main h1 { font-size: 26px !important; }
+  .tplGrid, .tree { grid-template-columns: 1fr; }
+  .accRow { flex-wrap: wrap; }
+  .foot { position: sticky; bottom: 0; background: var(--surface); padding-bottom: 12px; }
+  .foot button:last-child { flex: 1; }
+}

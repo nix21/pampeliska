@@ -1,0 +1,63 @@
+name: Deploy
+
+# Nasazení jen ručně: Actions → Deploy → Run workflow (z větve main)
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: .NET testy
+        run: dotnet test tests/Pampeliska.Tests --configuration Release
+
+  deploy:
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    # Self-hosted runner na VPS (labels: self-hosted, linux, pampeliska)
+    runs-on: [self-hosted, linux, pampeliska]
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - name: Zapsat .env
+        working-directory: deploy
+        run: |
+          umask 077
+          cat > .env <<ENV
+          DOMAIN=${{ vars.DOMAIN || 'pampeliska.nadrasky.cz' }}
+          OWNER_EMAILS=${{ vars.OWNER_EMAILS || 'v.nadrasky@gmail.com' }}
+          POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+          GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
+          BACKUP_TOKEN=${{ secrets.BACKUP_TOKEN }}
+          RCLONE_CONFIG_DIR=${{ vars.RCLONE_CONFIG_DIR || '/opt/invoicer/rclone' }}
+          RCLONE_REMOTE=${{ vars.RCLONE_REMOTE || 'onedrive-crypt:pampeliska/' }}
+          ENV
+      - name: Build a nasazení
+        working-directory: deploy
+        run: |
+          docker compose build --pull
+          docker compose up -d --remove-orphans
+          docker image prune -f
+      - name: Kontrola zdraví
+        working-directory: deploy
+        run: |
+          for i in $(seq 1 30); do
+            if docker compose exec -T app curl -fs http://localhost:8080/healthz >/dev/null; then echo "OK"; exit 0; fi
+            sleep 3
+          done
+          docker compose logs --tail=100 app
+          exit 1
+      - name: Sdílený Caddy
+        working-directory: deploy
+        run: |
+          sed "s/pampeliska.nadrasky.cz/${{ vars.DOMAIN || 'pampeliska.nadrasky.cz' }}/" pampeliska.caddy > /opt/caddy/sites/pampeliska.caddy
+          docker exec ${{ vars.CADDY_CONTAINER || 'invoicer-caddy-1' }} caddy reload --config /etc/caddy/Caddyfile

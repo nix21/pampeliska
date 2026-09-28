@@ -1,0 +1,87 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: .NET testy
+        run: dotnet test tests/Pampeliska.Tests --configuration Release
+      - name: Frontend build a lint
+        working-directory: web
+        run: |
+          npm ci
+          npx tsc -b
+          npx oxlint
+          npx vite build --outDir dist
+
+  e2e:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: pampeliska
+          POSTGRES_USER: pampeliska
+          POSTGRES_PASSWORD: pampeliska
+        ports: ["55433:5432"]
+        options: >-
+          --health-cmd "pg_isready -U pampeliska" --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://localhost:5290
+      Auth__OwnerEmails: e2e@example.com
+      BackgroundJobs__Enabled: "false"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Build webu do wwwroot
+        working-directory: web
+        run: |
+          npm ci
+          npx vite build
+      - name: Spustit API
+        run: |
+          dotnet build src/Pampeliska.Api -c Release
+          nohup dotnet run --project src/Pampeliska.Api -c Release --no-build --no-launch-profile > api.log 2>&1 &
+          for i in $(seq 1 60); do curl -fs http://localhost:5290/healthz && break; sleep 2; done
+      - name: Playwright
+        working-directory: web
+        env:
+          E2E_BASE_URL: http://localhost:5290
+        run: |
+          npx playwright install --with-deps chromium
+          npx playwright test
+      - name: Log API
+        if: failure()
+        run: tail -200 api.log
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: web/playwright-report

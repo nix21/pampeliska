@@ -1,0 +1,12 @@
+**/bin
+**/obj
+**/node_modules
+web/dist
+src/Pampeliska.Api/wwwroot
+data
+.git
+.github
+.claude
+tests
+deploy
+*.md

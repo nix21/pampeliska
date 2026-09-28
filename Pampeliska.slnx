@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Pampeliska.Api/Pampeliska.Api.csproj" />
+    <Project Path="src/Pampeliska.Core/Pampeliska.Core.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Pampeliska.Tests/Pampeliska.Tests.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,70 @@
+name: pampeliska
+
+# Veřejný provoz obstarává sdílený Caddy (compose Invoiceru) přes externí síť "edge" – viz docs/vps-setup.md.
+services:
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: pampeliska
+      POSTGRES_USER: pampeliska
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?chybí POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pampeliska -d pampeliska"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    image: pampeliska-app:latest
+    container_name: pampeliska-app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ConnectionStrings__Default: Host=db;Database=pampeliska;Username=pampeliska;Password=${POSTGRES_PASSWORD}
+      Auth__OwnerEmails: ${OWNER_EMAILS:-v.nadrasky@gmail.com}
+      Auth__Google__ClientId: ${GOOGLE_CLIENT_ID:?chybí GOOGLE_CLIENT_ID}
+      Auth__Google__ClientSecret: ${GOOGLE_CLIENT_SECRET:?chybí GOOGLE_CLIENT_SECRET}
+      Backup__Token: ${BACKUP_TOKEN:?chybí BACKUP_TOKEN}
+      TZ: Europe/Prague
+    volumes:
+      - appdata:/data
+    networks:
+      - default
+      - edge
+
+  backup:
+    build: ./backup
+    image: pampeliska-backup:latest
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGHOST: db
+      PGDATABASE: pampeliska
+      PGUSER: pampeliska
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      RCLONE_REMOTE: ${RCLONE_REMOTE:-onedrive-crypt:pampeliska/}
+      BACKUP_SCHEDULE: ${BACKUP_SCHEDULE:-45 2 * * *}
+      BACKUP_TOKEN: ${BACKUP_TOKEN}
+      REPORT_URL: http://app:8080/internal/backup-report
+      TZ: Europe/Prague
+    volumes:
+      - appdata:/data
+      - ${RCLONE_CONFIG_DIR:-/opt/invoicer/rclone}:/config/rclone
+
+volumes:
+  pgdata:
+  appdata:
+
+networks:
+  edge:
+    external: true

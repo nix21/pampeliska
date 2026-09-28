@@ -1,0 +1,16 @@
+# Site blok pro sdílený Caddy (běží v compose Invoiceru, importuje /etc/caddy/sites/*.caddy).
+# Deploy ho kopíruje do /opt/caddy/sites/ a Caddy znovu načte konfiguraci.
+pampeliska.nadrasky.cz {
+	encode zstd gzip
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options nosniff
+		X-Frame-Options SAMEORIGIN
+		Referrer-Policy strict-origin-when-cross-origin
+		X-Robots-Tag "noindex, nofollow"
+	}
+	# Interní endpoint pro hlášení záloh není dostupný zvenku
+	respond /internal/* 404
+	respond /testing/* 404
+	reverse_proxy pampeliska-app:8080
+}

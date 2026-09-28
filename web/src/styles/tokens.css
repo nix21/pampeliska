@@ -1,0 +1,70 @@
+/* Pampeliška – design tokeny (styl Sluneční), převzato z pampeliska-tokens.css prototypu.
+   Tmavý režim = :root[data-mode="dark"]. Komponenty používají jen var(--*). */
+:root {
+  color-scheme: light;
+  --font-body: 'Manrope', system-ui, sans-serif;
+  --font-display: 'Manrope', system-ui, sans-serif;
+  --font-label: var(--font-body);
+  --display-weight: 800;
+  --display-tracking: -0.03em;
+  --label-weight: 600;
+  --label-size: 13px;
+  --radius: 18px;
+  --radius-sm: 10px;
+  --radius-pill: 999px;
+  --pad: 22px;
+  --gap: 16px;
+  --icon-stroke: 1.75;
+
+  --bg: #F6F4EE;
+  --surface: #FFFFFF;
+  --surface-2: #F1EEE5;
+  --ink: #1D1B16;
+  --ink-2: #5F5A4E;
+  --ink-3: #8A8475;
+  --line: #E7E2D6;
+  --accent: #F2B705;
+  --accent-ink: #1D1B16;
+  --accent-soft: #FCEFC2;
+  --pos: #2B8A55;
+  --neg: #C9402F;
+  --warn: #A87200;
+  --shadow: 0 1px 2px rgba(40,30,0,.04), 0 6px 20px rgba(40,30,0,.05);
+  --shadow-pop: 0 12px 40px rgba(40,30,0,.14), 0 2px 6px rgba(40,30,0,.06);
+  --card-border: 1px solid var(--line);
+
+  --sidebar-bg: transparent;
+  --nav-active-bg: var(--surface);
+  --nav-active-shadow: var(--shadow);
+  --seg-bg: var(--surface-2);
+  --seg-active-bg: var(--surface);
+  --seg-active-shadow: 0 1px 3px rgba(0,0,0,.08);
+  --callout-bg: var(--accent-soft);
+  --logo-core: var(--accent);
+  --chart-line: var(--ink);
+
+  --c1: #3B6FE0; --c2: #E89A12; --c3: #2A9D74; --c4: #D8546B; --c5: #8A5CF6; --c6: #1597B8;
+  --c7: #D9733A; --c8: #7A8F2A; --c9: #9C6B3F; --c10: #B84FA6; --c11: #4F7C74; --c12: #C2413A;
+  --need: #5C6B82; --joy: #F2B705; --none: #D8D2C4;
+}
+
+:root[data-mode="dark"] {
+  color-scheme: dark;
+  --bg: #13120E;
+  --surface: #1D1B16;
+  --surface-2: #28261F;
+  --ink: #F3EFE4;
+  --ink-2: #B5AE9C;
+  --ink-3: #807A6A;
+  --line: #302D25;
+  --accent: #FFC928;
+  --accent-soft: #3A3013;
+  --pos: #5CC98E;
+  --neg: #FF7A68;
+  --warn: #F2B541;
+  --shadow: 0 1px 2px rgba(0,0,0,.3);
+  --shadow-pop: 0 12px 40px rgba(0,0,0,.5);
+  --c1: #6F9BFF; --c2: #FFB43D; --c3: #4CCB98; --c4: #FF7D93; --c5: #AE8FFF; --c6: #3CC6E6;
+  --c7: #FF9A5C; --c8: #A8C04A; --c9: #D19A66; --c10: #E27BD0; --c11: #7FB3A9; --c12: #F06A5F;
+  --need: #8FA0BA; --joy: #FFC928; --none: #4A463B;
+}

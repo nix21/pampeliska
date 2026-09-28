@@ -1,0 +1,24 @@
+.miniAvatar { width: 18px; height: 18px; border-radius: 999px; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 800; }
+
+.period { display: inline-flex; align-items: center; gap: 2px; padding: 3px; border-radius: var(--radius-sm); background: var(--surface); border: var(--card-border); }
+.periodArrow { display: flex; padding: 6px; border: 0; background: transparent; color: var(--ink-2); cursor: pointer; border-radius: 8px; }
+.periodArrow:disabled { color: var(--line); cursor: default; }
+.periodArrow:hover:not(:disabled) { background: var(--surface-2); }
+.periodButton { display: flex; align-items: center; gap: 10px; padding: 3px 10px; min-width: 170px; border: 0; background: transparent; cursor: pointer; text-align: left; border-radius: 8px; }
+.periodButton:hover { background: var(--surface-2); }
+.periodChips { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.chip {
+  display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 999px; border: 1px solid var(--line);
+  background: var(--surface); color: var(--ink); font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap;
+}
+.chip:hover { border-color: var(--ink-3); }
+.chipOn { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+
+.bank { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; border-radius: var(--radius-sm); color: #fff; font-weight: 800; letter-spacing: -.01em; }
+
+@media (max-width: 767px) {
+  .period { width: 100%; }
+  .periodButton { flex: 1; min-width: 0; justify-content: center; }
+  .periodArrow { padding: 12px; }
+}
