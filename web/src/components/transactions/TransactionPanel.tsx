@@ -254,7 +254,7 @@ function Detail({ d, variant, onClose, backLabel, onOpen }: { d: TxDetail; varia
           <span className={s.label}>Kategorie</span>
           {isSplit ? (
             <div className="col" style={{ gap: 10 }}>
-              <SplitEditor total={tx.amount} currency={tx.currency} parts={parts} kind={catKind} onChange={setDraft} />
+              <SplitEditor total={tx.amount} currency={tx.currency} parts={parts} kind={catKind} onChange={setDraft} onUnsplit={patch.isPending ? undefined : cancelSplit} />
               <div className="row wrap">
                 {draft && (
                   <Button variant="primary" size="sm" icon={<Check size={14} />} disabled={!splitValid} loading={patch.isPending} onClick={saveSplit}>
@@ -262,8 +262,6 @@ function Detail({ d, variant, onClose, backLabel, onOpen }: { d: TxDetail; varia
                   </Button>
                 )}
                 {draft && serverSplit && <Button variant="ghost" size="sm" onClick={() => setDraft(null)}>Vrátit změny</Button>}
-                <span style={{ flex: 1 }} />
-                <button type="button" className={s.link} onClick={cancelSplit} disabled={patch.isPending}>Zrušit rozdělení</button>
               </div>
               {draft && !splitValid && (
                 <span className="faint" style={{ fontSize: 12 }}>Každá část potřebuje kategorii a součet musí odpovídat částce platby.</span>

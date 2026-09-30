@@ -1,11 +1,9 @@
 import clsx from 'clsx'
-import { Check, Copy, HelpCircle, Search, Sparkles, Wand2, Zap } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { Check, Copy, HelpCircle, Sparkles, Wand2, Zap } from 'lucide-react'
 import { useAccounts } from '../../lib/accounts'
 import { useCategories } from '../../lib/categories'
 import { dateShort } from '../../lib/format'
-import { normalizeText, UNSURE_BELOW, type Effective, type InboxItem } from '../../lib/inbox'
-import type { CategoryKind } from '../../lib/types'
+import { UNSURE_BELOW, type Effective, type InboxItem } from '../../lib/inbox'
 import { Money } from '../common'
 import { Button } from '../ui'
 import s from './inbox.module.css'
@@ -106,42 +104,6 @@ export function DuplicateBlock({ item, onResolve, busy }: { item: InboxItem; onR
         <Button variant="dark" size="sm" disabled={busy} onClick={() => onResolve(false)}>Zahodit duplicitu</Button>
         <Button size="sm" disabled={busy} onClick={() => onResolve(true)}>Ponechat obě</Button>
       </div>
-    </div>
-  )
-}
-
-/** Vyhledávání ve stromu kategorií s výsledky pod polem (panel detailu). */
-export function CategorySearch({ kind, onSelect }: { kind?: CategoryKind; onSelect: (id: number) => void }) {
-  const { list, byId } = useCategories()
-  const [q, setQ] = useState('')
-  const results = useMemo(() => {
-    const n = normalizeText(q)
-    if (!n) return []
-    return list.filter((c) => (!kind || c.kind === kind) && normalizeText(c.path).includes(n)).slice(0, 6)
-  }, [list, q, kind])
-  return (
-    <div className={s.search}>
-      <label className={s.searchInput}>
-        <Search size={16} />
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Hledat ve stromu kategorií" aria-label="Hledat kategorii"
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && results[0]) {
-              onSelect(results[0].id)
-              setQ('')
-            }
-          }} />
-      </label>
-      {results.map((c) => {
-        const parent = c.parentId ? byId.get(c.parentId) : undefined
-        return (
-          <button key={c.id} type="button" className={s.searchRow} onClick={() => (onSelect(c.id), setQ(''))}>
-            <span className={s.dot} style={{ background: `var(--${c.color})` }} />
-            {parent && <span className="faint">{parent.name} ›</span>}
-            <span style={{ fontWeight: 600 }}>{c.name}</span>
-          </button>
-        )
-      })}
-      {q && results.length === 0 && <span className="faint" style={{ fontSize: 13, padding: '8px 12px', borderTop: '1px solid var(--line)' }}>Nic nenalezeno</span>}
     </div>
   )
 }

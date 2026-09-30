@@ -61,17 +61,9 @@
 }
 .option:hover { border-color: var(--ink-3); }
 .optionOn { border-color: var(--ink); background: var(--surface-2); }
-.optionOther { border-style: dashed; color: var(--ink-2); }
+.optionOther { border-style: dashed; border-color: var(--ink-3); color: var(--ink-2); }
+.optionOther:hover { border-color: var(--ink); color: var(--ink); }
 .optionConf { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; color: var(--ink-3); font-weight: 600; }
-
-.search { display: flex; flex-direction: column; border-radius: var(--radius-sm); border: 1px solid var(--line); overflow: hidden; }
-.searchInput { display: flex; align-items: center; gap: 8px; padding: 8px 12px; color: var(--ink-3); }
-.searchInput input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; font-size: 13px; color: var(--ink); }
-.searchRow {
-  display: flex; align-items: center; gap: 8px; padding: 8px 12px; border: 0; border-top: 1px solid var(--line); background: transparent;
-  font-size: 13px; cursor: pointer; text-align: left; width: 100%;
-}
-.searchRow:hover { background: var(--surface-2); }
 
 .linkBtn { display: inline-flex; align-items: center; gap: 6px; padding: 0; border: 0; background: transparent; font-size: 13px; font-weight: 600; color: var(--ink-2); cursor: pointer; align-self: flex-start; }
 .linkBtn:hover { color: var(--ink); }

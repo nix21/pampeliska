@@ -1,5 +1,5 @@
 import clsx from 'clsx'
-import { ChevronDown, Search, X } from 'lucide-react'
+import { Check, ChevronDown, Search, X } from 'lucide-react'
 import { useMemo, useRef, useState, type ReactNode } from 'react'
 import { useCategories, needColor, needLabel, needShort, type CategoryNode } from '../lib/categories'
 import { money, num, parseAmount } from '../lib/format'
@@ -14,15 +14,15 @@ export function CategoryDot({ id, size = 10 }: { id?: number | null; size?: numb
 }
 
 /** „Supermarkety · Jídlo“ s tečkou. */
-export function CategoryChip({ id, compact, empty = 'Nezařazeno' }: { id?: number | null; compact?: boolean; empty?: string }) {
+export function CategoryChip({ id, compact, empty = 'Nezařazeno', dot = true }: { id?: number | null; compact?: boolean; empty?: string; dot?: boolean }) {
   const { byId } = useCategories()
   const c = id != null ? byId.get(id) : undefined
   const parent = c?.parentId ? byId.get(c.parentId) : undefined
   return (
     <span className={s.chip}>
-      <CategoryDot id={id} />
+      {dot && <CategoryDot id={id} />}
       <span className="ellipsis">{c ? c.name : empty}</span>
-      {!compact && parent && <span className={s.chipParent}>· {parent.name}</span>}
+      {!compact && parent && <span className={clsx(s.chipParent, 'ellipsis')}>· {parent.name}</span>}
     </span>
   )
 }
@@ -107,7 +107,7 @@ export function CategoryList({ value, onSelect, kind, exclude, allowTop = true }
 }
 
 /** Tlačítko s vybranou kategorií, které otevře CategoryList v popoveru. */
-export function CategoryPicker({ value, onChange, kind, placeholder = 'Vyber kategorii', exclude, size = 'md', block }: {
+export function CategoryPicker({ value, onChange, kind, placeholder = 'Vyber kategorii', exclude, size = 'md', block, dot = true }: {
   value?: number | null
   onChange: (id: number) => void
   kind?: CategoryKind
@@ -115,14 +115,16 @@ export function CategoryPicker({ value, onChange, kind, placeholder = 'Vyber kat
   exclude?: Set<number>
   size?: 'sm' | 'md'
   block?: boolean
+  /** Tečka kategorie uvnitř tlačítka (vypnout, když ji volající kreslí vedle). */
+  dot?: boolean
 }) {
   const [open, setOpen] = useState(false)
   const { byId } = useCategories()
   const c = value != null ? byId.get(value) : undefined
   return (
     <Popover open={open} onOpenChange={setOpen} width={360} trigger={
-      <button type="button" className={clsx(s.picker, size === 'sm' && s.pickerSm, block && s.pickerBlock)}>
-        {c ? <CategoryChip id={c.id} /> : <span className="faint">{placeholder}</span>}
+      <button type="button" className={clsx(s.picker, size === 'sm' && s.pickerSm, block && s.pickerBlock, !c && s.pickerEmpty)}>
+        {c ? <CategoryChip id={c.id} dot={dot} /> : <span className="faint ellipsis">{placeholder}</span>}
         <ChevronDown size={15} color="var(--ink-3)" />
       </button>
     }>
@@ -147,12 +149,14 @@ const NEED_CYCLE: NeedType[] = ['Need', 'Joy', 'None']
  * Editor rozdělení: pruh s táhly, u každé části kategorie, typ výdaje, Kč a %. Změna jedné části dopočítá ostatní
  * (poslední část bere zbytek). Částky jsou kladné – znaménko přidá volající podle platby.
  */
-export function SplitEditor({ total, currency, parts, onChange, kind }: {
+export function SplitEditor({ total, currency, parts, onChange, kind, onUnsplit }: {
   total: number
   currency: string
   parts: SplitPart[]
   onChange: (parts: SplitPart[]) => void
   kind?: CategoryKind
+  /** „Zrušit rozdělení“ v patičce editoru. */
+  onUnsplit?: () => void
 }) {
   const { colorOf } = useCategories()
   const effNeed = useEffectiveNeed()
@@ -162,6 +166,7 @@ export function SplitEditor({ total, currency, parts, onChange, kind }: {
   const round = (v: number) => Math.round(v / step) * step
   const sum = parts.reduce((a, p) => a + p.amount, 0)
   const diff = Math.round((abs - sum) * 100) / 100
+  const pct = (v: number) => (abs ? (v / abs) * 100 : 0)
 
   const setAmount = (i: number, v: number) => {
     const next = parts.map((p) => ({ ...p }))
@@ -198,51 +203,70 @@ export function SplitEditor({ total, currency, parts, onChange, kind }: {
     window.addEventListener('pointerup', up)
   }
 
-  let acc = 0
+  const setPart = (i: number, patch: Partial<SplitPart>) => onChange(parts.map((x, j) => (j === i ? { ...x, ...patch } : x)))
+  // Pozice předělů = kumulované částky
+  const cuts = parts.slice(0, -1).map((_, i) => parts.slice(0, i + 1).reduce((a, p) => a + p.amount, 0))
   return (
     <div className={s.split}>
       <div className={s.splitHead}>
-        <span style={{ fontWeight: 700, fontSize: 13 }}>Rozdělení platby</span>
-        <span style={{ fontSize: 12, fontWeight: 700, color: diff === 0 ? 'var(--pos)' : 'var(--neg)' }}>
-          {diff === 0 ? `✓ Součet sedí · ${money(abs, { currency })}` : diff > 0 ? `Zbývá rozdělit ${money(diff, { currency })}` : `Přebývá ${money(-diff, { currency })}`}
+        <span style={{ fontWeight: 700 }}>Rozdělení platby</span>
+        <span className={s.splitSum} style={{ color: diff === 0 ? 'var(--pos)' : 'var(--neg)' }}>
+          {diff === 0 ? <><Check size={14} /> Součet sedí · {money(total, { currency })}</>
+            : diff > 0 ? `Zbývá rozdělit ${money(diff, { currency })}` : `Přebývá ${money(-diff, { currency })}`}
         </span>
       </div>
       <div ref={barRef} className={s.splitBar}>
-        {parts.map((p, i) => {
-          const left = (acc / abs) * 100
-          acc += p.amount
-          return (
-            <div key={i} className={s.splitSeg} style={{ left: `${left}%`, width: `${(p.amount / abs) * 100}%`, background: colorOf(p.categoryId) }}>
-              {i < parts.length - 1 && <span className={s.handle} onPointerDown={drag(i)} role="separator" aria-label="Posunout předěl" />}
-            </div>
-          )
-        })}
+        <div className={s.splitTrack}>
+          {parts.map((p, i) => {
+            const v = pct(p.amount)
+            return <div key={i} className={s.splitSeg} style={{ flex: p.amount, background: colorOf(p.categoryId) }}>{v >= 8 ? `${Math.round(v)} %` : ''}</div>
+          })}
+        </div>
+        {cuts.map((cut, i) => (
+          <span key={i} className={s.handle} style={{ left: `${pct(cut)}%` }} onPointerDown={drag(i)} role="separator" aria-label="Posunout předěl" title="Táhni pro změnu poměru">
+            <span><i /><i /><i /></span>
+          </span>
+        ))}
       </div>
+      <span className={s.splitHint}>Táhni za předěl, nebo zadej přesnou částku či procento. Ostatní části se dopočítají.</span>
       {parts.map((p, i) => {
         const n = p.need && p.need !== 'Inherit' ? { need: p.need, inherited: false } : effNeed(p.categoryId, null)
         return (
-          <div key={i} className={s.splitRow}>
-            <CategoryPicker value={p.categoryId} kind={kind} size="sm" block onChange={(id) => onChange(parts.map((x, j) => (j === i ? { ...x, categoryId: id } : x)))} />
-            <NeedChip need={n.need} inherited={n.inherited} short
-              onClick={() => onChange(parts.map((x, j) => (j === i ? { ...x, need: NEED_CYCLE[(NEED_CYCLE.indexOf(n.need) + 1) % 3] } : x)))} />
-            <AmountBox value={p.amount} suffix={currency === 'CZK' ? 'Kč' : currency} onChange={(v) => setAmount(i, v)} />
-            <AmountBox value={abs ? Math.round((p.amount / abs) * 1000) / 10 : 0} suffix="%" narrow onChange={(v) => setAmount(i, round((v / 100) * abs))} />
-            {parts.length > 2 ? (
-              <button type="button" className={s.remove} aria-label="Odebrat část" onClick={() => {
-                const rest = parts.filter((_, j) => j !== i)
-                rest[rest.length - 1] = { ...rest[rest.length - 1], amount: rest[rest.length - 1].amount + p.amount }
-                onChange(rest)
-              }}><X size={14} /></button>
-            ) : <span style={{ width: 28 }} />}
+          <div key={i} className={s.splitPart}>
+            <div className={s.splitPartRow}>
+              <span className={s.dot} style={{ background: colorOf(p.categoryId) }} />
+              <span className={s.splitPicker}>
+                <CategoryPicker value={p.categoryId} kind={kind} size="sm" block dot={false} placeholder="Vybrat kategorii" onChange={(id) => setPart(i, { categoryId: id })} />
+              </span>
+              <button type="button" className={s.splitNeed} title={`${needLabel[n.need]}${n.inherited ? ' (zděděno z kategorie)' : ''} · klikni pro změnu`}
+                onClick={() => setPart(i, { need: NEED_CYCLE[(NEED_CYCLE.indexOf(n.need) + 1) % 3] })}>
+                <span className={s.needDot} style={{ background: needColor[n.need] }} />{needLabel[n.need]}
+              </button>
+              {parts.length > 2 && (
+                <button type="button" className={s.remove} aria-label="Odebrat část" onClick={() => {
+                  const rest = parts.filter((_, j) => j !== i)
+                  const k = Math.max(0, i - 1)
+                  rest[k] = { ...rest[k], amount: rest[k].amount + p.amount }
+                  onChange(rest)
+                }}><X size={16} /></button>
+              )}
+            </div>
+            <div className={s.splitPartRow}>
+              <AmountBox value={p.amount} suffix={currency === 'CZK' ? 'Kč' : currency} onChange={(v) => setAmount(i, v)} />
+              <AmountBox value={Math.round(pct(p.amount) * 10) / 10} suffix="%" narrow onChange={(v) => setAmount(i, round((v / 100) * abs))} />
+            </div>
           </div>
         )
       })}
-      <button type="button" className={s.addPart} onClick={() => {
-        const idx = parts.reduce((m, p, i) => (p.amount > parts[m].amount ? i : m), 0)
-        const half = round(parts[idx].amount / 2)
-        const next = parts.map((p, i) => (i === idx ? { ...p, amount: p.amount - half } : p))
-        onChange([...next, { categoryId: null, amount: half }])
-      }}>+ Přidat část</button>
+      <div className={s.splitFoot}>
+        <button type="button" className={s.addPart} onClick={() => {
+          const idx = parts.reduce((m, p, i) => (p.amount > parts[m].amount ? i : m), 0)
+          const half = round(parts[idx].amount / 2)
+          const next = parts.map((p, i) => (i === idx ? { ...p, amount: p.amount - half } : p))
+          onChange([...next.slice(0, idx + 1), { categoryId: null, amount: half }, ...next.slice(idx + 1)])
+        }}>+ Přidat část</button>
+        {onUnsplit && <button type="button" className={s.unsplit} onClick={onUnsplit}>Zrušit rozdělení</button>}
+      </div>
     </div>
   )
 }

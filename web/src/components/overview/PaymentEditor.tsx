@@ -91,11 +91,9 @@ export function PaymentEditor({ tx, onClose }: { tx: TxRow; onClose: () => void 
           <span className={s.fieldLabel}>Kategorie</span>
           {draft ? (
             <>
-              <SplitEditor total={tx.amount} currency={tx.currency} parts={draft} onChange={setDraft} kind="Expense" />
+              <SplitEditor total={tx.amount} currency={tx.currency} parts={draft} onChange={setDraft} kind="Expense" onUnsplit={cancelSplit} />
               <div className="row wrap">
                 <Button variant="dark" size="sm" disabled={!splitValid || !splitDirty} loading={patch.isPending} onClick={saveSplit}>Uložit rozdělení</Button>
-                <span style={{ flex: 1 }} />
-                <button type="button" className={s.textBtn} onClick={cancelSplit}>Zrušit rozdělení</button>
               </div>
             </>
           ) : (

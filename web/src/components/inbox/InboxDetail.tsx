@@ -1,5 +1,5 @@
 import clsx from 'clsx'
-import { ArrowLeftRight, Check, ChevronLeft, ChevronRight, EyeOff, Search, Sparkles, Split, Wand2 } from 'lucide-react'
+import { ArrowLeftRight, Check, ChevronLeft, ChevronRight, EyeOff, Plus, Sparkles, Split, Wand2 } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import { useAccounts } from '../../lib/accounts'
 import { needColor, useCategories } from '../../lib/categories'
@@ -10,7 +10,7 @@ import { useUi } from '../../state/ui'
 import { CategoryList, SplitEditor, useEffectiveNeed } from '../category'
 import { Money } from '../common'
 import { Button, IconButton, Pill, Popover, tokenColor } from '../ui'
-import { CategorySearch, DuplicateBlock } from './InboxBits'
+import { DuplicateBlock } from './InboxBits'
 import s from './inbox.module.css'
 
 export interface InboxDetailProps {
@@ -139,15 +139,12 @@ export function InboxDetail({ item, draft, setDraft, onConfirm, onSkip, onPrev, 
           )}
         </button>
       ))}
-      {inline && <OtherCategory kind={kind} value={eff.categoryId} onSelect={pickCategory} />}
+      <PickCategory kind={kind} value={eff.categoryId} onSelect={pickCategory} />
     </div>
   )
 
   const categorySection = eff.isSplit ? (
-    <div className="col" style={{ gap: 8 }}>
-      <SplitEditor total={tx.amount} currency={tx.currency} parts={eff.splits} kind={kind} onChange={(p) => set({ splits: p })} />
-      <button type="button" className={s.linkBtn} style={{ alignSelf: 'flex-end', minHeight: inline ? 44 : undefined }} onClick={unsplit}>Zrušit rozdělení</button>
-    </div>
+    <SplitEditor total={tx.amount} currency={tx.currency} parts={eff.splits} kind={kind} onChange={(p) => set({ splits: p })} onUnsplit={unsplit} />
   ) : inline ? (
     <>
       {showConfNote && <span className={s.note}>Návrhy AI · % = jak moc si je AI jistá</span>}
@@ -155,8 +152,7 @@ export function InboxDetail({ item, draft, setDraft, onConfirm, onSkip, onPrev, 
     </>
   ) : (
     <>
-      {opts.length > 0 && optionChips}
-      <CategorySearch kind={kind} onSelect={pickCategory} />
+      {optionChips}
       {tx.kind !== 'Refund' && <button type="button" className={s.linkBtn} onClick={startSplit}><Split size={16} /> Rozdělit platbu do více kategorií</button>}
     </>
   )
@@ -276,12 +272,12 @@ export function InboxDetail({ item, draft, setDraft, onConfirm, onSkip, onPrev, 
   )
 }
 
-/** Mobil: čip „Jiná“ otevře celý strom kategorií. */
-function OtherCategory({ kind, value, onSelect }: { kind?: 'Expense' | 'Income'; value: number | null; onSelect: (id: number) => void }) {
+/** Čárkovaný čip „Vybrat kategorii“ – otevře celý strom kategorií. */
+function PickCategory({ kind, value, onSelect }: { kind?: 'Expense' | 'Income'; value: number | null; onSelect: (id: number) => void }) {
   const [open, setOpen] = useState(false)
   return (
-    <Popover open={open} onOpenChange={setOpen} width={340} align="end" trigger={
-      <button type="button" className={clsx(s.option, s.optionOther)}><Search size={16} /> Jiná</button>
+    <Popover open={open} onOpenChange={setOpen} width={360} align="start" trigger={
+      <button type="button" className={clsx(s.option, s.optionOther)}><Plus size={14} /> Vybrat kategorii</button>
     }>
       <CategoryList value={value} kind={kind} onSelect={(c) => (onSelect(c.id), setOpen(false))} />
     </Popover>
