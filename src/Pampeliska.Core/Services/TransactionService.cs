@@ -85,18 +85,21 @@ public class TransactionService(AppDbContext db, BatchService batches, RuleServi
         if (f.AccountId is { } a) q = q.Where(t => t.AccountId == a);
         if (f.BatchId is { } b) q = q.Where(t => t.BatchId == b);
         if (f.MemberId is { } m) q = q.Where(t => t.Shares.Any(s => s.MemberId == m && s.Percent > 0));
-        // V pohledu člena patří k výdajům/příjmům i převody mezi členy – podle druhu kategorie, nezařazené podle směru
+        // Výdaje/příjmy stejně jako statistiky: podle druhu kategorie (u rozdělení kterékoli části), nezařazené podle typu a směru.
+        // Příjem ve výdajové kategorii (např. vrácený podíl) tak patří mezi výdaje. Převody mezi členy jen v pohledu člena.
         var member = f.MemberId is not null;
         var expenseIds = categories?.Where(c => c.Kind == CategoryKind.Expense).Select(c => c.Id).ToList() ?? [];
         var incomeIds = categories?.Where(c => c.Kind == CategoryKind.Income).Select(c => c.Id).ToList() ?? [];
+        var flow = q.Where(t => t.Kind == TransactionKind.Expense || t.Kind == TransactionKind.Income || t.Kind == TransactionKind.Refund
+                                || (member && t.BetweenMembers));
         q = f.Kind switch
         {
-            KindFilter.Expense => q.Where(t => t.Kind == TransactionKind.Expense || t.Kind == TransactionKind.Refund
-                                               || (member && t.BetweenMembers && (t.CategoryId == null && !t.Splits.Any() ? t.Amount < 0
-                                                   : (t.CategoryId != null && expenseIds.Contains(t.CategoryId.Value)) || t.Splits.Any(s => expenseIds.Contains(s.CategoryId))))),
-            KindFilter.Income => q.Where(t => t.Kind == TransactionKind.Income
-                                              || (member && t.BetweenMembers && (t.CategoryId == null && !t.Splits.Any() ? t.Amount > 0
-                                                  : (t.CategoryId != null && incomeIds.Contains(t.CategoryId.Value)) || t.Splits.Any(s => incomeIds.Contains(s.CategoryId))))),
+            KindFilter.Expense => flow.Where(t => t.Splits.Any() ? t.Splits.Any(s => expenseIds.Contains(s.CategoryId))
+                : t.CategoryId != null ? expenseIds.Contains(t.CategoryId.Value)
+                : !(t.Kind == TransactionKind.Income || (t.BetweenMembers && t.Amount > 0))),
+            KindFilter.Income => flow.Where(t => t.Splits.Any() ? t.Splits.Any(s => incomeIds.Contains(s.CategoryId))
+                : t.CategoryId != null ? incomeIds.Contains(t.CategoryId.Value)
+                : t.Kind == TransactionKind.Income || (t.BetweenMembers && t.Amount > 0)),
             KindFilter.Transfer => q.Where(t => t.Kind == TransactionKind.Transfer || t.Kind == TransactionKind.InvestmentTransfer),
             _ => q,
         };
@@ -141,7 +144,7 @@ public class TransactionService(AppDbContext db, BatchService batches, RuleServi
 
     public async Task<TxPage> ListAsync(TxFilter f)
     {
-        var cats = f.CategoryId is null && !f.Excluded && (f.MemberId is null || f.Kind is not (KindFilter.Expense or KindFilter.Income)) ? null
+        var cats = f.CategoryId is null && !f.Excluded && f.Kind is not (KindFilter.Expense or KindFilter.Income) ? null
             : await db.Categories.AsNoTracking().ToListAsync();
         var q = Query(f, cats);
         var total = await q.CountAsync();

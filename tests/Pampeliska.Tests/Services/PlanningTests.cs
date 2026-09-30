@@ -35,6 +35,29 @@ public class StatsTests : IDisposable
     }
 
     [Fact]
+    public async Task Income_in_expense_category_reduces_expense_and_is_listed_among_expenses()
+    {
+        var tx = _env.Get<TransactionService>();
+        var rent = await _env.ImportAsync(_env.Bezny, TestEnv.Tx("2026-09-05", -41283, "Nájem"));
+        await tx.UpdateAsync(rent.TransactionIds[0], new TxUpdate(CategoryId: _env.Cat("Elektronika"), SetCategory: true), "V");
+        var share = await _env.ImportAsync(_env.Bezny, TestEnv.Tx("2026-09-06", 10000, "Míša podíl"));
+        await tx.UpdateAsync(share.TransactionIds[0], new TxUpdate(CategoryId: _env.Cat("Elektronika"), SetCategory: true), "V");
+        var salary = await _env.ImportAsync(_env.Bezny, TestEnv.Tx("2026-09-10", 68880, "Mzda Škoda Auto"));
+        await tx.UpdateAsync(salary.TransactionIds[0], new TxUpdate(CategoryId: _env.Cat("Mzda"), SetCategory: true), "V");
+
+        var o = await _env.Get<StatsService>().OverviewAsync(new StatsFilter(DateRange.Month(2026, 9)), compare: false);
+        Assert.Equal(31283, o.Expense);
+
+        var september = DateRange.Month(2026, 9);
+        var expenses = await tx.ListAsync(new TxFilter(september, Kind: KindFilter.Expense));
+        Assert.Equal([rent.TransactionIds[0], share.TransactionIds[0]], expenses.Items.Select(i => i.Id).Order());
+        var byCategory = await tx.ListAsync(new TxFilter(september, Kind: KindFilter.Expense, CategoryId: _env.Cat("Elektronika a domácnost")));
+        Assert.Equal(2, byCategory.Total);
+        var income = await tx.ListAsync(new TxFilter(september, Kind: KindFilter.Income));
+        Assert.Equal([salary.TransactionIds[0]], income.Items.Select(i => i.Id));
+    }
+
+    [Fact]
     public async Task Excluded_category_is_ignored_including_split_parts_and_subcategories()
     {
         var tx = _env.Get<TransactionService>();
