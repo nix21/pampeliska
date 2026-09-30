@@ -151,12 +151,11 @@ public class ImportService(AppDbContext db, FxService fx, TransferMatcher transf
                 suspected++;
             }
 
-            // Převod: protiúčet je vlastní účet domácnosti, nebo sedí protějšek na jiném účtu
+            // Převod: protiúčet je vlastní účet domácnosti, nebo protějšek na jiném účtu s doloženým směrem peněz (TransferMatcher.FlowMatches)
             var ownCounter = otherAccounts.FirstOrDefault(a => AccountNumber.Same(a.Iban, t.CounterpartyAccount));
-            var candidates = await transfers.CandidatesAsync(t, created);
-            var match = ownCounter is not null ? candidates.FirstOrDefault(c => c.AccountId == ownCounter.Id) ?? candidates.FirstOrDefault()
-                : candidates.FirstOrDefault(c => AccountNumber.Same(c.CounterpartyAccount, account.Iban)) ?? (candidates.Count == 1 ? candidates[0] : null);
-            if (match is not null && (ownCounter is not null || AccountNumber.Same(match.CounterpartyAccount, account.Iban) || candidates.Count == 1))
+            var candidates = await transfers.MatchesAsync(t, account, created);
+            var match = candidates.FirstOrDefault(c => c.AccountId == ownCounter?.Id) ?? candidates.FirstOrDefault();
+            if (match is not null)
             {
                 var matchAccount = match.Account ?? otherAccounts.First(a => a.Id == match.AccountId);
                 TransferMatcher.Pair(t, match, account, matchAccount);

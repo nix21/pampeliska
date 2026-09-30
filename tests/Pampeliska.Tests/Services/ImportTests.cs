@@ -87,9 +87,55 @@ public class ImportTests : IDisposable
     [Fact]
     public async Task Foreign_currency_transfer_pairs_within_tolerance()
     {
-        await _env.ImportAsync(_env.Bezny, TestEnv.Tx("2026-09-26", -12310, "Nákup EUR"));
+        await _env.ImportAsync(_env.Bezny, TestEnv.Tx("2026-09-26", -12310, "Nákup EUR", counterAccount: "2900333444/2010"));
         var res = await _env.ImportAsync(_env.Eurovy, TestEnv.Tx("2026-09-27", 500, "Novák Václav")); // 500 € ≈ 12 190 Kč
         Assert.Equal(1, res.Transfers);
+        Assert.All(await _env.FreshDb().Transactions.ToListAsync(), t => Assert.NotNull(t.TransferPairId));
+    }
+
+    [Fact]
+    public async Task Same_amount_without_proof_of_flow_is_not_a_transfer()
+    {
+        // Jediný protějšek se stejnou částkou, ale nic nedokládá, že peníze tekly mezi těmito účty
+        await _env.ImportAsync(_env.Bezny, TestEnv.Tx("2026-09-15", -3000, "Nákup"));
+        var res = await _env.ImportAsync(_env.Spolecny, TestEnv.Tx("2026-09-16", 3000, "Vrácení zálohy"));
+        Assert.Equal(0, res.Transfers);
+        var txs = await _env.FreshDb().Transactions.OrderBy(t => t.Id).ToListAsync();
+        Assert.Equal([TransactionKind.Expense, TransactionKind.Income], txs.Select(t => t.Kind));
+        Assert.All(txs, t => Assert.Null(t.TransferPairId));
+    }
+
+    [Fact]
+    public async Task Incoming_from_foreign_account_is_not_paired_with_own_outgoing_of_same_amount()
+    {
+        await _env.ImportAsync(_env.Bezny, TestEnv.Tx("2026-09-15", -4000, "Nájem", counterAccount: "1111222233/0100"));
+        var res = await _env.ImportAsync(_env.Spolecny, TestEnv.Tx("2026-09-16", 4000, "Jan Cizí", counterAccount: "5555666677/0300"));
+        Assert.Equal(0, res.Transfers);
+        Assert.All(await _env.FreshDb().Transactions.ToListAsync(), t => Assert.Null(t.TransferPairId));
+    }
+
+    [Fact]
+    public async Task Known_counterparty_that_is_not_the_other_account_blocks_pairing()
+    {
+        // Běžný posílá na Společný, ale na Společný ve stejnou dobu přišla stejná částka od někoho cizího
+        await _env.ImportAsync(_env.Bezny, TestEnv.Tx("2026-09-15", -4000, "Na společný", counterAccount: "2900111222/2010"));
+        await _env.ImportAsync(_env.Spolecny, TestEnv.Tx("2026-09-16", 4000, "Jan Cizí", counterAccount: "5555666677/0300"));
+        var txs = await _env.FreshDb().Transactions.OrderBy(t => t.Id).ToListAsync();
+        Assert.Equal(TransactionKind.Transfer, txs[0].Kind); // protiúčet je vlastní účet → převod, ale bez páru
+        Assert.Equal(TransactionKind.Income, txs[1].Kind);
+        Assert.All(txs, t => Assert.Null(t.TransferPairId));
+    }
+
+    [Fact]
+    public async Task Deposit_to_investment_account_from_its_funding_account_is_paired()
+    {
+        var broker = await _env.Get<AccountService>().CreateAsync(new AccountInput(AccountKind.Investment, "xtb", "ETF", "XTB-1", Joint: true,
+            Ratio: new() { [_env.Vasek.Id] = 100 }, InvestmentKind: InvestmentKind.Etf, FundingAccountId: _env.Bezny.Id,
+            OpeningDate: new DateOnly(2026, 1, 1)));
+        await _env.ImportAsync(_env.Bezny, TestEnv.Tx("2026-09-10", -8000, "XTB", counterAccount: "2345678901/2700")); // sběrný účet brokera
+        var res = await _env.ImportAsync(broker, TestEnv.Tx("2026-09-11", 8000, "Vklad"));
+        Assert.Equal(1, res.Transfers);
+        Assert.All(await _env.FreshDb().Transactions.ToListAsync(), t => Assert.Equal(TransactionKind.InvestmentTransfer, t.Kind));
     }
 
     [Fact]

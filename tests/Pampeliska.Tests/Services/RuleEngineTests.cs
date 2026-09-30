@@ -92,3 +92,14 @@ public class RuleEngineTests
         RuleEngine.Validate(R(1, 1, RuleLogic.And, (RuleField.Amount, RuleOp.Gt, "1 000 Kč")));
     }
 }
+
+public class AccountNumberTests
+{
+    [Theory]
+    [InlineData("CZ65 0800 0000 1920 0014 5399", "19-2000145399/0800")]
+    [InlineData("192000145399/0800", "19-2000145399/0800")]
+    [InlineData("0000192000145399/0800", "19-2000145399/0800")]
+    [InlineData("000019-2000145399/0800", "19-2000145399/0800")]
+    [InlineData("2900111222/2010", "2900111222/2010")]
+    public void Normalizes_czech_formats(string input, string expected) => Assert.Equal(expected, Pampeliska.Core.AccountNumber.Normalize(input));
+}

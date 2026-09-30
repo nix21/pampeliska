@@ -118,6 +118,9 @@ public static class AccountNumber
         if (iban.Success) return Canon(iban.Groups[2].Value, iban.Groups[3].Value, iban.Groups[1].Value);
         var cz = Regex.Match(v, @"^(?:(\d{1,6})-)?(\d{2,10})/(\d{4})$");
         if (cz.Success) return Canon(cz.Groups[1].Value, cz.Groups[2].Value, cz.Groups[3].Value);
+        // Předčíslí bez pomlčky („0000192000145399/0800“, „192000145399/0800“): posledních 10 číslic je číslo účtu
+        var joined = Regex.Match(v, @"^(\d{1,6})(\d{10})/(\d{4})$");
+        if (joined.Success) return Canon(joined.Groups[1].Value, joined.Groups[2].Value, joined.Groups[3].Value);
         return v;
     }
 

@@ -6,7 +6,7 @@ namespace Pampeliska.Core.Services;
 
 /// <summary>
 /// Páruje převody mezi účty domácnosti: opačné znaménko, stejná částka (u různých měn ±3 % po přepočtu na Kč),
-/// datum ±3 dny. Převod není výdaj ani příjem.
+/// datum ±3 dny a doložený směr peněz (<see cref="FlowMatches"/>). Převod není výdaj ani příjem.
 /// </summary>
 public class TransferMatcher(AppDbContext db)
 {
@@ -22,7 +22,37 @@ public class TransferMatcher(AppDbContext db)
         return x > 0 && Math.Abs(x - y) <= x * FxTolerance;
     }
 
-    /// <summary>Kandidáti na protějšek: jiný účet domácnosti, nespárované, ne ručně zařazené jako výdaj/příjem.</summary>
+    /// <summary>
+    /// Odkud kam tečou peníze: protiúčet aspoň jedné strany je číslo druhého účtu, nebo jde o vklad na investiční účet
+    /// z jeho zdrojového účtu. Známý protiúčet, který k druhému účtu nesedí, párování vylučuje – stejná částka nestačí.
+    /// </summary>
+    public static bool FlowMatches(Transaction a, Account accountA, Transaction b, Account accountB)
+    {
+        if (AccountNumber.Same(a.CounterpartyAccount, accountB.Iban) || AccountNumber.Same(b.CounterpartyAccount, accountA.Iban))
+            return !Contradicts(a, accountB) && !Contradicts(b, accountA);
+        // Investiční účet a jeho zdrojový účet: u zdrojové strany bývá protiúčtem sběrný účet brokera, u investiční se kontroluje
+        if (accountB.Kind == AccountKind.Investment && accountB.FundingAccountId == accountA.Id) return !Contradicts(b, accountA);
+        if (accountA.Kind == AccountKind.Investment && accountA.FundingAccountId == accountB.Id) return !Contradicts(a, accountB);
+        return false;
+    }
+
+    /// <summary>Pohyb má známý protiúčet a účet známé číslo, ale neshodují se.</summary>
+    private static bool Contradicts(Transaction t, Account other) =>
+        AccountNumber.Normalize(t.CounterpartyAccount) is { } c && AccountNumber.Normalize(other.Iban) is { } o && c != o;
+
+    /// <summary>Protějšky pro automatické párování: kandidáti s doloženým směrem peněz, nejbližší datum první.</summary>
+    public async Task<List<Transaction>> MatchesAsync(Transaction t, Account account, IEnumerable<Transaction>? pending = null)
+    {
+        var all = await CandidatesAsync(t, pending);
+        var ids = all.Select(u => u.AccountId).Distinct().ToList();
+        var accounts = await db.Accounts.AsNoTracking().Where(a => ids.Contains(a.Id)).ToDictionaryAsync(a => a.Id);
+        return all.Where(u => accounts.TryGetValue(u.AccountId, out var other) && FlowMatches(t, account, u, other)).ToList();
+    }
+
+    /// <summary>
+    /// Kandidáti na protějšek podle částky a data (nabídka pro ruční spárování): jiný účet domácnosti, nespárované,
+    /// ne ručně zařazené jako výdaj/příjem. Nejbližší datum první.
+    /// </summary>
     public async Task<List<Transaction>> CandidatesAsync(Transaction t, IEnumerable<Transaction>? pending = null)
     {
         var from = t.Date.AddDays(-WindowDays);
