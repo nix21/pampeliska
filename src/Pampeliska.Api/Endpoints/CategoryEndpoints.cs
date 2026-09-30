@@ -21,6 +21,11 @@ public static class CategoryEndpoints
         api.MapGet("/categories/{id:int}/merge-preview", (int id, int target, CategoryService svc) => svc.MergePreviewAsync(id, target));
         api.MapPost("/categories/{id:int}/merge", (int id, MergeInput i, CategoryService svc) => svc.MergeAsync(id, i.TargetId));
 
+        api.MapGet("/notes", (NoteService svc, string? search, int? categoryId) => svc.ListAsync(search, categoryId));
+        api.MapPost("/notes", async (NoteInput i, NoteService svc, CurrentUser user) => await svc.CreateAsync(i, await user.ActorAsync()));
+        api.MapPut("/notes/{id:int}", async (int id, NoteInput i, NoteService svc, CurrentUser user) => await svc.UpdateAsync(id, i, await user.ActorAsync()));
+        api.MapDelete("/notes/{id:int}", async (int id, NoteService svc) => { await svc.DeleteAsync(id); return Results.NoContent(); });
+
         api.MapGet("/rules", (RuleService svc) => svc.ListAsync());
         api.MapPost("/rules", async (RuleInput i, RuleService svc) => { var r = await svc.CreateAsync(i); return new { r.Id }; });
         api.MapPut("/rules/{id:int}", async (int id, RuleInput i, RuleService svc) => { await svc.UpdateAsync(id, i); return Results.NoContent(); });

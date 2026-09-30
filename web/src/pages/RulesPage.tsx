@@ -7,6 +7,7 @@ import { PageHeader } from '../components/AppShell'
 import { matchesText, useIsMobile } from '../components/categories/hooks'
 import { invalidateData } from '../components/categories/model'
 import { commonStyles } from '../components/common'
+import { NotesTab, RulesTabs } from '../components/rules/NotesTab'
 import { RuleEditor } from '../components/rules/RuleEditor'
 import { Button, Card, Empty, IconButton, Spinner, Switch, tokenColor } from '../components/ui'
 import { useAccounts } from '../lib/accounts'
@@ -27,6 +28,11 @@ const SOURCE_ICON: Record<RuleSource, ReactNode> = {
 }
 
 export default function RulesPage() {
+  const [params] = useSearchParams()
+  return params.get('tab') === 'notes' ? <NotesTab /> : <RulesList />
+}
+
+function RulesList() {
   const qc = useQueryClient()
   const mobile = useIsMobile()
   const location = useLocation()
@@ -124,6 +130,7 @@ export default function RulesPage() {
         actions={<Button variant="primary" icon={<Plus size={16} />} onClick={() => select('new')}>Nové pravidlo</Button>}
         tools={
           <>
+            <RulesTabs />
             <div className={s.filters}>
               {FILTERS.map(([v, l]) => (
                 <button key={v} type="button" aria-pressed={filter === v} className={clsx(commonStyles.chip, s.filter, filter === v && commonStyles.chipOn)}

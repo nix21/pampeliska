@@ -157,6 +157,7 @@ public partial class HouseholdService(AppDbContext db, AccountService accounts, 
         db.RuleConditions.RemoveRange(db.RuleConditions);
         db.Rules.RemoveRange(db.Rules);
         db.RuleSuggestionDismissals.RemoveRange(db.RuleSuggestionDismissals);
+        db.CategorizationNotes.RemoveRange(db.CategorizationNotes);
         db.MemberBudgets.RemoveRange(db.MemberBudgets);
         db.RecurringSkips.RemoveRange(db.RecurringSkips);
         db.RecurringPayments.RemoveRange(db.RecurringPayments);

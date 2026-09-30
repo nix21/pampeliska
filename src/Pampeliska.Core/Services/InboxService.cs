@@ -18,7 +18,7 @@ public record SimilarTx(DateOnly Date, string Counterparty, decimal Amount, stri
 public record QueueItem(int Id, DateOnly Date, TimeOnly? Time, int AccountId, string Account, decimal Amount, string Currency, decimal AmountCzk,
     string Counterparty, string? Message, string? RawText, string? CounterpartyAccount, string? Mcc, PaymentType PaymentType,
     TransactionStatus Status, int? SuggestedCategoryId, string? SuggestedCategoryPath, CategorySource? Source, int? AiConfidence,
-    bool SuspectedDuplicate, IReadOnlyList<SimilarTx> Similar);
+    bool SuspectedDuplicate, IReadOnlyList<SimilarTx> Similar, IReadOnlyList<QueueNote> Notes);
 
 /// <summary>Fronta „Ke kategorizaci“: nepotvrzené a nezařazené pohyby a podezřelé duplicity.</summary>
 public class InboxService(AppDbContext db, TransactionService txs)
@@ -83,13 +83,15 @@ public class InboxService(AppDbContext db, TransactionService txs)
         var q = Base(null).Where(t => t.SuspectedDuplicateOfId == null);
         if (onlyUncategorized) q = q.Where(t => t.CategoryId == null && !t.Splits.Any());
         if (batchId is { } b) q = q.Where(t => t.BatchId == b);
-        var items = await q.Include(t => t.Account).OrderBy(t => t.Date).ThenBy(t => t.Id).Take(Math.Clamp(limit, 1, 200)).ToListAsync();
+        var items = await q.Include(t => t.Account).Include(t => t.Splits).OrderBy(t => t.Date).ThenBy(t => t.Id).Take(Math.Clamp(limit, 1, 200)).ToListAsync();
         var paths = await CategoryService.PathsAsync(db);
         var keys = items.Select(t => Text.MerchantKey(t.Counterparty)).Where(k => k.Length >= 3).Distinct().ToList();
         var history = await db.Transactions.AsNoTracking()
             .Where(t => t.CategoryId != null && (t.Status == TransactionStatus.Confirmed || t.CategorySource == CategorySource.Manual))
             .OrderByDescending(t => t.Date).Take(5000)
             .Select(t => new { t.Date, t.Counterparty, t.Amount, t.Currency, t.CategoryId, t.CategorySource }).ToListAsync();
+        var notes = await db.CategorizationNotes.AsNoTracking().Where(n => n.MerchantPattern != null || n.CategoryId != null).ToListAsync();
+        var parents = await db.Categories.AsNoTracking().ToDictionaryAsync(c => c.Id, c => c.ParentId);
         var byKey = history.GroupBy(h => Text.MerchantKey(h.Counterparty)).Where(g => keys.Contains(g.Key)).ToDictionary(g => g.Key, g => g.Take(3).ToList());
         return items.Select(t =>
         {
@@ -97,7 +99,8 @@ public class InboxService(AppDbContext db, TransactionService txs)
             return new QueueItem(t.Id, t.Date, t.Time, t.AccountId, t.Account!.Name, t.Amount, t.Currency, t.AmountCzk, t.Counterparty, t.Message, t.RawText,
                 t.CounterpartyAccount, t.Mcc, t.PaymentType, t.Status, t.CategoryId, t.CategoryId is { } c ? paths.GetValueOrDefault(c) : null, t.CategorySource,
                 t.AiConfidence, t.SuspectedDuplicateOfId != null,
-                similar.Select(s => new SimilarTx(s.Date, s.Counterparty, s.Amount, s.Currency, s.CategoryId, s.CategoryId is { } sc ? paths.GetValueOrDefault(sc) : null, s.CategorySource)).ToList());
+                similar.Select(s => new SimilarTx(s.Date, s.Counterparty, s.Amount, s.Currency, s.CategoryId, s.CategoryId is { } sc ? paths.GetValueOrDefault(sc) : null, s.CategorySource)).ToList(),
+                NoteService.For(t, notes, parents));
         }).ToList();
     }
 }

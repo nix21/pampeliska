@@ -192,6 +192,7 @@ public class CategoryService(AppDbContext db)
         foreach (var s in await db.TransactionSplits.Where(s => s.CategoryId == sourceId).ToListAsync()) s.CategoryId = targetId;
         foreach (var r in await db.Rules.Where(r => r.CategoryId == sourceId).ToListAsync()) r.CategoryId = targetId;
         foreach (var r in await db.RecurringPayments.Where(r => r.CategoryId == sourceId).ToListAsync()) r.CategoryId = targetId;
+        foreach (var n in await db.CategorizationNotes.Where(n => n.CategoryId == sourceId).ToListAsync()) n.CategoryId = targetId;
         foreach (var d in await db.RuleSuggestionDismissals.Where(d => d.CategoryId == sourceId).ToListAsync()) db.RuleSuggestionDismissals.Remove(d);
         var targetBudgets = await db.MemberBudgets.Where(b => b.CategoryId == targetId).ToListAsync();
         foreach (var b in await db.MemberBudgets.Where(b => b.CategoryId == sourceId).ToListAsync())
@@ -237,6 +238,7 @@ public class CategoryService(AppDbContext db)
         if (await db.Rules.AnyAsync(r => r.CategoryId == id))
             throw new DomainException($"Na kategorii „{c.Name}“ odkazují pravidla. Nejdřív je smaž nebo změň, případně kategorii slouč.");
         foreach (var r in await db.RecurringPayments.Where(r => r.CategoryId == id).ToListAsync()) r.CategoryId = null;
+        foreach (var n in await db.CategorizationNotes.Where(n => n.CategoryId == id).ToListAsync()) n.CategoryId = null;
         db.MemberBudgets.RemoveRange(await db.MemberBudgets.Where(b => b.CategoryId == id).ToListAsync());
         db.RuleSuggestionDismissals.RemoveRange(await db.RuleSuggestionDismissals.Where(b => b.CategoryId == id).ToListAsync());
         db.Categories.Remove(c);

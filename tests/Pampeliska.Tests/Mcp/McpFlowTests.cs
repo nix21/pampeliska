@@ -204,6 +204,18 @@ public class McpFlowTests(PampeliskaFactory factory) : IClassFixture<PampeliskaF
         Assert.Equal(1, suggested.GetProperty("autoConfirmed").GetInt32());
         var remaining = await Call(mcp, "get_categorization_queue", new());
         Assert.Equal(1, remaining.GetArrayLength());
+
+        // Poznámky ke kategorizaci – sdílená paměť, navázané se připojí k položce fronty
+        var note = await Call(mcp, "add_note", new() { ["text"] = "Netflix platí Míša, patří do Předplatného", ["merchant"] = "netflix" });
+        Assert.StartsWith("Test klient (", note.GetProperty("createdBy").GetString());
+        var noteId = note.GetProperty("id").GetInt32();
+        var withNote = await Call(mcp, "get_categorization_queue", new());
+        Assert.Equal(noteId, withNote[0].GetProperty("notes")[0].GetProperty("id").GetInt32());
+        var updated = await Call(mcp, "update_note", new() { ["noteId"] = noteId, ["text"] = "Netflix = Předplatné", ["merchant"] = "" });
+        Assert.False(updated.TryGetProperty("merchantPattern", out _));
+        Assert.Equal("Netflix = Předplatné", (await Call(mcp, "list_notes", new() { ["search"] = "predplatne" }))[0].GetProperty("text").GetString());
+        Assert.False((await mcp.CallToolAsync("delete_note", new Dictionary<string, object?> { ["noteId"] = noteId })).IsError ?? false);
+        Assert.Equal(0, (await Call(mcp, "list_notes", new())).GetArrayLength());
         var summary = await Call(mcp, "get_summary", new() { ["period"] = "2026-09" });
         Assert.Equal(1453.5m, summary.GetProperty("expense").GetDecimal());
 
@@ -223,10 +235,15 @@ public class McpFlowTests(PampeliskaFactory factory) : IClassFixture<PampeliskaF
 
         var tools = await mcp.ListToolsAsync();
         var writeTool = tools.FirstOrDefault(t => t.ProtocolTool.Annotations?.ReadOnlyHint != true);
-        if (writeTool is null) return; // zatím žádný zápisový nástroj
+        Assert.NotNull(writeTool);
         var res = await mcp.CallToolAsync(writeTool.Name, new Dictionary<string, object?>());
         Assert.True(res.IsError);
         Assert.Contains("jen oprávnění ke čtení", Text(res));
+
+        // Poznámky jde číst, ale ne ukládat
+        Assert.Equal(0, (await Call(mcp, "list_notes", new())).GetArrayLength());
+        var add = await mcp.CallToolAsync("add_note", new Dictionary<string, object?> { ["text"] = "x" });
+        Assert.True(add.IsError);
     }
 
     /// <summary>Souhlas → kód → tokeny. Vrací access token.</summary>

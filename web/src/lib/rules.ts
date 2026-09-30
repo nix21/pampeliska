@@ -148,3 +148,25 @@ export function conditionValid(c: RuleCondition) {
   if (c.field === 'Account') return /^\d+$/.test(v)
   return true
 }
+
+/** Poznámka pro AI ke kategorizaci (NoteService.cs). */
+export interface NoteDto {
+  id: number
+  text: string
+  merchantPattern?: string
+  categoryId?: number
+  categoryPath?: string
+  createdBy: string
+  createdAt: string
+  updatedBy?: string
+  updatedAt: string
+}
+
+export interface NoteInput {
+  text: string
+  merchantPattern: string | null
+  categoryId: number | null
+}
+
+export const NOTE_MAX = 1000
+export const notesQuery = { queryKey: ['notes'], queryFn: () => api.get<NoteDto[]>('/api/notes') }

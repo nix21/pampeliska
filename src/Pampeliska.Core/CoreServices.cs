@@ -22,6 +22,7 @@ public static class CoreServices
         services.AddScoped<BalanceService>();
         services.AddScoped<HouseholdService>();
         services.AddScoped<RuleService>();
+        services.AddScoped<NoteService>();
         services.AddScoped<TransactionService>();
         services.AddScoped<InboxService>();
         services.AddScoped<StatsService>();

@@ -76,3 +76,21 @@ public class RuleSuggestionDismissal
     public required string Pattern { get; set; }
     public int CategoryId { get; set; }
 }
+
+/// <summary>
+/// Poznámka pro AI ke kategorizaci – sdílená paměť MCP klientů (zvyklosti domácnosti, výjimky, kdy se zeptat).
+/// Volitelně navázaná na obchodníka (text jako u pravidla) a/nebo kategorii; navázané se připojují k položkám fronty.
+/// </summary>
+public class CategorizationNote
+{
+    public int Id { get; set; }
+    public required string Text { get; set; }
+    /// <summary>Text obchodníka / protistrany (obsahuje, bez ohledu na velikost písmen a diakritiku).</summary>
+    public string? MerchantPattern { get; set; }
+    public int? CategoryId { get; set; }
+    public Category? Category { get; set; }
+    public required string CreatedBy { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
+    public string? UpdatedBy { get; set; }
+    public DateTimeOffset UpdatedAt { get; set; }
+}

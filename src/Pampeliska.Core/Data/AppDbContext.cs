@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Pampeliska.Core.Domain;
+using Pampeliska.Core.Services;
 
 namespace Pampeliska.Core.Data;
 
@@ -23,6 +24,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Rule> Rules => Set<Rule>();
     public DbSet<RuleCondition> RuleConditions => Set<RuleCondition>();
     public DbSet<RuleSuggestionDismissal> RuleSuggestionDismissals => Set<RuleSuggestionDismissal>();
+    public DbSet<CategorizationNote> CategorizationNotes => Set<CategorizationNote>();
     public DbSet<RecurringPayment> RecurringPayments => Set<RecurringPayment>();
     public DbSet<RecurringSkip> RecurringSkips => Set<RecurringSkip>();
     public DbSet<InvestmentValue> InvestmentValues => Set<InvestmentValue>();
@@ -103,6 +105,15 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.HasOne(r => r.Category).WithMany().HasForeignKey(r => r.CategoryId).OnDelete(DeleteBehavior.Restrict);
             e.HasMany(r => r.Conditions).WithOne().HasForeignKey(c => c.RuleId).OnDelete(DeleteBehavior.Cascade);
             e.HasIndex(r => r.Priority);
+        });
+
+        b.Entity<CategorizationNote>(e =>
+        {
+            e.HasOne(n => n.Category).WithMany().HasForeignKey(n => n.CategoryId).OnDelete(DeleteBehavior.SetNull);
+            e.Property(n => n.Text).HasMaxLength(NoteService.MaxLength);
+            e.Property(n => n.MerchantPattern).HasMaxLength(100);
+            e.Property(n => n.CreatedBy).HasMaxLength(200);
+            e.Property(n => n.UpdatedBy).HasMaxLength(200);
         });
 
         b.Entity<RecurringPayment>().HasIndex(r => r.AccountId);
