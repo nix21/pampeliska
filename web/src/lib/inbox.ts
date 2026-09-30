@@ -72,6 +72,7 @@ export interface BatchItem {
   source?: CategorySource
   aiConfidence?: number
   suspectedDuplicate: boolean
+  betweenMembers: boolean
 }
 
 export interface SkippedItem {
@@ -252,7 +253,8 @@ export function merchantKey(counterparty?: string | null) {
 export const normalizeText = normalize
 
 export function categoryKindFor(tx: TxRow): CategoryKind | undefined {
-  if (tx.kind === 'Refund') return undefined
+  // Příchozí převod od člena: příjem, nebo vyrovnání výdaje (třeba polovina dovolené)
+  if (tx.kind === 'Refund' || (tx.betweenMembers && tx.amount > 0)) return undefined
   return tx.amount < 0 ? 'Expense' : 'Income'
 }
 

@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Pampeliska.Core.Domain;
+using Pampeliska.Core.Services;
 
 namespace Pampeliska.Core.Data;
 
@@ -104,6 +105,8 @@ public static class Seed
         foreach (var i in Institutions.Where(i => !existing.Contains(i.Key)))
             db.Institutions.Add(new Institution { Key = i.Key, Name = i.Name, Abbrev = i.Abbrev, Color = i.Color, Kind = i.Kind, SortOrder = i.SortOrder });
         await db.SaveChangesAsync();
+        // Starší převody bez protiúčtu: doplnit protiúčet a „převod mezi členy“
+        await TransferMatcher.ReclassifyAsync(db);
     }
 
     /// <summary>Založí strom kategorií podle šablony (jen když ještě žádné kategorie nejsou).</summary>

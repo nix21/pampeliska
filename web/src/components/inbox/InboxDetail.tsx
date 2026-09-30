@@ -1,5 +1,5 @@
 import clsx from 'clsx'
-import { Check, ChevronLeft, ChevronRight, EyeOff, Search, Sparkles, Split, Wand2 } from 'lucide-react'
+import { ArrowLeftRight, Check, ChevronLeft, ChevronRight, EyeOff, Search, Sparkles, Split, Wand2 } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import { useAccounts } from '../../lib/accounts'
 import { needColor, useCategories } from '../../lib/categories'
@@ -50,6 +50,7 @@ export function InboxDetail({ item, draft, setDraft, onConfirm, onSkip, onPrev, 
   const accounts = useAccounts()
   const { household } = useUi()
   const acc = accounts.byId.get(tx.accountId)
+  const pairAcc = tx.transferPairAccountId != null ? accounts.byId.get(tx.transferPairAccountId) : undefined
   const kind = categoryKindFor(tx)
   const abs = Math.abs(tx.amount)
   const set = (patch: Partial<InboxDraft>) => setDraft({ ...d, ...patch })
@@ -110,7 +111,8 @@ export function InboxDetail({ item, draft, setDraft, onConfirm, onSkip, onPrev, 
       ))}
     </div>
   )
-  const memberSeg = members.length > 1 && (
+  // Převod mezi členy patří vždy vlastníkovi účtu
+  const memberSeg = members.length > 1 && !tx.betweenMembers && (
     <div className={inline ? s.hseg : s.vseg} role="radiogroup" aria-label="Člen">
       {memOpts.map((o) => (
         <button key={String(o.value)} type="button" role="radio" aria-checked={memberNow === o.value}
@@ -222,6 +224,13 @@ export function InboxDetail({ item, draft, setDraft, onConfirm, onSkip, onPrev, 
         </div>
         {(item.rawText || tx.message) && <span className={s.raw}>{item.rawText ?? tx.message}</span>}
         {tx.excludeFromStats && <span><Pill tone="neutral" icon={<EyeOff size={11} />}>Nezapočítává se do statistik</Pill></span>}
+        {tx.betweenMembers && (
+          <span>
+            <Pill tone="neutral" icon={<ArrowLeftRight size={11} />}>
+              Převod mezi členy{pairAcc ? ` ${tx.amount < 0 ? '→' : '←'} ${pairAcc.name}` : ''} · počítá se jen v pohledu člena
+            </Pill>
+          </span>
+        )}
       </div>
 
       {tx.suspectedDuplicateOfId != null && <DuplicateBlock item={item} onResolve={onResolveDuplicate} busy={busy} />}

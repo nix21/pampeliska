@@ -480,6 +480,7 @@ function TxListRow({ row, selected, open, onToggle, onSelect, accountFiltered }:
   const badges: Badge[] = []
   if (incoming && accountFiltered) badges.push({ label: 'Příchozí převod', tone: 'pos', icon: Link2 })
   if (unconfirmed) badges.push({ label: 'Nepotvrzeno', tone: 'dashed' })
+  if (tx.betweenMembers) badges.push({ label: 'Mezi členy', tone: 'line', icon: ArrowLeftRight })
   if (tx.kind === 'Transfer') badges.push(tx.transferPairId ? { label: 'Spárováno', tone: 'neutral', icon: Link2 } : { label: 'Nespárováno', tone: 'warn', icon: Link2 })
   if (tx.kind === 'InvestmentTransfer') badges.push({ label: 'Nákup investice', tone: 'neutral', icon: TrendingUp })
   if (tx.kind === 'Refund') badges.push({ label: 'Vratka', tone: 'pos' })
@@ -491,7 +492,7 @@ function TxListRow({ row, selected, open, onToggle, onSelect, accountFiltered }:
   const catTxt = isSplit
     ? tx.splits.map((p) => cats.nameOf(p.categoryId)).join(' + ')
     : transfer
-      ? `${incoming ? '← ' : '→ '}${pairAcct ? accountLabel(pairAcct) : 'nespárováno'}`
+      ? `${incoming ? '← ' : '→ '}${pairAcct ? accountLabel(pairAcct) : 'nespárováno'}${tx.betweenMembers ? ` · ${cat ? cat.path : 'Nezařazeno'}` : ''}`
       : tx.kind === 'Correction'
         ? 'Zůstatek dle výpisu'
         : cat ? cat.path : 'Nezařazeno'

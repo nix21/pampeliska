@@ -36,6 +36,8 @@ public record MembersStats(IReadOnlyList<MemberStat> Members, IReadOnlyList<Memb
 /// <summary>
 /// Souhrny příjmů a výdajů. Počítají se jen pohyby, které se započítávají (ne převody, korekce a vyřazené),
 /// rozdělené platby po částech, u vybraného člena jen jeho podíl. Vratky snižují výdaje ve své kategorii.
+/// U vybraného člena se počítají i převody mezi členy (<see cref="Transaction.BetweenMembers"/>): odchozí jako výdaj,
+/// příchozí jako příjem, resp. snížení výdaje, když je v kategorii výdajů.
 /// </summary>
 public class StatsService(AppDbContext db)
 {
@@ -49,9 +51,12 @@ public class StatsService(AppDbContext db)
     {
         var tree = CategoryService.BuildTree(cats).ToDictionary(n => n.Id);
         var byId = cats.ToDictionary(c => c.Id);
+        // Převody mezi členy jen v pohledu člena – v domácnosti se vzájemně vyruší
+        var member = f.MemberId is not null;
         var q = db.Transactions.AsNoTracking().Include(t => t.Splits).Include(t => t.Shares)
             .Where(t => t.Date >= f.Range.From && t.Date <= f.Range.To && !t.ExcludeFromStats
-                        && (t.Kind == TransactionKind.Expense || t.Kind == TransactionKind.Income || t.Kind == TransactionKind.Refund));
+                        && (t.Kind == TransactionKind.Expense || t.Kind == TransactionKind.Income || t.Kind == TransactionKind.Refund
+                            || (member && t.BetweenMembers)));
         if (f.ConfirmedOnly) q = q.Where(t => t.Status == TransactionStatus.Confirmed);
         if (f.AccountId is { } acc) q = q.Where(t => t.AccountId == acc);
         if (f.MemberId is { } mid) q = q.Where(t => t.Shares.Any(s => s.MemberId == mid && s.Percent > 0));
@@ -74,7 +79,7 @@ public class StatsService(AppDbContext db)
         FlowLine Line(Transaction t, int? cid, decimal amount, NeedType? needOverride, bool confirmed)
         {
             var kind = cid is { } c && byId.TryGetValue(c, out var cat) ? cat.Kind
-                : t.Kind == TransactionKind.Income ? CategoryKind.Income : CategoryKind.Expense;
+                : t.Kind == TransactionKind.Income || (t.BetweenMembers && t.Amount > 0) ? CategoryKind.Income : CategoryKind.Expense;
             var need = needOverride is { } n and not NeedType.Inherit ? n
                 : cid is { } c2 && tree.TryGetValue(c2, out var node) ? node.EffectiveNeed : NeedType.None;
             return new FlowLine(t.Id, t.Date, cid, kind, amount, need, confirmed, t.Counterparty, t.AccountId);
@@ -197,13 +202,16 @@ public class StatsService(AppDbContext db)
         if (memberId is { } m) q = q.Where(t => t.Shares.Any(s => s.MemberId == m && s.Percent > 0));
         var txs = await q.ToListAsync();
         decimal W(Transaction t) => memberId is { } m ? (t.Shares.FirstOrDefault(s => s.MemberId == m)?.Percent ?? 0) / 100m : 1m;
-        var counted = txs.Where(t => t.CountsInStats).ToList();
+        var counted = txs.Where(t => t.CountsFor(memberId)).ToList();
+        // Převod mezi členy (jen v pohledu člena): odchozí jako výdaj, příchozí jako příjem
+        bool Out(Transaction t) => t.Kind == TransactionKind.Expense || (t.BetweenMembers && t.Amount < 0);
+        bool In(Transaction t) => t.Kind == TransactionKind.Income || (t.BetweenMembers && t.Amount > 0);
         return new TxSummary(
-            -counted.Where(t => t.Kind == TransactionKind.Expense).Sum(t => t.AmountCzk * W(t)) - counted.Where(t => t.Kind == TransactionKind.Refund).Sum(t => t.AmountCzk * W(t)),
+            -counted.Where(Out).Sum(t => t.AmountCzk * W(t)) - counted.Where(t => t.Kind == TransactionKind.Refund).Sum(t => t.AmountCzk * W(t)),
             counted.Where(t => t.Kind == TransactionKind.Refund).Sum(t => t.AmountCzk * W(t)),
-            counted.Where(t => t.Kind == TransactionKind.Income).Sum(t => t.AmountCzk * W(t)),
-            counted.Count(t => t.Kind == TransactionKind.Income),
-            txs.Count(t => t.Kind is TransactionKind.Transfer or TransactionKind.InvestmentTransfer),
+            counted.Where(In).Sum(t => t.AmountCzk * W(t)),
+            counted.Count(In),
+            txs.Count(t => t.Kind is TransactionKind.Transfer or TransactionKind.InvestmentTransfer && !t.CountsFor(memberId)),
             txs.Count(t => t.ExcludeFromStats && t.Kind != TransactionKind.Correction),
             txs.Count(t => t.Kind == TransactionKind.Correction), txs.Count,
             txs.Count(t => t.IsSplit), txs.Count(t => t.Status == TransactionStatus.Suggested), txs.Count(t => t.IsRecurring));

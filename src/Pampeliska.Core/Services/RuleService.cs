@@ -46,7 +46,7 @@ public class RuleService(AppDbContext db, TimeProvider time)
 
     private Task<List<Transaction>> HistoryAsync() =>
         db.Transactions.AsNoTracking().Include(t => t.Splits)
-            .Where(t => t.Date >= HistoryFrom && t.Kind != TransactionKind.Transfer && t.Kind != TransactionKind.InvestmentTransfer && t.Kind != TransactionKind.Correction)
+            .Where(t => t.Date >= HistoryFrom && (t.BetweenMembers || t.Kind != TransactionKind.Transfer && t.Kind != TransactionKind.InvestmentTransfer && t.Kind != TransactionKind.Correction))
             .ToListAsync();
 
     public async Task<List<RuleDto>> ListAsync()

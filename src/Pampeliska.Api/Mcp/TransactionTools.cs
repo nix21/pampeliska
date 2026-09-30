@@ -130,7 +130,8 @@ public class TransactionTools(ImportService import, TransactionService txs, Inbo
         });
 
     [McpServerTool(Name = "link_transfer", Title = "Spárovat převod", ReadOnly = false, Destructive = false, Idempotent = true, OpenWorld = false)]
-    [Description("Ručně spáruje odchozí a příchozí pohyb mezi dvěma vlastními účty jako převod (není výdaj ani příjem).")]
+    [Description("Ručně spáruje odchozí a příchozí pohyb mezi dvěma vlastními účty jako převod (není výdaj ani příjem). " +
+                 "Převod mezi účty dvou různých členů si kategorii ponechá a v pohledu člena se počítá.")]
     public Task<string> LinkTransfer([Description("Id prvního pohybu.")] int transactionIdA, [Description("Id druhého pohybu.")] int transactionIdB) =>
         McpSetup.Guard(async () => { await transfers.LinkAsync(transactionIdA, transactionIdB); return "Spárováno."; });
 

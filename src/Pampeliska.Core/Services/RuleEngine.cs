@@ -56,10 +56,9 @@ public static partial class RuleEngine
     public static Rule? FirstMatch(IEnumerable<Rule> rules, Transaction t) =>
         rules.Where(r => r.Enabled).OrderBy(r => r.Priority).FirstOrDefault(r => Matches(r, t));
 
-    /// <summary>Smí pravidlo pohyb (pře)zařadit? Ručně zařazené, převody a korekce ne.</summary>
+    /// <summary>Smí pravidlo pohyb (pře)zařadit? Ručně zařazené, převody (kromě převodů mezi členy) a korekce ne.</summary>
     public static bool CanApplyTo(Transaction t) =>
-        t.CategorySource != CategorySource.Manual && !t.IsSplit &&
-        t.Kind is TransactionKind.Expense or TransactionKind.Income or TransactionKind.Refund;
+        t.CategorySource != CategorySource.Manual && !t.IsSplit && t.NeedsCategory;
 
     /// <summary>Použije výsledek pravidla na pohyb (kategorie, typ výdaje, člen, příznaky). Nepotvrzuje.</summary>
     public static void Apply(Rule rule, Transaction t)
@@ -73,7 +72,8 @@ public static partial class RuleEngine
         t.AiAlternatives = null;
         if (rule.ExcludeFromStats) t.ExcludeFromStats = true;
         if (rule.MarkRecurring) t.IsRecurring = true;
-        if (rule.MemberId is { } member)
+        // Převod mezi členy patří vždy vlastníkovi účtu
+        if (rule.MemberId is { } member && !t.BetweenMembers)
         {
             ShareService.Apply(t, [new TransactionShare { MemberId = member, Percent = 100 }]);
             t.SharesOverridden = true;

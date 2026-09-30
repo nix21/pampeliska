@@ -165,9 +165,7 @@ public class ImportService(AppDbContext db, FxService fx, TransferMatcher transf
             }
             else if (ownCounter is not null)
             {
-                t.Kind = ownCounter.Kind == AccountKind.Investment || account.Kind == AccountKind.Investment
-                    ? TransactionKind.InvestmentTransfer : TransactionKind.Transfer;
-                TransferMatcher.MarkTransfer(t);
+                TransferMatcher.MarkTransfer(t, account, ownCounter);
                 transferCount++;
             }
 
@@ -179,6 +177,7 @@ public class ImportService(AppDbContext db, FxService fx, TransferMatcher transf
                 t.Events.Add(new TransactionEvent { At = now, Actor = "Pravidla", Text = $"Pravidlo „{RuleEngine.Describe(rule)}“" });
                 byRule++;
             }
+            if (match is not null && !TransferMatcher.PrefillFromPair(match, t, now)) TransferMatcher.PrefillFromPair(t, match, now);
 
             if (t.Kind is TransactionKind.Expense or TransactionKind.Income && RecurringSchedule.FindMatch(recurring, t) is { } rec)
             {
@@ -198,7 +197,7 @@ public class ImportService(AppDbContext db, FxService fx, TransferMatcher transf
         await BatchService.RecomputeStateAsync(db, batch, now);
         await db.SaveChangesAsync();
 
-        var uncategorized = created.Count(t => !t.IsCategorized && t.Kind is not (TransactionKind.Transfer or TransactionKind.InvestmentTransfer));
+        var uncategorized = created.Count(t => !t.IsCategorized && t.NeedsCategory);
         return new ImportResult(batch.Id, created.Count, skipped, suspected, byRule, transferCount, uncategorized,
             created.Select(t => t.Id).ToList());
     }

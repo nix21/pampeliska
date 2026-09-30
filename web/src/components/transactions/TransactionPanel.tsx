@@ -102,8 +102,9 @@ function Detail({ d, variant, onClose, backLabel, onOpen }: { d: TxDetail; varia
   const serverSplit = tx.splits.length > 0
   const isSplit = serverSplit || draft !== null
   const abs = Math.abs(tx.amount)
-  const catKind: CategoryKind = kind === 'Income' ? 'Income' : 'Expense'
-  const canCat = isCategorizable(kind)
+  // Příchozí převod od člena může být příjem i vyrovnání výdaje (snižuje ho), proto obě větve kategorií
+  const catKind: CategoryKind | undefined = tx.betweenMembers ? (tx.amount < 0 ? 'Expense' : undefined) : kind === 'Income' ? 'Income' : 'Expense'
+  const canCat = isCategorizable(tx)
   const isTransfer = isTransferKind(kind)
   const canDelete = kind === 'Correction' || (d.batchLabel?.startsWith('ručně') ?? false)
   const foreign = tx.currency !== 'CZK'
@@ -157,9 +158,9 @@ function Detail({ d, variant, onClose, backLabel, onOpen }: { d: TxDetail; varia
   const cat = tx.categoryId != null ? cats.byId.get(tx.categoryId) : undefined
   const need = effNeed(tx.categoryId, tx.needOverride)
   const overridden = !!tx.needOverride && tx.needOverride !== 'Inherit'
-  const showNeed = kind === 'Expense' && !isSplit
+  const showNeed = (kind === 'Expense' || (tx.betweenMembers && tx.amount < 0)) && !isSplit
   const owner = shareOwner(tx.shares)
-  const showMember = household.members.length > 1 && kind !== 'Correction'
+  const showMember = household.members.length > 1 && kind !== 'Correction' && !tx.betweenMembers
   const accountJoint = (account?.ratio.filter((r) => r.percent > 0).length ?? 0) > 1
   const setJoint = () => {
     if (accountJoint) patch.mutate({ setMember: true, memberId: null })
@@ -179,7 +180,9 @@ function Detail({ d, variant, onClose, backLabel, onOpen }: { d: TxDetail; varia
 
       <div className={s.head}>
         <div className={s.pills}>
-          <span className={clsx(s.kindPill, (kind === 'Income' || kind === 'Refund') && s.kindPos, kind === 'InvestmentTransfer' && s.kindAccent)}>{kindLabel[kind]}</span>
+          <span className={clsx(s.kindPill, (kind === 'Income' || kind === 'Refund') && s.kindPos, kind === 'InvestmentTransfer' && s.kindAccent)}>
+            {tx.betweenMembers ? 'Převod mezi členy' : kindLabel[kind]}
+          </span>
           <span className={clsx(s.statusPill, unconfirmed ? s.statusOpen : s.statusDone)}>{unconfirmed ? 'Nepotvrzeno' : 'Potvrzeno'}</span>
           {srcText && (
             <span className={s.src} title={d.appliedRule ?? undefined}>{src && <SrcIcon size={12} />} {srcText}</span>
@@ -440,7 +443,9 @@ function TransferBlock({ d, onUnpair, unpairing, onOpen }: { d: TxDetail; onUnpa
   const side = (title: string, r: TxRef | null, dashed?: boolean) => (
     <button type="button" className={clsx(s.side, dashed && s.sideDashed)} disabled={!r || r.id === tx.id || !onOpen} onClick={() => r && onOpen?.(r.id)}>
       <span className={s.sideLabel}>{title}</span>
-      <span className={s.sideAcct}>{r ? accountLabel(accounts.byId.get(r.accountId)) : 'Hledám protějšek…'}</span>
+      <span className={s.sideAcct}>
+        {r ? accountLabel(accounts.byId.get(r.accountId)) : tx.transferPairAccountId ? accountLabel(accounts.byId.get(tx.transferPairAccountId)) : 'Hledám protějšek…'}
+      </span>
       <span className={s.sideAmt}>{r ? fm(r.amount, { currency: r.currency, sign: true }) : ''}</span>
     </button>
   )
@@ -448,7 +453,7 @@ function TransferBlock({ d, onUnpair, unpairing, onOpen }: { d: TxDetail; onUnpa
   return (
     <div className={s.box}>
       <div className={s.boxHead}>
-        <span>{inv ? 'Převod na investiční účet' : pair ? 'Spárovaný převod' : 'Převod mezi účty'}</span>
+        <span>{inv ? 'Převod na investiční účet' : tx.betweenMembers ? 'Převod mezi členy' : pair ? 'Spárovaný převod' : 'Převod mezi účty'}</span>
         <span className={s.pairState} style={{ color: pair ? 'var(--pos)' : 'var(--warn)' }}>
           <Link2 size={14} /> {pair ? 'Spárováno' : 'Nespárováno'}
         </span>
@@ -469,6 +474,12 @@ function TransferBlock({ d, onUnpair, unpairing, onOpen }: { d: TxDetail; onUnpa
         </>
       )}
       {inv && <span className={s.invNote}>Převod na investiční účet se nepočítá jako výdaj – hodnotu sleduješ v Investicích.</span>}
+      {tx.betweenMembers && (
+        <span className={s.hint} style={{ lineHeight: 1.5 }}>
+          Peníze mezi členy: v pohledu člena se počítá jako {tx.amount < 0 ? 'výdaj' : 'příjem'} ve vybrané kategorii
+          (příchozí převod v kategorii výdajů výdaj snižuje, třeba vyrovnání dovolené). V pohledu celé domácnosti se nezapočítává.
+        </span>
+      )}
       {!pair && <PairCandidates id={tx.id} />}
       {pair && (
         <div className="row">

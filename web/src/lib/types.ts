@@ -179,6 +179,8 @@ export interface TxRow {
   paymentType: PaymentType
   recurringPaymentId?: number
   note?: string
+  /** Převod mezi vlastními účty dvou různých členů – kategorizuje se, počítá se jen v pohledu člena. */
+  betweenMembers: boolean
 }
 
 export interface TxRef {

@@ -81,6 +81,13 @@ public class Transaction
     public bool IsRecurring { get; set; }
     public bool SharesOverridden { get; set; }
     public int? TransferPairId { get; set; }
+    /// <summary>Účet domácnosti na druhé straně převodu (i když protějšek ještě není naimportovaný).</summary>
+    public int? TransferAccountId { get; set; }
+    /// <summary>
+    /// Převod mezi vlastními účty dvou různých členů (nastavuje <see cref="Services.TransferMatcher.MarkTransfer"/>).
+    /// Kategorizuje se a v pohledu člena se počítá jako výdaj/příjem, v pohledu domácnosti ne.
+    /// </summary>
+    public bool BetweenMembers { get; set; }
     public int? RefundOfId { get; set; }
     public int? RecurringPaymentId { get; set; }
     public int? SuspectedDuplicateOfId { get; set; }
@@ -98,6 +105,10 @@ public class Transaction
     public bool IsCategorized => CategoryId is not null || Splits.Count > 0;
     /// <summary>Započítává se do výdajů/příjmů (převody, korekce a vyřazené ne).</summary>
     public bool CountsInStats => !ExcludeFromStats && Kind is TransactionKind.Expense or TransactionKind.Income or TransactionKind.Refund;
+    /// <summary>Započítává se v pohledu člena (navíc převody mezi členy), resp. domácnosti (<paramref name="memberId"/> null).</summary>
+    public bool CountsFor(int? memberId) => CountsInStats || (memberId is not null && !ExcludeFromStats && BetweenMembers);
+    /// <summary>Pohyb se zařazuje do kategorie (výdaj, příjem, vratka nebo převod mezi členy).</summary>
+    public bool NeedsCategory => Kind is TransactionKind.Expense or TransactionKind.Income or TransactionKind.Refund || BetweenMembers;
 }
 
 /// <summary>Část rozdělené platby s vlastní kategorií. Částka ve stejné měně a se stejným znaménkem jako pohyb.</summary>

@@ -6,7 +6,8 @@ namespace Pampeliska.Core.Services;
 
 /// <summary>
 /// Páruje převody mezi účty domácnosti: opačné znaménko, stejná částka (u různých měn ±3 % po přepočtu na Kč),
-/// datum ±3 dny a doložený směr peněz (<see cref="FlowMatches"/>). Převod není výdaj ani příjem.
+/// datum ±3 dny a doložený směr peněz (<see cref="FlowMatches"/>). Převod není výdaj ani příjem – kromě převodu mezi členy
+/// v pohledu jednoho člena (<see cref="Transaction.BetweenMembers"/>).
 /// </summary>
 public class TransferMatcher(AppDbContext db)
 {
@@ -43,25 +44,27 @@ public class TransferMatcher(AppDbContext db)
     /// <summary>Protějšky pro automatické párování: kandidáti s doloženým směrem peněz, nejbližší datum první.</summary>
     public async Task<List<Transaction>> MatchesAsync(Transaction t, Account account, IEnumerable<Transaction>? pending = null)
     {
-        var all = await CandidatesAsync(t, pending);
+        var all = await CandidatesAsync(t, pending, includeManual: true);
         var ids = all.Select(u => u.AccountId).Distinct().ToList();
         var accounts = await db.Accounts.AsNoTracking().Where(a => ids.Contains(a.Id)).ToDictionaryAsync(a => a.Id);
-        return all.Where(u => accounts.TryGetValue(u.AccountId, out var other) && FlowMatches(t, account, u, other)).ToList();
+        // Ručně zařazený výdaj/příjem se páruje jen jako převod mezi členy – tam se kategorie zachová
+        return all.Where(u => accounts.TryGetValue(u.AccountId, out var other) && FlowMatches(t, account, u, other)
+                              && (u.CategorySource != CategorySource.Manual || AreBetweenMembers(account, other))).ToList();
     }
 
     /// <summary>
     /// Kandidáti na protějšek podle částky a data (nabídka pro ruční spárování): jiný účet domácnosti, nespárované,
     /// ne ručně zařazené jako výdaj/příjem. Nejbližší datum první.
     /// </summary>
-    public async Task<List<Transaction>> CandidatesAsync(Transaction t, IEnumerable<Transaction>? pending = null)
+    public async Task<List<Transaction>> CandidatesAsync(Transaction t, IEnumerable<Transaction>? pending = null, bool includeManual = false)
     {
         var from = t.Date.AddDays(-WindowDays);
         var to = t.Date.AddDays(WindowDays);
         var sign = Math.Sign(t.Amount);
-        var fromDb = await db.Transactions
+        var fromDb = await db.Transactions.Include(u => u.Splits)
             .Where(u => u.AccountId != t.AccountId && u.Id != t.Id && u.TransferPairId == null && u.Date >= from && u.Date <= to
                         && (sign < 0 ? u.Amount > 0 : u.Amount < 0)
-                        && u.Kind != TransactionKind.Correction && u.CategorySource != CategorySource.Manual)
+                        && u.Kind != TransactionKind.Correction && (includeManual || u.CategorySource != CategorySource.Manual))
             .ToListAsync();
         var all = fromDb.Concat((pending ?? []).Where(u => u.AccountId != t.AccountId && !ReferenceEquals(u, t) && u.TransferPairId == null
                                                             && u.Date >= from && u.Date <= to && u.Kind != TransactionKind.Correction))
@@ -72,19 +75,38 @@ public class TransferMatcher(AppDbContext db)
 
     public static void Pair(Transaction a, Transaction b, Account accountA, Account accountB)
     {
-        var kind = accountA.Kind == AccountKind.Investment || accountB.Kind == AccountKind.Investment
-            ? TransactionKind.InvestmentTransfer : TransactionKind.Transfer;
-        foreach (var (t, other) in new[] { (a, b), (b, a) })
+        foreach (var (t, other, account, counter) in new[] { (a, b, accountA, accountB), (b, a, accountB, accountA) })
         {
-            t.Kind = kind;
             t.TransferPairId = other.Id == 0 ? null : other.Id;
-            MarkTransfer(t);
+            MarkTransfer(t, account, counter);
         }
     }
 
-    public static void MarkTransfer(Transaction t)
+    /// <summary>Oba účty patří každý jinému členovi (společný ani investiční účet ne).</summary>
+    public static bool AreBetweenMembers(Account a, Account b) =>
+        a.OwnerMemberId is { } x && b.OwnerMemberId is { } y && x != y
+        && a.Kind != AccountKind.Investment && b.Kind != AccountKind.Investment;
+
+    /// <summary>
+    /// Označí pohyb na <paramref name="account"/> jako převod s protiúčtem <paramref name="counter"/>. Převod mezi členy si kategorii
+    /// nechá a bez ní čeká ve frontě ke kategorizaci; ostatní převody se nekategorizují.
+    /// </summary>
+    public static void MarkTransfer(Transaction t, Account account, Account counter)
     {
-        if (t.Kind is not (TransactionKind.Transfer or TransactionKind.InvestmentTransfer)) t.Kind = TransactionKind.Transfer;
+        t.Kind = account.Kind == AccountKind.Investment || counter.Kind == AccountKind.Investment
+            ? TransactionKind.InvestmentTransfer : TransactionKind.Transfer;
+        t.TransferAccountId = counter.Id == 0 ? null : counter.Id;
+        t.BetweenMembers = AreBetweenMembers(account, counter);
+        if (t.BetweenMembers)
+        {
+            if (!t.IsCategorized)
+            {
+                t.CategorySource = null;
+                t.Status = TransactionStatus.Suggested;
+                t.ConfirmedAt = null;
+            }
+            return;
+        }
         t.CategoryId = null;
         t.Splits.Clear();
         t.NeedOverride = null;
@@ -94,6 +116,68 @@ public class TransferMatcher(AppDbContext db)
         t.AiAlternatives = null;
         t.CategorySource = CategorySource.Auto;
         t.Status = TransactionStatus.Confirmed;
+    }
+
+    /// <summary>
+    /// Převod mezi členy: ještě nezařazené straně <paramref name="to"/> předvyplní kategorii (nebo rozdělení) protějšku jako návrh.
+    /// Každá strana má kategorii vlastní, tohle jen šetří práci. Vrací true, když se něco změnilo.
+    /// </summary>
+    public static bool PrefillFromPair(Transaction from, Transaction to, DateTimeOffset now)
+    {
+        if (!from.BetweenMembers || !to.BetweenMembers || !from.IsCategorized || to.IsCategorized || to.Status == TransactionStatus.Confirmed)
+            return false;
+        if (from.IsSplit)
+        {
+            var ratio = to.Amount / from.Amount;
+            var parts = from.Splits.OrderBy(s => s.SortOrder).ToList();
+            var rest = to.Amount;
+            for (var i = 0; i < parts.Count; i++)
+            {
+                var amount = i == parts.Count - 1 ? rest : Math.Round(parts[i].Amount * ratio, 2);
+                rest -= amount;
+                to.Splits.Add(new TransactionSplit { CategoryId = parts[i].CategoryId, Amount = amount, NeedOverride = parts[i].NeedOverride, SortOrder = i });
+            }
+        }
+        else to.CategoryId = from.CategoryId;
+        to.NeedOverride = from.NeedOverride;
+        to.CategorySource = CategorySource.Auto;
+        to.Events.Add(new TransactionEvent { At = now, Actor = "Pampeliška", Text = "Kategorie podle protějšku převodu" });
+        return true;
+    }
+
+    /// <summary>Zrušení převodu (rozpárování, smazání protějšku): pohyb se vrátí mezi výdaje/příjmy a do fronty.</summary>
+    public static void Unmark(Transaction t)
+    {
+        t.TransferPairId = null;
+        t.TransferAccountId = null;
+        t.BetweenMembers = false;
+        t.Kind = t.Amount < 0 ? TransactionKind.Expense : TransactionKind.Income;
+        if (!t.IsCategorized) t.CategorySource = null;
+        t.Status = TransactionStatus.Suggested;
+        t.ConfirmedAt = null;
+    }
+
+    /// <summary>
+    /// Znovu určí protiúčet a „převod mezi členy“ (po změně vlastníka účtu; při startu u starších převodů bez protiúčtu).
+    /// </summary>
+    public static async Task ReclassifyAsync(AppDbContext db, int? accountId = null)
+    {
+        var q = db.Transactions.Include(t => t.Splits)
+            .Where(t => t.Kind == TransactionKind.Transfer || t.Kind == TransactionKind.InvestmentTransfer);
+        q = accountId is { } id ? q.Where(t => t.AccountId == id || t.TransferAccountId == id) : q.Where(t => t.TransferAccountId == null);
+        var txs = await q.ToListAsync();
+        if (txs.Count == 0) return;
+        var accounts = await db.Accounts.AsNoTracking().ToDictionaryAsync(a => a.Id);
+        var pairIds = txs.Where(t => t.TransferPairId != null).Select(t => t.TransferPairId!.Value).ToList();
+        var pairAccounts = await db.Transactions.AsNoTracking().Where(t => pairIds.Contains(t.Id)).ToDictionaryAsync(t => t.Id, t => t.AccountId);
+        foreach (var t in txs)
+        {
+            if (!accounts.TryGetValue(t.AccountId, out var account)) continue;
+            var counterId = t.TransferPairId is { } p && pairAccounts.TryGetValue(p, out var pa) ? pa
+                : t.TransferAccountId ?? accounts.Values.FirstOrDefault(a => a.Id != t.AccountId && AccountNumber.Same(a.Iban, t.CounterpartyAccount))?.Id;
+            if (counterId is { } c && accounts.TryGetValue(c, out var counter)) MarkTransfer(t, account, counter);
+        }
+        await db.SaveChangesAsync();
     }
 
     /// <summary>Po uložení (známe Id) doplní vzájemné odkazy u dvojic spárovaných v jedné dávce.</summary>
@@ -109,15 +193,9 @@ public class TransferMatcher(AppDbContext db)
     /// <summary>Zruší párování – oba pohyby se vrátí mezi výdaje/příjmy a do fronty ke kategorizaci.</summary>
     public async Task UnpairAsync(int transactionId)
     {
-        var t = await db.Transactions.FindAsync(transactionId) ?? throw new DomainException("Pohyb neexistuje.");
-        var other = t.TransferPairId is { } pid ? await db.Transactions.FindAsync(pid) : null;
-        foreach (var x in new[] { t, other }.OfType<Transaction>())
-        {
-            x.TransferPairId = null;
-            x.Kind = x.Amount < 0 ? TransactionKind.Expense : TransactionKind.Income;
-            x.CategorySource = null;
-            x.Status = TransactionStatus.Suggested;
-        }
+        var t = await db.Transactions.Include(x => x.Splits).FirstOrDefaultAsync(x => x.Id == transactionId) ?? throw new DomainException("Pohyb neexistuje.");
+        var other = t.TransferPairId is { } pid ? await db.Transactions.Include(x => x.Splits).FirstOrDefaultAsync(x => x.Id == pid) : null;
+        foreach (var x in new[] { t, other }.OfType<Transaction>()) Unmark(x);
         await db.SaveChangesAsync();
     }
 

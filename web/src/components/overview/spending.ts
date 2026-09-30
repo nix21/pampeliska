@@ -3,8 +3,15 @@ import { mix, needVar, ringShade, tileShade, tokenVar, type CatAgg } from '../..
 
 export type ColorMode = 'cat' | 'need'
 
-/** Podkategorie pro graf; hlavní kategorie bez podkategorií dostane jednu „vlastní“ dlaždici. */
-const kids = (t: CatAgg): CatAgg[] => (t.children.length ? t.children : [{ ...t, children: [], synthetic: true }])
+/**
+ * Podkategorie pro graf; hlavní kategorie bez podkategorií dostane jednu „vlastní“ dlaždici. Záporné podkategorie (u člena
+ * třeba vyrovnání dovolené od druhého člena) v grafu nejsou a zbylé se poměrně vejdou do součtu hlavní kategorie.
+ */
+const kids = (t: CatAgg): CatAgg[] => {
+  const list = (t.children.length ? t.children : [{ ...t, children: [], synthetic: true }]).filter((c) => c.amount > 0)
+  const sum = list.reduce((a, c) => a + c.amount, 0)
+  return sum > t.amount && sum > 0 ? list.map((c) => ({ ...c, amount: (c.amount * t.amount) / sum })) : list
+}
 
 /** Barva podkategorie v legendě / prstenci. */
 export const childColor = (top: CatAgg, child: CatAgg, i: number, mode: ColorMode) => (mode === 'need' ? needVar(child.need) : ringShade(top.token, i))

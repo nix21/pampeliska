@@ -51,14 +51,14 @@ function SrcIcon({ b, size = 36 }: { b: BatchSummary; size?: number }) {
 function itemStatus(t: BatchItem): [string, string] {
   if (t.status === 'Confirmed') return ['Potvrzeno', s.stOk]
   if (t.suspectedDuplicate) return ['Duplicita', s.stDup]
-  if (t.kind === 'Transfer' || t.kind === 'InvestmentTransfer') return ['Převod', s.stWait]
+  if ((t.kind === 'Transfer' || t.kind === 'InvestmentTransfer') && !t.betweenMembers) return ['Převod', s.stWait]
   if (!t.category) return ['Nahráno', s.stNew]
   if (t.source === 'Ai' && (t.aiConfidence ?? 0) < UNSURE_BELOW) return ['AI nejistá', s.stUnsure]
   return ['Čeká', s.stWait]
 }
 
 function itemCategory(t: BatchItem) {
-  if (!t.category) return t.kind === 'Transfer' || t.kind === 'InvestmentTransfer' ? 'Převod mezi účty' : '—'
+  if (!t.category) return t.betweenMembers ? 'Převod mezi členy' : t.kind === 'Transfer' || t.kind === 'InvestmentTransfer' ? 'Převod mezi účty' : '—'
   const src = t.source === 'Rule' ? ' · pravidlo' : t.source === 'Ai' ? ` · AI ${t.aiConfidence ?? 0} %` : t.source === 'Manual' ? ' · ručně' : ''
   return `${t.status === 'Confirmed' ? '' : 'Návrh: '}${t.category}${src}`
 }

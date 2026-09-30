@@ -88,8 +88,9 @@ export const sourceLabel: Record<CategorySource, string> = {
 }
 
 export const isTransferKind = (k: TransactionKind) => k === 'Transfer' || k === 'InvestmentTransfer'
-/** Pohyb, který se kategorizuje (výdaj, příjem, vratka). */
-export const isCategorizable = (k: TransactionKind) => k === 'Expense' || k === 'Income' || k === 'Refund'
+/** Pohyb, který se kategorizuje (výdaj, příjem, vratka, převod mezi členy). */
+export const isCategorizable = (tx: Pick<TxRow, 'kind' | 'betweenMembers'>) =>
+  tx.kind === 'Expense' || tx.kind === 'Income' || tx.kind === 'Refund' || tx.betweenMembers
 
 /** „Běžný účet · ČS“ */
 export function accountLabel(a?: Pick<Account, 'name' | 'institution'>, short = false) {

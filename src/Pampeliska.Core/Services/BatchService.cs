@@ -10,7 +10,7 @@ public record BatchSummary(int Id, DateTimeOffset CreatedAt, BatchSource Source,
 
 public record BatchItem(int Id, DateOnly Date, string Counterparty, decimal Amount, string Currency, decimal AmountCzk,
     string Account, TransactionKind Kind, TransactionStatus Status, string? Category, CategorySource? Source, int? AiConfidence,
-    bool SuspectedDuplicate);
+    bool SuspectedDuplicate, bool BetweenMembers);
 
 public record SkippedItem(DateOnly Date, string Counterparty, decimal Amount, int? ExistingTransactionId);
 
@@ -23,8 +23,8 @@ public class BatchService(AppDbContext db, TimeProvider time)
     public static async Task RecomputeStateAsync(AppDbContext db, ImportBatch batch, DateTimeOffset now)
     {
         var txs = await db.Transactions.Where(t => t.BatchId == batch.Id)
-            .Select(t => new { t.Status, t.CategoryId, HasSplits = t.Splits.Any(), t.Kind }).ToListAsync();
-        var needsCategory = txs.Where(t => t.Kind is not (TransactionKind.Transfer or TransactionKind.InvestmentTransfer or TransactionKind.Correction));
+            .Select(t => new { t.Status, t.CategoryId, HasSplits = t.Splits.Any(), t.Kind, t.BetweenMembers }).ToListAsync();
+        var needsCategory = txs.Where(t => t.BetweenMembers || t.Kind is not (TransactionKind.Transfer or TransactionKind.InvestmentTransfer or TransactionKind.Correction));
         var state = txs.Count > 0 && txs.All(t => t.Status == TransactionStatus.Confirmed) ? BatchState.Confirmed
             : needsCategory.All(t => t.CategoryId != null || t.HasSplits) ? BatchState.Categorized
             : BatchState.Uploaded;
@@ -81,7 +81,7 @@ public class BatchService(AppDbContext db, TimeProvider time)
         return new BatchDetail(summary,
             items.Select(t => new BatchItem(t.Id, t.Date, t.Counterparty, t.Amount, t.Currency, t.AmountCzk, t.Account!.Name, t.Kind, t.Status,
                 t.IsSplit ? $"Rozděleno · {t.Splits.Count} části" : t.CategoryId is { } c ? cats.GetValueOrDefault(c) : null,
-                t.CategorySource, t.AiConfidence, t.SuspectedDuplicateOfId != null)).ToList(),
+                t.CategorySource, t.AiConfidence, t.SuspectedDuplicateOfId != null, t.BetweenMembers)).ToList(),
             batch.SkippedDuplicates.Select(s => new SkippedItem(s.Date, s.Counterparty, s.Amount, s.ExistingTransactionId)).ToList());
     }
 
@@ -110,7 +110,7 @@ public class BatchService(AppDbContext db, TimeProvider time)
         var txs = await db.Transactions.Include(t => t.Splits)
             .Where(t => t.BatchId == id && t.Status == TransactionStatus.Suggested && t.SuspectedDuplicateOfId == null).ToListAsync();
         var n = 0;
-        foreach (var t in txs.Where(t => t.IsCategorized || t.Kind is TransactionKind.Transfer or TransactionKind.InvestmentTransfer))
+        foreach (var t in txs.Where(t => t.IsCategorized || !t.NeedsCategory && t.Kind is TransactionKind.Transfer or TransactionKind.InvestmentTransfer))
         {
             t.Status = TransactionStatus.Confirmed;
             t.ConfirmedAt = now;

@@ -36,7 +36,7 @@ public record TxRow(
     string Counterparty, string? Message, TransactionKind Kind, TransactionStatus Status, int? CategoryId, NeedType? NeedOverride,
     IReadOnlyList<SplitDto> Splits, IReadOnlyList<ShareDto> Shares, bool SharesOverridden, bool IsRecurring, bool ExcludeFromStats,
     CategorySource? CategorySource, int? AiConfidence, int? TransferPairId, int? TransferPairAccountId, int? RefundOfId,
-    int? SuspectedDuplicateOfId, int? BatchId, PaymentType PaymentType, int? RecurringPaymentId, string? Note);
+    int? SuspectedDuplicateOfId, int? BatchId, PaymentType PaymentType, int? RecurringPaymentId, string? Note, bool BetweenMembers);
 
 public record TxEventDto(DateTimeOffset At, string Actor, string Text);
 
@@ -85,10 +85,18 @@ public class TransactionService(AppDbContext db, BatchService batches, RuleServi
         if (f.AccountId is { } a) q = q.Where(t => t.AccountId == a);
         if (f.BatchId is { } b) q = q.Where(t => t.BatchId == b);
         if (f.MemberId is { } m) q = q.Where(t => t.Shares.Any(s => s.MemberId == m && s.Percent > 0));
+        // V pohledu člena patří k výdajům/příjmům i převody mezi členy – podle druhu kategorie, nezařazené podle směru
+        var member = f.MemberId is not null;
+        var expenseIds = categories?.Where(c => c.Kind == CategoryKind.Expense).Select(c => c.Id).ToList() ?? [];
+        var incomeIds = categories?.Where(c => c.Kind == CategoryKind.Income).Select(c => c.Id).ToList() ?? [];
         q = f.Kind switch
         {
-            KindFilter.Expense => q.Where(t => t.Kind == TransactionKind.Expense || (t.Kind == TransactionKind.Refund)),
-            KindFilter.Income => q.Where(t => t.Kind == TransactionKind.Income),
+            KindFilter.Expense => q.Where(t => t.Kind == TransactionKind.Expense || t.Kind == TransactionKind.Refund
+                                               || (member && t.BetweenMembers && (t.CategoryId == null && !t.Splits.Any() ? t.Amount < 0
+                                                   : (t.CategoryId != null && expenseIds.Contains(t.CategoryId.Value)) || t.Splits.Any(s => expenseIds.Contains(s.CategoryId))))),
+            KindFilter.Income => q.Where(t => t.Kind == TransactionKind.Income
+                                              || (member && t.BetweenMembers && (t.CategoryId == null && !t.Splits.Any() ? t.Amount > 0
+                                                  : (t.CategoryId != null && incomeIds.Contains(t.CategoryId.Value)) || t.Splits.Any(s => incomeIds.Contains(s.CategoryId))))),
             KindFilter.Transfer => q.Where(t => t.Kind == TransactionKind.Transfer || t.Kind == TransactionKind.InvestmentTransfer),
             _ => q,
         };
@@ -104,8 +112,8 @@ public class TransactionService(AppDbContext db, BatchService batches, RuleServi
         if (f.Excluded) q = q.Where(t => t.ExcludeFromStats && t.Kind != TransactionKind.Correction);
         if (f.Corrections) q = q.Where(t => t.Kind == TransactionKind.Correction);
         if (f.Uncategorized)
-            q = q.Where(t => t.CategoryId == null && !t.Splits.Any() && t.Kind != TransactionKind.Transfer
-                             && t.Kind != TransactionKind.InvestmentTransfer && t.Kind != TransactionKind.Correction);
+            q = q.Where(t => t.CategoryId == null && !t.Splits.Any() && (t.BetweenMembers || t.Kind != TransactionKind.Transfer
+                             && t.Kind != TransactionKind.InvestmentTransfer && t.Kind != TransactionKind.Correction));
         if (f.Suspected) q = q.Where(t => t.SuspectedDuplicateOfId != null);
         if (!string.IsNullOrWhiteSpace(f.Search))
         {
@@ -126,7 +134,8 @@ public class TransactionService(AppDbContext db, BatchService batches, RuleServi
 
     public async Task<TxPage> ListAsync(TxFilter f)
     {
-        var cats = f.CategoryId is null ? null : await db.Categories.AsNoTracking().ToListAsync();
+        var cats = f.CategoryId is null && (f.MemberId is null || f.Kind is not (KindFilter.Expense or KindFilter.Income)) ? null
+            : await db.Categories.AsNoTracking().ToListAsync();
         var q = Query(f, cats);
         var total = await q.CountAsync();
         var items = await q.Include(t => t.Splits).Include(t => t.Shares).Skip(f.Skip).Take(Math.Clamp(f.Take, 1, 1000)).ToListAsync();
@@ -147,8 +156,8 @@ public class TransactionService(AppDbContext db, BatchService batches, RuleServi
         t.Splits.OrderBy(s => s.SortOrder).Select(s => new SplitDto(s.CategoryId, s.Amount, Math.Round(s.Amount * t.FxRate, 2), s.NeedOverride)).ToList(),
         t.Shares.Select(s => new ShareDto(s.MemberId, s.Percent)).ToList(), t.SharesOverridden, t.IsRecurring, t.ExcludeFromStats,
         t.CategorySource, t.AiConfidence, t.TransferPairId,
-        t.TransferPairId is { } p && pairAccounts is not null && pairAccounts.TryGetValue(p, out var pa) ? pa : null,
-        t.RefundOfId, t.SuspectedDuplicateOfId, t.BatchId, t.PaymentType, t.RecurringPaymentId, t.Note);
+        t.TransferPairId is { } p && pairAccounts is not null && pairAccounts.TryGetValue(p, out var pa) ? pa : t.TransferAccountId,
+        t.RefundOfId, t.SuspectedDuplicateOfId, t.BatchId, t.PaymentType, t.RecurringPaymentId, t.Note, t.BetweenMembers);
 
     public async Task<TxDetail> GetAsync(int id)
     {
@@ -287,7 +296,7 @@ public class TransactionService(AppDbContext db, BatchService batches, RuleServi
         }
         if (u.Confirm == true && t.Status != TransactionStatus.Confirmed)
         {
-            if (!t.IsCategorized && t.Kind is not (TransactionKind.Transfer or TransactionKind.InvestmentTransfer or TransactionKind.Correction))
+            if (!t.IsCategorized && t.NeedsCategory)
                 throw new DomainException("Nezařazenou platbu nelze potvrdit – nejdřív vyber kategorii.");
             t.Status = TransactionStatus.Confirmed;
             t.ConfirmedAt = now;
@@ -300,6 +309,7 @@ public class TransactionService(AppDbContext db, BatchService batches, RuleServi
         }
         foreach (var e in events.Where(e => !e.StartsWith("Potvrdil"))) t.Events.Add(new TransactionEvent { At = now, Actor = actor, Text = e });
         if (events.FirstOrDefault(e => e.StartsWith("Potvrdil")) is { }) t.Events.Add(new TransactionEvent { At = now, Actor = actor, Text = "Potvrzeno" });
+        await PrefillPairAsync(t, now);
         await db.SaveChangesAsync();
 
         if (u.CreateRule && t.CategoryId is { } ruleCat)
@@ -308,18 +318,25 @@ public class TransactionService(AppDbContext db, BatchService batches, RuleServi
         return ToRow(t);
     }
 
+    /// <summary>Převod mezi členy: nezařazenému protějšku předvyplní stejnou kategorii (<see cref="TransferMatcher.PrefillFromPair"/>).</summary>
+    private async Task PrefillPairAsync(Transaction t, DateTimeOffset now)
+    {
+        if (!t.BetweenMembers || !t.IsCategorized || t.TransferPairId is not { } pid) return;
+        var other = await db.Transactions.Include(x => x.Splits).FirstOrDefaultAsync(x => x.Id == pid);
+        if (other is not null) TransferMatcher.PrefillFromPair(t, other, now);
+    }
+
     private static void EnsureKindFits(Transaction t, Category c)
     {
-        if (t.Kind is TransactionKind.Transfer or TransactionKind.InvestmentTransfer)
-            throw new DomainException("Převod se nekategorizuje. Nejdřív ho rozpáruj.");
+        if (t.Kind is TransactionKind.Transfer or TransactionKind.InvestmentTransfer && !t.BetweenMembers)
+            throw new DomainException("Převod mezi vlastními účty se nekategorizuje. Nejdřív ho rozpáruj.");
         if (t.Kind == TransactionKind.Correction) throw new DomainException("Korekce zůstatku se nekategorizuje.");
         _ = c;
     }
 
     private static void ValidateSplits(Transaction t, List<SplitInput> splits, IReadOnlyDictionary<int, Category> cats)
     {
-        if (t.Kind is TransactionKind.Transfer or TransactionKind.InvestmentTransfer or TransactionKind.Correction)
-            throw new DomainException("Převod ani korekci nelze rozdělit.");
+        if (!t.NeedsCategory) throw new DomainException("Převod mezi vlastními účty ani korekci nelze rozdělit.");
         if (splits.Count < 2) throw new DomainException("Rozdělení musí mít aspoň dvě části.");
         foreach (var s in splits)
         {
@@ -340,7 +357,7 @@ public class TransactionService(AppDbContext db, BatchService batches, RuleServi
         var n = 0;
         foreach (var t in txs.Where(t => t.Status == TransactionStatus.Suggested))
         {
-            if (!t.IsCategorized && t.Kind is TransactionKind.Expense or TransactionKind.Income or TransactionKind.Refund) continue;
+            if (!t.IsCategorized && t.NeedsCategory) continue;
             t.Status = TransactionStatus.Confirmed;
             t.ConfirmedAt = now;
             t.Events.Add(new TransactionEvent { At = now, Actor = actor, Text = "Potvrzeno" });
@@ -379,8 +396,7 @@ public class TransactionService(AppDbContext db, BatchService batches, RuleServi
             if (t is null) { skipped.Add($"{s.TransactionId}: pohyb neexistuje"); continue; }
             if (t.Status == TransactionStatus.Confirmed) { skipped.Add($"{t.Id}: už je potvrzený"); continue; }
             if (t.CategorySource == CategorySource.Manual) { skipped.Add($"{t.Id}: zařazen ručně"); continue; }
-            if (t.Kind is TransactionKind.Transfer or TransactionKind.InvestmentTransfer or TransactionKind.Correction)
-            { skipped.Add($"{t.Id}: převod/korekce se nekategorizuje"); continue; }
+            if (!t.NeedsCategory) { skipped.Add($"{t.Id}: převod mezi vlastními účty / korekce se nekategorizuje"); continue; }
             var confidence = Math.Clamp(s.Confidence, 0, 100);
             try
             {
@@ -417,6 +433,7 @@ public class TransactionService(AppDbContext db, BatchService batches, RuleServi
             }
             applied++;
             batchIds.Add(t.BatchId);
+            await PrefillPairAsync(t, now);
         }
         await db.SaveChangesAsync();
         await batches.RecomputeAsync(batchIds);
@@ -454,15 +471,9 @@ public class TransactionService(AppDbContext db, BatchService batches, RuleServi
 
     private async Task DeleteInternalAsync(Transaction t)
     {
-        foreach (var o in await db.Transactions.Where(x => x.TransferPairId == t.Id || x.RefundOfId == t.Id || x.SuspectedDuplicateOfId == t.Id).ToListAsync())
+        foreach (var o in await db.Transactions.Include(x => x.Splits).Where(x => x.TransferPairId == t.Id || x.RefundOfId == t.Id || x.SuspectedDuplicateOfId == t.Id).ToListAsync())
         {
-            if (o.TransferPairId == t.Id)
-            {
-                o.TransferPairId = null;
-                o.Kind = o.Amount < 0 ? TransactionKind.Expense : TransactionKind.Income;
-                o.CategorySource = null;
-                o.Status = TransactionStatus.Suggested;
-            }
+            if (o.TransferPairId == t.Id) TransferMatcher.Unmark(o);
             if (o.RefundOfId == t.Id) o.RefundOfId = null;
             if (o.SuspectedDuplicateOfId == t.Id) o.SuspectedDuplicateOfId = null;
         }

@@ -85,9 +85,12 @@ public class AccountService(AppDbContext db, ShareService shares, FxService fx, 
         if (input.OpeningDate is { } od) a.OpeningDate = od;
         if (input.OpeningDeposits is { } odp) a.OpeningDeposits = odp;
         if (input.Source is { } src) a.Source = src;
+        var owner = a.OwnerMemberId;
         await ApplyAsync(a, input, isNew: false);
         await db.SaveChangesAsync();
         if (a.IsJoint && a.Shares.Count == 0) await DefaultRatioAsync(a);
+        // Jiný vlastník = jiné převody mezi členy
+        if (a.OwnerMemberId != owner && hasTx) await TransferMatcher.ReclassifyAsync(db, a.Id);
         return a;
     }
 
