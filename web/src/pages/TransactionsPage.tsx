@@ -16,7 +16,7 @@ import { api, qs } from '../lib/api'
 import { needLabel, useCategories } from '../lib/categories'
 import { count, dayHeading, num } from '../lib/format'
 import {
-  accountLabel, FLAG_LABELS, isTransferKind, KIND_OPTIONS, ratioLabel, whoLabel,
+  accountLabel, countedCzk, FLAG_LABELS, isExcludedTx, isTransferKind, KIND_OPTIONS, ratioLabel, whoLabel,
   type KindFilter, type ListRow, type TransferFlow, type TxFlag, type TxSummary,
 } from '../lib/transactions'
 import type { Account, TxPage } from '../lib/types'
@@ -55,6 +55,7 @@ export default function TransactionsPage() {
   const { period, member, filterParams } = useUi()
   const members = useMembers()
   const accounts = useAccounts()
+  const { isExcluded } = useCategories()
   const isMobile = useIsMobile()
   const [params, setParams] = useSearchParams()
   const location = useLocation()
@@ -150,9 +151,9 @@ export default function TransactionsPage() {
     return [...map.entries()].map(([date, rs]) => ({
       date,
       rows: rs,
-      sum: rs.reduce((a, r) => a + (!r.tx.excludeFromStats && (r.tx.kind === 'Expense' || r.tx.kind === 'Income' || r.tx.kind === 'Refund') ? r.tx.amountCzk : 0), 0),
+      sum: rs.reduce((a, r) => a + countedCzk(r.tx, isExcluded), 0),
     }))
-  }, [rows])
+  }, [rows, isExcluded])
 
   const account = accountId != null ? accounts.byId.get(accountId) : undefined
   const memberName = member === 'all' ? null : members.get(member)?.name
@@ -460,7 +461,7 @@ function TxListRow({ row, selected, open, onToggle, onSelect, accountFiltered }:
   const acctName = accountLabel(acct)
   const who = whoLabel(tx.shares, members)
   const isSplit = tx.splits.length > 0
-  const excl = tx.excludeFromStats && tx.kind !== 'Correction'
+  const excl = isExcludedTx(tx, cats.isExcluded)
   const unconfirmed = tx.status === 'Suggested'
   const transfer = isTransferKind(tx.kind)
   const incoming = transfer && tx.amount > 0

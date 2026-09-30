@@ -245,6 +245,19 @@ export function CategoryDetail({ node, stat, onSelect, onExpand }: {
       )}
 
       <div className={s.section}>
+        <label className={s.switchRow}>
+          <span className="grow">Nezapočítávat do statistik</span>
+          <Switch checked={node.effectiveExclude} disabled={node.effectiveExclude && !node.excludeFromStats}
+            onChange={(v) => update({ excludeFromStats: v })} label="Nezapočítávat do statistik" />
+        </label>
+        <span className={s.hint}>
+          {node.effectiveExclude && !node.excludeFromStats
+            ? `Zděděno z nadřazené kategorie „${parent?.name ?? ''}“.`
+            : `Platby v kategorii (i části rozdělených) se nepočítají do ${isExpense ? 'výdajů' : 'příjmů'} – např. kauce nebo půjčky.`}
+        </span>
+      </div>
+
+      <div className={s.section}>
         <div className={s.rulesHead}>
           <span className={s.label}>Pravidla</span>
           <Link to="/pravidla" className={s.link}>Spravovat</Link>

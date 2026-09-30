@@ -21,6 +21,10 @@ export interface CategoryNode {
   budgetAmount?: number
   carryOver: boolean
   isFixed: boolean
+  /** Platby v kategorii se nezapočítávají do statistik (vlastní nastavení). */
+  excludeFromStats: boolean
+  /** Vlastní nebo zděděné po nadřazené kategorii. */
+  effectiveExclude: boolean
   /** „Jídlo › Supermarkety“ */
   path: string
   topId: number
@@ -35,6 +39,8 @@ export interface Categories {
   nameOf: (id?: number | null) => string
   /** Id kategorie + všech potomků */
   descendants: (id: number) => Set<number>
+  /** Kategorie (sama nebo zděděně) se nezapočítává do statistik. */
+  isExcluded: (id?: number | null) => boolean
 }
 
 export const categoriesQuery = { queryKey: ['categories'], queryFn: () => api.get<CategoryNode[]>('/api/categories') }
@@ -72,6 +78,7 @@ export function useCategories(): Categories & { isLoading: boolean } {
         return c ? shade(c.color, c.depth) : 'var(--none)'
       },
       nameOf: (id) => (id != null ? byId.get(id)?.name ?? '?' : 'Nezařazeno'),
+      isExcluded: (id) => (id != null ? byId.get(id)?.effectiveExclude ?? false : false),
     }
   }, [q.data, q.isLoading])
 }

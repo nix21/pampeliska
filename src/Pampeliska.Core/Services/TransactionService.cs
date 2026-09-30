@@ -109,7 +109,14 @@ public class TransactionService(AppDbContext db, BatchService batches, RuleServi
         if (f.Unconfirmed) q = q.Where(t => t.Status == TransactionStatus.Suggested);
         if (f.ConfirmedOnly) q = q.Where(t => t.Status == TransactionStatus.Confirmed);
         if (f.Recurring) q = q.Where(t => t.IsRecurring);
-        if (f.Excluded) q = q.Where(t => t.ExcludeFromStats && t.Kind != TransactionKind.Correction);
+        if (f.Excluded)
+        {
+            // Vyřazené samy nebo celé ve vyřazené kategorii (stejně jako počet v SummaryAsync)
+            var excludedCats = categories is null ? [] : CategoryService.ExcludedIds(categories).ToList();
+            q = q.Where(t => t.Kind != TransactionKind.Correction && (t.ExcludeFromStats
+                             || (t.Splits.Any() ? t.Splits.All(s => excludedCats.Contains(s.CategoryId))
+                                 : t.CategoryId != null && excludedCats.Contains(t.CategoryId.Value))));
+        }
         if (f.Corrections) q = q.Where(t => t.Kind == TransactionKind.Correction);
         if (f.Uncategorized)
             q = q.Where(t => t.CategoryId == null && !t.Splits.Any() && (t.BetweenMembers || t.Kind != TransactionKind.Transfer
@@ -134,7 +141,7 @@ public class TransactionService(AppDbContext db, BatchService batches, RuleServi
 
     public async Task<TxPage> ListAsync(TxFilter f)
     {
-        var cats = f.CategoryId is null && (f.MemberId is null || f.Kind is not (KindFilter.Expense or KindFilter.Income)) ? null
+        var cats = f.CategoryId is null && !f.Excluded && (f.MemberId is null || f.Kind is not (KindFilter.Expense or KindFilter.Income)) ? null
             : await db.Categories.AsNoTracking().ToListAsync();
         var q = Query(f, cats);
         var total = await q.CountAsync();

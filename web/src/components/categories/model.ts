@@ -41,6 +41,7 @@ export interface CategoryInput {
   setBudget?: boolean
   carryOver?: boolean
   isFixed?: boolean
+  excludeFromStats?: boolean
   sortOrder?: number
 }
 

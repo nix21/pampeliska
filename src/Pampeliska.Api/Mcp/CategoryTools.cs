@@ -12,7 +12,7 @@ public class CategoryTools(CategoryService categories, RuleService rules, StatsS
 {
     [McpServerTool(Name = "list_categories", Title = "Kategorie", ReadOnly = true, Idempotent = true, OpenWorld = false)]
     [Description("Celý strom kategorií (výdaje i příjmy): id, rodič, cesta „Jídlo › Supermarkety“, typ výdaje (need: Inherit/Need/Joy/None a effectiveNeed), " +
-                 "barva, rozpočet domácnosti. Volitelně s útratou za období.")]
+                 "barva, rozpočet domácnosti, nezapočítávání do statistik (excludeFromStats vlastní, effectiveExclude i zděděné). Volitelně s útratou za období.")]
     public Task<object> ListCategories([Description("Období pro útratu (např. 2026-09), volitelné.")] string? period = null) => McpSetup.Guard(async () =>
     {
         var tree = await categories.TreeAsync();
@@ -31,14 +31,16 @@ public class CategoryTools(CategoryService categories, RuleService rules, StatsS
         [Description("Id nadřazené kategorie; null = hlavní kategorie.")] int? parentId = null,
         [Description("Expense nebo Income (u podkategorie se převezme z rodiče).")] CategoryKind kind = CategoryKind.Expense,
         [Description("Typ výdaje: Inherit (zdědit), Need, Joy, None.")] NeedType need = NeedType.Inherit,
-        [Description("Barva hlavní kategorie: c1…c12.")] string? color = null) => McpSetup.Guard(async () =>
+        [Description("Barva hlavní kategorie: c1…c12.")] string? color = null,
+        [Description("Platby v kategorii (i podkategoriích) nezapočítávat do výdajů a příjmů.")] bool excludeFromStats = false) => McpSetup.Guard(async () =>
     {
-        var c = await categories.CreateAsync(new CategoryInput(name, kind, parentId, Color: color, Need: need));
+        var c = await categories.CreateAsync(new CategoryInput(name, kind, parentId, Color: color, Need: need, ExcludeFromStats: excludeFromStats));
         return (object)new { c.Id, c.Name };
     });
 
     [McpServerTool(Name = "update_category", Title = "Upravit kategorii", ReadOnly = false, Destructive = false, Idempotent = true, OpenWorld = false)]
-    [Description("Přejmenuje, přesune (move=true + parentId, null = hlavní), změní barvu, typ výdaje, rozpočet domácnosti nebo pořadí kategorie.")]
+    [Description("Přejmenuje, přesune (move=true + parentId, null = hlavní), změní barvu, typ výdaje, rozpočet domácnosti, pořadí kategorie " +
+                 "nebo nezapočítávání do statistik.")]
     public Task<string> UpdateCategory(
         [Description("Id kategorie.")] int categoryId,
         [Description("Nový název.")] string? name = null,
@@ -50,10 +52,12 @@ public class CategoryTools(CategoryService categories, RuleService rules, StatsS
         [Description("Limit rozpočtu v Kč (0/None = bez limitu).")] decimal? budgetAmount = null,
         [Description("Přenášet nevyčerpaný rozpočet.")] bool? carryOver = null,
         [Description("Fixní náklad (hypotéka…).")] bool? isFixed = null,
-        [Description("Pozice mezi sourozenci (0 = první).")] int? position = null) => McpSetup.Guard(async () =>
+        [Description("Pozice mezi sourozenci (0 = první).")] int? position = null,
+        [Description("Platby v kategorii (i podkategoriích) nezapočítávat do výdajů a příjmů.")] bool? excludeFromStats = null) => McpSetup.Guard(async () =>
     {
         await categories.UpdateAsync(categoryId, new CategoryInput(name, null, parentId, move, color, need, budgetPeriod,
-            budgetPeriod == BudgetPeriod.None ? null : budgetAmount, budgetAmount is not null || budgetPeriod == BudgetPeriod.None, carryOver, isFixed, position));
+            budgetPeriod == BudgetPeriod.None ? null : budgetAmount, budgetAmount is not null || budgetPeriod == BudgetPeriod.None, carryOver, isFixed, position,
+            excludeFromStats));
         return "Uloženo.";
     });
 

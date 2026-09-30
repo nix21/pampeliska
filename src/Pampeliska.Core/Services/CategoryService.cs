@@ -6,11 +6,11 @@ namespace Pampeliska.Core.Services;
 
 public record CategoryNode(int Id, int? ParentId, CategoryKind Kind, string Name, int Depth, int SortOrder, string Color, string? OwnColor,
     NeedType Need, NeedType EffectiveNeed, string? InheritedFrom, BudgetPeriod BudgetPeriod, decimal? BudgetAmount, bool CarryOver,
-    bool IsFixed, string Path, int TopId);
+    bool IsFixed, string Path, int TopId, bool ExcludeFromStats, bool EffectiveExclude);
 
 public record CategoryInput(string? Name = null, CategoryKind? Kind = null, int? ParentId = null, bool SetParent = false, string? Color = null,
     NeedType? Need = null, BudgetPeriod? BudgetPeriod = null, decimal? BudgetAmount = null, bool SetBudget = false, bool? CarryOver = null,
-    bool? IsFixed = null, int? SortOrder = null);
+    bool? IsFixed = null, int? SortOrder = null, bool? ExcludeFromStats = null);
 
 public record MergePreview(int Transactions, int Rules, int Children, string Source, string Target);
 
@@ -25,7 +25,7 @@ public class CategoryService(AppDbContext db)
         var byParent = all.ToLookup(c => c.ParentId);
         var byId = all.ToDictionary(c => c.Id);
         var result = new List<CategoryNode>();
-        void Walk(int? parentId, int depth, string path, Category? top, NeedType parentNeed, string? parentFrom)
+        void Walk(int? parentId, int depth, string path, Category? top, NeedType parentNeed, string? parentFrom, bool parentExcluded)
         {
             foreach (var c in byParent[parentId].OrderBy(c => c.SortOrder).ThenBy(c => c.Name))
             {
@@ -33,13 +33,14 @@ public class CategoryService(AppDbContext db)
                 var eff = c.Need == NeedType.Inherit ? parentNeed : c.Need;
                 var from = c.Need == NeedType.Inherit ? parentFrom : c.Name;
                 var p = path.Length == 0 ? c.Name : $"{path} › {c.Name}";
+                var excluded = parentExcluded || c.ExcludeFromStats;
                 result.Add(new CategoryNode(c.Id, c.ParentId, c.Kind, c.Name, depth, c.SortOrder, t.ColorToken ?? "c1", c.ColorToken, c.Need,
                     eff == NeedType.Inherit ? NeedType.None : eff, c.Need == NeedType.Inherit ? parentFrom : null,
-                    c.BudgetPeriod, c.BudgetAmount, c.CarryOver, c.IsFixed, p, t.Id));
-                Walk(c.Id, depth + 1, p, t, eff, from);
+                    c.BudgetPeriod, c.BudgetAmount, c.CarryOver, c.IsFixed, p, t.Id, c.ExcludeFromStats, excluded));
+                Walk(c.Id, depth + 1, p, t, eff, from, excluded);
             }
         }
-        Walk(null, 0, "", null, NeedType.None, null);
+        Walk(null, 0, "", null, NeedType.None, null, false);
         _ = byId;
         return result;
     }
@@ -49,6 +50,10 @@ public class CategoryService(AppDbContext db)
     /// <summary>Id kategorie → „Nadřazená › Kategorie“.</summary>
     public static async Task<Dictionary<int, string>> PathsAsync(AppDbContext db) =>
         BuildTree(await db.Categories.AsNoTracking().ToListAsync()).ToDictionary(n => n.Id, n => n.Path);
+
+    /// <summary>Kategorie, které se nezapočítávají do statistik (samy nebo zděděně po předkovi).</summary>
+    public static HashSet<int> ExcludedIds(IReadOnlyCollection<Category> all) =>
+        BuildTree(all).Where(n => n.EffectiveExclude).Select(n => n.Id).ToHashSet();
 
     /// <summary>Id kategorie a všech jejích potomků.</summary>
     public static HashSet<int> WithDescendants(IReadOnlyCollection<Category> all, int id)
@@ -81,6 +86,7 @@ public class CategoryService(AppDbContext db)
             Need = input.Need ?? NeedType.Inherit,
             SortOrder = input.SortOrder ?? (siblings.Count == 0 ? 0 : siblings.Max(s => s.SortOrder) + 1),
             IsFixed = input.IsFixed ?? false,
+            ExcludeFromStats = input.ExcludeFromStats ?? false,
         };
         ApplyBudget(c, input);
         db.Categories.Add(c);
@@ -104,6 +110,7 @@ public class CategoryService(AppDbContext db)
         }
         if (input.Need is { } need) c.Need = need;
         if (input.IsFixed is { } fixedCost) c.IsFixed = fixedCost;
+        if (input.ExcludeFromStats is { } exclude) c.ExcludeFromStats = exclude;
         if (input.SortOrder is { } order) await ReorderAsync(c, order);
         ApplyBudget(c, input);
         await db.SaveChangesAsync();

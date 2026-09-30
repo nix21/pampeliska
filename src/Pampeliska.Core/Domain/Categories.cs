@@ -21,6 +21,11 @@ public class Category
     public bool CarryOver { get; set; }
     /// <summary>Fixní náklad (hypotéka…) – v rozpočtu stav Zaplaceno / Čeká na platbu.</summary>
     public bool IsFixed { get; set; }
+    /// <summary>
+    /// Platby v kategorii (i části rozdělených) se nezapočítávají do výdajů a příjmů – např. kauce, půjčky vlastní firmě.
+    /// Dědí se na podkategorie.
+    /// </summary>
+    public bool ExcludeFromStats { get; set; }
 }
 
 /// <summary>Osobní limit člena v kategorii (vedle limitu domácnosti).</summary>

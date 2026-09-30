@@ -92,6 +92,20 @@ export const isTransferKind = (k: TransactionKind) => k === 'Transfer' || k === 
 export const isCategorizable = (tx: Pick<TxRow, 'kind' | 'betweenMembers'>) =>
   tx.kind === 'Expense' || tx.kind === 'Income' || tx.kind === 'Refund' || tx.betweenMembers
 
+/** Pohyb se celý nezapočítává: vyřazený sám, nebo všechny jeho kategorie jsou vyřazené (korekce mají vlastní označení). */
+export function isExcludedTx(tx: Pick<TxRow, 'kind' | 'excludeFromStats' | 'categoryId' | 'splits'>, isExcluded: (id?: number | null) => boolean) {
+  if (tx.kind === 'Correction') return false
+  if (tx.excludeFromStats) return true
+  return tx.splits.length > 0 ? tx.splits.every((p) => isExcluded(p.categoryId)) : isExcluded(tx.categoryId)
+}
+
+/** Částka v Kč, která se započítává do výdajů/příjmů (bez částí ve vyřazených kategoriích). */
+export function countedCzk(tx: TxRow, isExcluded: (id?: number | null) => boolean) {
+  if (tx.excludeFromStats || !(tx.kind === 'Expense' || tx.kind === 'Income' || tx.kind === 'Refund')) return 0
+  if (tx.splits.length > 0) return tx.splits.reduce((a, p) => a + (isExcluded(p.categoryId) ? 0 : p.amountCzk), 0)
+  return isExcluded(tx.categoryId) ? 0 : tx.amountCzk
+}
+
 /** „Běžný účet · ČS“ */
 export function accountLabel(a?: Pick<Account, 'name' | 'institution'>, short = false) {
   if (!a) return 'Neznámý účet'

@@ -35,6 +35,35 @@ public class StatsTests : IDisposable
     }
 
     [Fact]
+    public async Task Excluded_category_is_ignored_including_split_parts_and_subcategories()
+    {
+        var tx = _env.Get<TransactionService>();
+        var categories = _env.Get<CategoryService>();
+        var parent = await categories.CreateAsync(new CategoryInput("Pronájem", CategoryKind.Income));
+        var rent = await categories.CreateAsync(new CategoryInput("Nájem", ParentId: parent.Id));
+        var deposit = await categories.CreateAsync(new CategoryInput("Kauce", ParentId: parent.Id));
+        await categories.UpdateAsync(deposit.Id, new CategoryInput(ExcludeFromStats: true));
+        var cash = await _env.ImportAsync(_env.Bezny, TestEnv.Tx("2026-09-05", 45000, "Vklad hotovosti"));
+        await tx.UpdateAsync(cash.TransactionIds[0], new TxUpdate(Splits: [new SplitInput(deposit.Id, 30000), new SplitInput(rent.Id, 15000)]), "V");
+        var loan = await _env.ImportAsync(_env.Bezny, TestEnv.Tx("2026-09-06", 110000, "Firma s.r.o."));
+        await tx.UpdateAsync(loan.TransactionIds[0], new TxUpdate(CategoryId: deposit.Id, SetCategory: true), "V");
+
+        var stats = _env.Get<StatsService>();
+        var o = await stats.OverviewAsync(new StatsFilter(DateRange.Month(2026, 9)), compare: false);
+        Assert.Equal(15000, o.Income);
+        var summary = await stats.SummaryAsync(DateRange.Month(2026, 9), null, null);
+        Assert.Equal(15000, summary.Income);
+        Assert.Equal(1, summary.Excluded); // celá půjčka; vklad se započítává částí nájmu
+
+        // Vyřazení hlavní kategorie se dědí na podkategorie
+        await categories.UpdateAsync(deposit.Id, new CategoryInput(ExcludeFromStats: false));
+        await categories.UpdateAsync(parent.Id, new CategoryInput(ExcludeFromStats: true));
+        Assert.Equal(0, (await stats.OverviewAsync(new StatsFilter(DateRange.Month(2026, 9)), compare: false)).Income);
+        var excluded = await tx.ListAsync(new TxFilter(Excluded: true));
+        Assert.Equal(2, excluded.Total);
+    }
+
+    [Fact]
     public async Task Member_filter_uses_shares_of_joint_account()
     {
         await _env.ImportAsync(_env.Spolecny, TestEnv.Tx("2026-09-05", -1000, "Albert"));

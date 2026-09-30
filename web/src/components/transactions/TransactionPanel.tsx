@@ -9,7 +9,7 @@ import { api, notifyError, notifyOk } from '../../lib/api'
 import { needColor, useCategories } from '../../lib/categories'
 import { currencySymbol, dateLong, dateShort, dayHeading, num, parseIso, relative } from '../../lib/format'
 import {
-  accountLabel, correctionBalance, equalShares, invalidateTx, isCategorizable, isTransferKind, kindLabel, shareOwner, sourceLabel, whoLabel,
+  accountLabel, correctionBalance, equalShares, invalidateTx, isCategorizable, isExcludedTx, isTransferKind, kindLabel, shareOwner, sourceLabel, whoLabel,
 } from '../../lib/transactions'
 import type { CategoryKind, NeedType, TxDetail, TxRef, TxRow, TxUpdate } from '../../lib/types'
 import { useMembers, useUi } from '../../state/ui'
@@ -139,7 +139,7 @@ function Detail({ d, variant, onClose, backLabel, onOpen }: { d: TxDetail; varia
   const SrcIcon = src === 'Rule' ? Wand2 : src === 'Ai' ? Sparkles : src === 'Auto' ? Link2 : Check
   const srcText = src ? (src === 'Ai' && tx.aiConfidence != null ? `${sourceLabel[src]} · ${tx.aiConfidence} %` : sourceLabel[src]) : d.batchLabel ?? null
   const when = `${dayHeading(tx.date)} ${parseIso(tx.date).getFullYear()}${tx.time ? ` · ${tx.time.slice(0, 5)}` : ''}`
-  const amountColor = isTransfer || excl || kind === 'Correction' ? 'var(--ink-2)' : tx.amount > 0 ? 'var(--pos)' : 'var(--ink)'
+  const amountColor = isTransfer || isExcludedTx(tx, cats.isExcluded) || kind === 'Correction' ? 'var(--ink-2)' : tx.amount > 0 ? 'var(--pos)' : 'var(--ink)'
 
   const menu: MenuItemDef[] = []
   if ((kind === 'Expense' || kind === 'Income') && !isSplit) menu.push({ label: 'Spárovat jako převod', icon: <Link2 size={15} />, onSelect: () => setPairing(true) })

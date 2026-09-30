@@ -99,7 +99,7 @@ public class HouseholdTools(AppDbContext db, FxService fx, AccountQueries accoun
 
     [McpServerTool(Name = "get_summary", Title = "Souhrn", ReadOnly = true, Idempotent = true, OpenWorld = false)]
     [Description("Příjmy, výdaje, bilance a míra úspor za období, rozpad podle kategorií (včetně podkategorií), nezbytné / pro radost a " +
-                 "největší obchodníci. Převody, korekce a vyřazené pohyby se nepočítají; u člena jen jeho podíl.")]
+                 "největší obchodníci. Převody, korekce, vyřazené pohyby a platby ve vyřazených kategoriích se nepočítají; u člena jen jeho podíl.")]
     public Task<OverviewStats> GetSummary(
         [Description("Období: 2026-09, 2026-Q3, 2026 nebo 2026-01-01..2026-06-30.")] string period,
         [Description("Id člena (volitelné).")] int? memberId = null,

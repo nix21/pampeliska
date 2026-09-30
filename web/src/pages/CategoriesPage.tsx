@@ -1,7 +1,7 @@
 import { DndContext, DragOverlay, PointerSensor, pointerWithin, useDraggable, useDroppable, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import clsx from 'clsx'
-import { ChevronLeft, ChevronRight, GripVertical, Plus, Search, X } from 'lucide-react'
+import { Ban, ChevronLeft, ChevronRight, GripVertical, Plus, Search, X } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useSearchParams } from 'react-router-dom'
 import { PageHeader } from '../components/AppShell'
@@ -310,6 +310,7 @@ function TreeRow({ row, stat, months, selected, dragging, invalidDrop, onSelect,
         </button>
         <span className={s.dot} style={{ width: top ? 12 : 9, height: top ? 12 : 9, background: shade(node.color, node.depth) }} />
         <span className={clsx('ellipsis', s.name)}>{node.name}</span>
+        {node.excludeFromStats && <span title="Nezapočítává se do statistik" style={{ display: 'inline-flex', color: 'var(--ink-3)' }}><Ban size={13} /></span>}
         {row.hasKids && !row.open && <span className={s.kids}>{row.kids}</span>}
       </div>
       <NeedTag node={node} />
