@@ -29,7 +29,7 @@ public class CategoryTools(CategoryService categories, RuleService rules, StatsS
     public Task<object> CreateCategory(
         [Description("Název.")] string name,
         [Description("Id nadřazené kategorie; null = hlavní kategorie.")] int? parentId = null,
-        [Description("Expense nebo Income (u podkategorie se převezme z rodiče).")] CategoryKind kind = CategoryKind.Expense,
+        [Description("Expense nebo Income; u hlavní kategorie výchozí Expense, u podkategorie se převezme z rodiče.")] CategoryKind? kind = null,
         [Description("Typ výdaje: Inherit (zdědit), Need, Joy, None.")] NeedType need = NeedType.Inherit,
         [Description("Barva hlavní kategorie: c1…c12.")] string? color = null,
         [Description("Platby v kategorii (i podkategoriích) nezapočítávat do výdajů a příjmů.")] bool excludeFromStats = false) => McpSetup.Guard(async () =>
