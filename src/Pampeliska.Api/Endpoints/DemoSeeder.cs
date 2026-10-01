@@ -11,7 +11,7 @@ namespace Pampeliska.Api.Endpoints;
 /// pravidla, pravidelné platby, rozpočty, investice a pár nepotvrzených návrhů ve frontě.
 /// </summary>
 public class DemoSeeder(AppDbContext db, HouseholdService household, AccountService accounts, ImportService import, TransactionService txs,
-    RuleService rules, RecurringService recurring, BudgetService budgets, InvestmentService investments, TimeProvider time)
+    RuleService rules, RecurringService recurring, BudgetService budgets, InvestmentService investments, SavingTipService tips, TimeProvider time)
 {
     private readonly Random _rnd = new(42);
 
@@ -186,6 +186,40 @@ public class DemoSeeder(AppDbContext db, HouseholdService household, AccountServ
         await investments.AddTradeAsync(new TradeInput(etf.Id, today.AddDays(-2), TradeSide.Buy, "VWCE", "Vanguard FTSE All-World", 7, 109.52m, "EUR", null));
         await investments.AddTradeAsync(new TradeInput(etf.Id, today.AddDays(-60), TradeSide.Buy, "CSPX", "iShares Core S&P 500", 1, 589.2m, "EUR", null));
         await recurring.DetectAsync();
+
+        // Rady od AI na Kde ušetřit (dvě starší, jedna skrytá a jedna odmítnutá)
+        async Task<List<int>> Ids(params string[] merchants) => (await db.Transactions.AsNoTracking()
+            .Where(t => t.Date >= today.AddMonths(-6)).Select(t => new { t.Id, t.Counterparty }).ToListAsync())
+            .Where(t => merchants.Any(m => t.Counterparty.Contains(m))).Select(t => t.Id).ToList();
+        async Task Tip(SavingTipInput input, int monthsAgo = 0, SavingTipStatus status = SavingTipStatus.Active)
+        {
+            var dto = await tips.CreateAsync(input, "Claude Desktop (demo)");
+            var t = await db.SavingTips.FirstAsync(x => x.Id == dto.Id);
+            t.Since = today.AddMonths(-monthsAgo);
+            t.Status = status;
+            await db.SaveChangesAsync();
+        }
+        await Tip(new SavingTipInput("Platíte dvě streamovací služby najednou",
+            "Netflix a YouTube Premium vás stojí dohromady asi 650 Kč měsíčně. Když budete služby střídat po měsících (vždy jedna aktivní), " +
+            "ušetříte zhruba 320 Kč měsíčně.", "Předplatné", 320, Evidence: "pravidelné platby Netflix a YouTube Premium · 6 měsíců",
+            TransactionIds: await Ids("NETFLIX", "YOUTUBE")));
+        await Tip(new SavingTipInput("Rozvoz a restaurace ve všední dny",
+            "Za Wolt a Lokál platíte v průměru přes 1 500 Kč měsíčně, většinou mezi 12. a 20. hodinou. Když jednu objednávku týdně nahradíte " +
+            "vařením, ušetříte zhruba 600 Kč měsíčně.", "Jídlo", 600, Evidence: "platby Wolt a Lokál Dlouhá · posledních 6 měsíců",
+            TransactionIds: await Ids("WOLT", "LOKAL")));
+        await Tip(new SavingTipInput("Osobní účet RB vás může stát poplatek",
+            "Podmínka 10 plateb kartou za měsíc na Osobním účtu se nesplňuje pokaždé a poplatek je 99 Kč. Stačí platit kartou RB i kávu " +
+            "a drobné nákupy.", "Účty", 8, SavingLabel: "≈ 100 Kč / rok", Evidence: "podmínky účtu · posledních 6 měsíců", MemberId: misa.Id), 1);
+        await Tip(new SavingTipInput("Pojištění auta se brzy obnovuje",
+            "Za povinné ručení a havarijní platíte 9 800 Kč ročně. Podobné vozy v kalkulačkách vycházejí o 10–20 % levněji. " +
+            "Srovnání má smysl udělat měsíc před výročím.", "Pojištění", 120, SavingLabel: "≈ 1 000–2 000 Kč / rok",
+            Evidence: "pravidelná platba Pojištění auta", Search: "KOOPERATIVA"), 1);
+        await Tip(new SavingTipInput("Káva cestou do práce",
+            "Kavárny dělají kolem 1 000 Kč měsíčně, skoro vždy ráno. Káva z domu v termohrnku by to snížila zhruba na 250 Kč.", "Jídlo", 750,
+            Evidence: "platby Cafe Lounge a Starbucks", TransactionIds: await Ids("CAFE LOUNGE", "STARBUCKS"), MemberId: misa.Id), 2, SavingTipStatus.Hidden);
+        await Tip(new SavingTipInput("Spořicí účet s vyšším úrokem jinde",
+            "Jiné banky nabízejí na spořicím účtu o 0,5 p. b. víc. Při současném zůstatku by to dělalo asi 160 Kč měsíčně.", "Účty", 160,
+            Evidence: "zůstatek Spořicího účtu"), 3, SavingTipStatus.Rejected);
     }
 
     private async Task EnsureRatesAsync(DateOnly from, DateOnly to)

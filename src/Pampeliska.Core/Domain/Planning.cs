@@ -42,6 +42,39 @@ public class RecurringSkip
     public DateOnly DueDate { get; set; }
 }
 
+public enum SavingTipStatus { Active, Hidden, Rejected }
+
+/// <summary>
+/// Kde ušetřit: rada od AI. Ukazuje se od měsíce <see cref="Since"/> dál, dokud ji uživatel neskryje
+/// (AI ji dál považuje za platnou) nebo neodmítne (AI ji ani podobné už nenabízí).
+/// </summary>
+public class SavingTip
+{
+    public int Id { get; set; }
+    public required string Title { get; set; }
+    public required string Body { get; set; }
+    /// <summary>Krátký štítek oblasti (Předplatné, Jídlo, Účty…).</summary>
+    public required string Topic { get; set; }
+    /// <summary>Odhad úspory v Kč za měsíc (0 = neušetří, jen posune peníze v čase).</summary>
+    public decimal MonthlySaving { get; set; }
+    /// <summary>Vlastní popisek úspory místo „≈ X Kč / měs.“ (rozpětí, roční částka…).</summary>
+    public string? SavingLabel { get; set; }
+    /// <summary>Z čeho rada vychází („14 plateb Wolt, Pizza Nuova · červen–září“).</summary>
+    public string? Evidence { get; set; }
+    /// <summary>Id pohybů, ze kterých rada vychází, oddělená čárkou (pro „Ukázat platby“).</summary>
+    public string? TransactionIds { get; set; }
+    /// <summary>Hledaný text pro „Ukázat platby“, když rada nemá konkrétní pohyby.</summary>
+    public string? Search { get; set; }
+    /// <summary>Rada jen pro člena (null = domácnost).</summary>
+    public int? MemberId { get; set; }
+    public SavingTipStatus Status { get; set; }
+    /// <summary>Den, od kterého se rada ukazuje (v jeho měsíci je „nová“).</summary>
+    public DateOnly Since { get; set; }
+    public required string CreatedBy { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset UpdatedAt { get; set; }
+}
+
 /// <summary>Hodnota investičního účtu k datu (ručně nebo přes MCP).</summary>
 public class InvestmentValue
 {

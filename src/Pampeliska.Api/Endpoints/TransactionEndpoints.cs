@@ -18,12 +18,16 @@ public static class TransactionEndpoints
 
     public static void MapTransactionEndpoints(this RouteGroupBuilder api)
     {
-        api.MapGet("/transactions", (TransactionService svc, string? period, int? account, int? member, KindFilter? kind, int? category, string? search,
+        api.MapGet("/transactions", async (TransactionService svc, string? period, int? account, int? member, KindFilter? kind, int? category, string? search,
                 bool? split, bool? unconfirmed, bool? recurring, bool? excluded, bool? corrections, bool? uncategorized, bool? suspected, bool? confirmedOnly,
-                int? batch, TxSort? sort, int? skip, int? take, string? from) =>
-            svc.ListAsync(new TxFilter(Range(period), account, member, kind ?? KindFilter.All, category, search, split == true, unconfirmed == true,
-                recurring == true, excluded == true, corrections == true, uncategorized == true, suspected == true, confirmedOnly == true, batch,
-                sort ?? TxSort.DateDesc, skip ?? 0, take ?? 200, from)));
+                int? batch, TxSort? sort, int? skip, int? take, string? from, int? tip, SavingTipService tips) =>
+        {
+            // Platby k radě „Kde ušetřit“: pohyby rady bez ohledu na období
+            var ids = tip is { } t ? await tips.TransactionIdsAsync(t) : null;
+            return await svc.ListAsync(new TxFilter(ids is null ? Range(period) : null, account, member, kind ?? KindFilter.All, category, search,
+                split == true, unconfirmed == true, recurring == true, excluded == true, corrections == true, uncategorized == true, suspected == true,
+                confirmedOnly == true, batch, sort ?? TxSort.DateDesc, skip ?? 0, take ?? 200, from, ids));
+        });
 
         api.MapGet("/transactions/summary", (StatsService svc, string period, int? account, int? member, bool? confirmedOnly) =>
             svc.SummaryAsync(DateRange.Parse(period), account, member, confirmedOnly == true));

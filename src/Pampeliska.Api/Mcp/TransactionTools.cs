@@ -71,12 +71,23 @@ public class TransactionTools(ImportService import, TransactionService txs, Inbo
         [Description("Další možné kategorie s jistotou.")] public List<AiAlternative>? Alternatives { get; set; }
     }
 
+    public record SuggestResponse(int Applied, int AutoConfirmed, IReadOnlyList<string> Skipped, string Next);
+
     [McpServerTool(Name = "suggest_categories", Title = "Navrhnout kategorie", ReadOnly = false, Destructive = false, Idempotent = true, OpenWorld = false)]
     [Description("Uloží návrhy kategorií (nebo rozdělení) od AI. Návrh s jistotou alespoň na prahu domácnosti se rovnou potvrdí, ostatní čekají " +
-                 "na uživatele ve frontě Ke kategorizaci. Ručně zařazené a potvrzené pohyby se nemění.")]
-    public Task<SuggestResult> SuggestCategories([Description("Návrhy.")] List<Suggestion> suggestions) => McpSetup.Guard(async () =>
-        await txs.SuggestAsync(suggestions.Select(s => new AiSuggestion(s.TransactionId, s.CategoryId, s.Splits, s.Confidence, s.Reason, s.Alternatives)).ToList(),
-            await user.ActorAsync()));
+                 "na uživatele ve frontě Ke kategorizaci. Ručně zařazené a potvrzené pohyby se nemění. " +
+                 "Když si u pohybu nejsi jistý, nehádej potichu: po kategorizaci dej uživateli číslovaný soupis nejistých pohybů " +
+                 "(1., 2., 3. … – datum, částka, protistrana, tvůj návrh a krátká otázka), aby mohl odpovědět odkazem na číslo. " +
+                 "Nakonec mu navrhni, že všechny zařazené pohyby potvrdíš (confirm_transactions po jeho souhlasu).")]
+    public Task<SuggestResponse> SuggestCategories([Description("Návrhy.")] List<Suggestion> suggestions) => McpSetup.Guard(async () =>
+    {
+        var r = await txs.SuggestAsync(
+            suggestions.Select(s => new AiSuggestion(s.TransactionId, s.CategoryId, s.Splits, s.Confidence, s.Reason, s.Alternatives)).ToList(),
+            await user.ActorAsync());
+        return new SuggestResponse(r.Applied, r.AutoConfirmed, r.Skipped,
+            "Až budeš mít zařazeno vše, dej uživateli číslovaný soupis nejistých pohybů s tvým návrhem a otázkou " +
+            "a navrhni, že po jeho souhlasu všechny zařazené pohyby potvrdíš (confirm_transactions).");
+    });
 
     public class Categorization
     {
@@ -116,7 +127,7 @@ public class TransactionTools(ImportService import, TransactionService txs, Inbo
     });
 
     [McpServerTool(Name = "confirm_transactions", Title = "Potvrdit pohyby", ReadOnly = false, Destructive = false, Idempotent = true, OpenWorld = false)]
-    [Description("Potvrdí zařazené pohyby (nezařazené přeskočí). Použij jen se souhlasem uživatele.")]
+    [Description("Potvrdí zařazené pohyby (nezařazené přeskočí). Použij jen se souhlasem uživatele – po kategorizaci mu to sám navrhni.")]
     public Task<object> ConfirmTransactions([Description("Id pohybů.")] List<int> transactionIds) => McpSetup.Guard(async () =>
         (object)new { confirmed = await txs.ConfirmAsync(transactionIds, await user.ActorAsync()) });
 

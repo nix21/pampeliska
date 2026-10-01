@@ -130,10 +130,27 @@ export interface SavingsOverview {
   averageShare: number
   topJoy: JoyCategory[]
   subscriptions: JoySubscription[]
-  insight?: { categoryId: number; count: number; yearlyCzk: number; names: string[] }
   disposable: number
   monthlyNet: number
   outlook: number[]
+}
+
+export type SavingTipStatus = 'Active' | 'Hidden' | 'Rejected'
+/** Rada od AI (přes MCP add_saving_tip); ukazuje se od měsíce `since` dál. */
+export interface SavingTip {
+  id: number
+  title: string
+  body: string
+  topic: string
+  monthlySaving: number
+  savingLabel?: string
+  evidence?: string
+  transactionIds: number[]
+  search?: string
+  memberId?: number
+  status: SavingTipStatus
+  since: string
+  createdBy: string
 }
 
 // ---------- Investice ----------

@@ -219,6 +219,22 @@ public class McpFlowTests(PampeliskaFactory factory) : IClassFixture<PampeliskaF
         var summary = await Call(mcp, "get_summary", new() { ["period"] = "2026-09" });
         Assert.Equal(1453.5m, summary.GetProperty("expense").GetDecimal());
 
+        // Kde ušetřit: podklady, rada s pohyby, skrytí na pokyn uživatele
+        var overview = await Call(mcp, "get_savings_overview", new() { ["month"] = "2026-09" });
+        Assert.Equal(6, overview.GetProperty("history").GetArrayLength());
+        var netflixId = queue.EnumerateArray().First(q => q.GetProperty("counterparty").GetString() == "NETFLIX.COM").GetProperty("id").GetInt32();
+        var tip = await Call(mcp, "add_saving_tip", new()
+        {
+            ["tip"] = new { title = "Streamování", body = "Netflix vás stojí 329 Kč měsíčně.", topic = "Předplatné", monthlySaving = 329, transactionIds = new[] { netflixId } },
+        });
+        Assert.Equal("Active", tip.GetProperty("status").GetString());
+        var tipId = tip.GetProperty("id").GetInt32();
+        var hidden = await Call(mcp, "update_saving_tip", new() { ["tipId"] = tipId, ["status"] = "Hidden", ["changes"] = new { evidence = "platby Netflix" } });
+        Assert.Equal("platby Netflix", hidden.GetProperty("evidence").GetString());
+        Assert.Equal(1, (await Call(mcp, "list_saving_tips", new() { ["status"] = "Hidden" })).GetArrayLength());
+        var tipTxs = await browser.GetFromJsonAsync<JsonElement>($"/api/transactions?tip={tipId}");
+        Assert.Equal(netflixId, tipTxs.GetProperty("items")[0].GetProperty("id").GetInt32());
+
         // Odpojení v Nastavení → token přestane platit
         var connectionId = connections.EnumerateArray().First(c => c.GetProperty("clientName").GetString() == "Test klient").GetProperty("id").GetInt32();
         Assert.Equal(HttpStatusCode.NoContent, (await browser.DeleteAsync($"/api/mcp/connections/{connectionId}")).StatusCode);

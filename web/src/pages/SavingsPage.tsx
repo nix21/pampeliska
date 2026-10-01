@@ -1,15 +1,16 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import clsx from 'clsx'
-import { Bell, Calendar, ChevronLeft, ChevronRight, Repeat, Scissors, Sparkles } from 'lucide-react'
+import { Bell, Calendar, ChevronLeft, ChevronRight, EyeOff, List, Repeat, Scissors, Sparkles, X } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { PageHeader } from '../components/AppShell'
 import { MemberSwitch, Money, useMoney } from '../components/common'
 import { Button, Card, Empty, Spinner, tint } from '../components/ui'
 import { useAccounts } from '../lib/accounts'
 import { api, notifyError, notifyOk, qs } from '../lib/api'
 import { useCategories } from '../lib/categories'
-import { count, dateShort, monthLocative, monthNamesCap, monthShort, num, pct } from '../lib/format'
-import type { SavingsOverview } from '../lib/planning'
+import { count, dateShort, monthGenitive, monthLocative, monthNamesCap, monthShort, num, pct } from '../lib/format'
+import type { SavingsOverview, SavingTip, SavingTipStatus } from '../lib/planning'
 import { useUi } from '../state/ui'
 import s from './SavingsPage.module.css'
 
@@ -90,6 +91,8 @@ export default function SavingsPage() {
         tools={<>{monthPicker}<MemberSwitch /></>} />
       {q.isLoading || !data ? <Spinner center /> : (
         <>
+          <AiTips month={month} />
+
           <div className={s.kpis}>
             <Card>
               <span className={s.kpiLabel}><span className={s.joyDot} />Pro radost · {monthNamesCap[m - 1].toLowerCase()}</span>
@@ -114,12 +117,6 @@ export default function SavingsPage() {
                 <h2 style={{ flex: 1 }}>Předplatná a pravidelné výdaje pro radost</h2>
                 <span className="faint" style={{ fontSize: 12 }}>Seřazeno podle roční částky</span>
               </div>
-              {data.insight && (
-                <div className={s.insight}>
-                  <Sparkles size={16} />
-                  <span>Platíš {data.insight.count} {cats.nameOf(data.insight.categoryId).toLowerCase()} ({data.insight.names.join(', ')}) za {money(data.insight.yearlyCzk)} ročně. Většinou stačí jedna nebo dvě.</span>
-                </div>
-              )}
               <div className={clsx(s.subRow, s.subHead)}><span>Položka</span><span style={{ textAlign: 'right' }}>Měsíčně</span><span>Ročně</span><span>Další platba</span><span style={{ textAlign: 'right' }}>Zrušit?</span></div>
               {subs.length === 0 && <Empty title="Žádná předplatná pro radost">Pravidelné platby v kategoriích „pro radost“ se tu objeví samy.</Empty>}
               {subs.map((x) => {
@@ -231,5 +228,131 @@ export default function SavingsPage() {
         </>
       )}
     </>
+  )
+}
+
+type Archive = 'Hidden' | 'Rejected'
+
+/** Rady od AI (přidává je AI přes MCP). Platí od svého měsíce dál, dokud je uživatel neskryje nebo neodmítne. */
+function AiTips({ month }: { month: string }) {
+  const { member } = useUi()
+  const qc = useQueryClient()
+  const money = useMoney()
+  const navigate = useNavigate()
+  const [arch, setArch] = useState<Archive | null>(null)
+  const q = useQuery({ queryKey: ['saving-tips'], queryFn: () => api.get<SavingTip[]>('/api/savings/tips') })
+  const setStatus = useMutation({
+    mutationFn: ({ id, status }: { id: number; status: SavingTipStatus }) => api.post(`/api/savings/tips/${id}/status`, { status }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['saving-tips'] }),
+    onError: notifyError,
+  })
+
+  const all = (q.data ?? []).filter((t) => member === 'all' || t.memberId == null || t.memberId === member)
+  const active = all.filter((t) => t.status === 'Active' && t.since.slice(0, 7) <= month)
+  const shown = arch ? all.filter((t) => t.status === arch) : active
+  const nHidden = all.filter((t) => t.status === 'Hidden').length
+  const nRejected = all.filter((t) => t.status === 'Rejected').length
+  const pot = active.reduce((a, t) => a + t.monthlySaving, 0)
+  const [y, m] = month.split('-').map(Number)
+  const tipsLabel = (n: number) => count(n, 'rada', 'rady', 'rad')
+
+  /** null = nová v tomto měsíci */
+  const age = (t: SavingTip) => {
+    if (!arch && t.since.slice(0, 7) === month) return null
+    const [ty, tm] = t.since.split('-').map(Number)
+    return `Od ${monthGenitive[tm - 1]}${ty !== y ? ` ${ty}` : ''}`
+  }
+  const savingText = (t: SavingTip) => t.savingLabel ?? (t.monthlySaving > 0 ? `≈ ${money(t.monthlySaving)} / měs.` : null)
+  const paymentsLink = (t: SavingTip) =>
+    t.transactionIds.length ? `/pohyby?rada=${t.id}` : t.search ? `/pohyby?hledat=${encodeURIComponent(t.search)}` : null
+  const chip = (k: Archive, label: string, n: number, title: string) => (
+    <button type="button" className={clsx(s.archChip, arch === k && s.archChipOn)} title={title} aria-pressed={arch === k}
+      onClick={() => setArch(arch === k ? null : k)}>
+      {label}<span className={s.archCount}>{n}</span>
+    </button>
+  )
+
+  return (
+    <Card>
+      <div className={s.tipsHead}>
+        <span className={s.tipsIcon}><Sparkles size={18} /></span>
+        <div className={clsx('col grow', s.tipsTitle)}>
+          <h2>{arch === 'Hidden' ? 'Skryté rady' : arch === 'Rejected' ? 'Odmítnuté rady' : `Rady od AI · ${monthNamesCap[m - 1]} ${y}`}</h2>
+          <span className="faint" style={{ fontSize: 12 }}>
+            {arch ? `${tipsLabel(nHidden + nRejected)} mimo hlavní seznam` : (
+              <>
+                {tipsLabel(active.length)} z vašich pohybů
+                <span className={s.desktopOnly}> za posledních 12 měsíců · rady se přenášejí do dalších měsíců, dokud je neskryjete</span>
+              </>
+            )}
+          </span>
+        </div>
+        {!arch && pot > 0 && (
+          <div className={s.tipsPot}>
+            <span className={clsx('faint', s.desktopOnly)} style={{ fontSize: 12 }}>Možná úspora</span>
+            <span className="num pos">≈ {money(pot)} / měs.</span>
+          </div>
+        )}
+        <div className={s.archChips}>
+          {chip('Hidden', 'Skryté', nHidden, 'Rady, které nechcete vidět. AI je dál považuje za platné.')}
+          {chip('Rejected', 'Odmítnuté', nRejected, 'Rady, které AI už nebude nabízet.')}
+        </div>
+      </div>
+      {arch && (
+        <div className={s.archNote}>
+          <span className="grow muted">
+            {arch === 'Hidden' ? 'Skryté rady AI dál považuje za platné, jen je nezobrazuje. Vrácená rada se znovu objeví v aktuálním měsíci.'
+              : 'Tyto rady ani podobné nové už AI nenabízí.'}
+          </span>
+          <button type="button" className={s.linkBtn} onClick={() => setArch(null)}>Zpět na rady</button>
+        </div>
+      )}
+      {q.isLoading ? <Spinner center /> : (
+        <div className={s.tips}>
+          {shown.map((t) => {
+            const a = age(t)
+            const sv = savingText(t)
+            const link = paymentsLink(t)
+            const busy = setStatus.isPending && setStatus.variables?.id === t.id
+            return (
+              <article key={t.id} className={clsx(s.tip, arch && s.tipArch)}>
+                <div className={s.tipTags}>
+                  <span className={clsx(s.tag, !a && s.tagNew)}>{a ?? 'Nová'}</span>
+                  <span className={s.tag}>{t.topic}</span>
+                  {t.status !== 'Active' && <span className={clsx(s.tag, s.tagOutline)}>{t.status === 'Hidden' ? 'Skrytá' : 'AI už nenabízí'}</span>}
+                  <span className="grow" />
+                  {sv && <span className={clsx('num', s.tipSaving, t.monthlySaving > 0 && 'pos')}>{sv}</span>}
+                </div>
+                <span className={s.tipTitle}>{t.title}</span>
+                <span className={s.tipBody}>{t.body}</span>
+                {t.evidence && <span className={s.tipEvidence}><List size={14} /><span>Vychází z: {t.evidence}</span></span>}
+                <div className={s.tipActions}>
+                  {link && <button type="button" className={s.linkBtn} onClick={() => navigate(link)}>Ukázat platby</button>}
+                  <span className="grow" />
+                  {t.status !== 'Active' && (
+                    <Button size="sm" disabled={busy} onClick={() => setStatus.mutate({ id: t.id, status: 'Active' })}>Vrátit mezi rady</Button>
+                  )}
+                  {t.status === 'Active' && (
+                    <Button size="sm" icon={<EyeOff size={14} />} disabled={busy} onClick={() => setStatus.mutate({ id: t.id, status: 'Hidden' })}>Skrýt</Button>
+                  )}
+                  {t.status !== 'Rejected' && (
+                    <Button size="sm" icon={<X size={14} />} disabled={busy} className={s.mutedBtn}
+                      onClick={() => setStatus.mutate({ id: t.id, status: 'Rejected' })}>Už nenabízet</Button>
+                  )}
+                </div>
+              </article>
+            )
+          })}
+          {shown.length === 0 && (
+            <div className={s.tipsEmpty}>
+              {arch ? 'Nic tu není.'
+                : (q.data ?? []).length === 0
+                  ? 'AI zatím žádné rady nepřidala. Připojte ji přes MCP (Nastavení) a požádejte ji, ať projde vaše pohyby a najde, kde ušetřit.'
+                  : 'Pro tento měsíc nemá AI žádné další rady.'}
+            </div>
+          )}
+        </div>
+      )}
+    </Card>
   )
 }

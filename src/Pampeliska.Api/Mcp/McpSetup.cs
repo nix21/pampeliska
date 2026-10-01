@@ -36,6 +36,20 @@ public static class McpSetup
         6. Co se dozvíš od uživatele a nejde vyjádřit pravidlem (výjimky, souvislosti, kdy se ptát), ulož přes add_note,
            případně oprav zastaralou poznámku (update_note, delete_note). Nemusíš se ptát předem, ale vždy uživateli řekni,
            co sis zapamatoval nebo změnil.
+        7. Po kategorizaci dej uživateli soupis všech nejistých pohybů (nižší jistota, nejasný obchodník, možné rozdělení):
+           číslovaný seznam 1., 2., 3. …, aby se uživatel mohl odkázat číslem („2 je dárek“). U každé položky datum, částka,
+           protistrana, tvůj návrh kategorie a krátká otázka. Pak navrhni, že všechny zařazené pohyby potvrdíš
+           (po souhlasu confirm_transactions, opravy z odpovědi nejdřív přes categorize_transactions).
+
+        Kde ušetřit (uživatel chce vědět, kde ušetřit, nebo zkontrolovat rady):
+        1. get_savings_overview (výdaje pro radost, předplatná, výhled), get_spending_by_month a get_summary za posledních 12 měsíců,
+           list_recurring_payments, get_conditions_status (poplatky za nesplněné podmínky), list_accounts (zůstatky, spořicí účty),
+           get_transactions na detaily (časy, obchodníci, trendy).
+        2. list_saving_tips – co už bylo navrženo. Odmítnuté (Rejected) ani podobné nenabízej, skryté (Hidden) nepřidávej znovu,
+           platné aktivní aktualizuj novými čísly (update_saving_tip), neplatné smaž (delete_saving_tip).
+        3. add_saving_tip – jen konkrétní rady podložené daty (čísla, obchodníci, období, id pohybů), s realistickým odhadem úspory.
+           Žádné obecné poučky. Uživateli pak rady krátce shrň.
+        4. Předplatná ke zrušení poznamenej (mark_subscriptions_to_cancel) jen na pokyn uživatele – je to připomínka, nic se nevypovídá.
 
         Důležité:
         - Před založením, přejmenováním, sloučením nebo smazáním kategorie či pravidla a před přímým potvrzením
@@ -65,6 +79,7 @@ public static class McpSetup
             .WithTools<CategoryTools>(JsonOptions)
             .WithTools<NoteTools>(JsonOptions)
             .WithTools<PlanningTools>(JsonOptions)
+            .WithTools<SavingTools>(JsonOptions)
             .WithRequestFilters(f => f.AddCallToolFilter(next => async (request, ct) =>
             {
                 var services = request.Services!;

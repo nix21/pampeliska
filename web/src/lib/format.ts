@@ -56,6 +56,8 @@ export const monthNamesCap = monthNames.map((m) => m[0].toUpperCase() + m.slice(
 export const monthShort = ['led', 'úno', 'bře', 'dub', 'kvě', 'čvn', 'čvc', 'srp', 'zář', 'říj', 'lis', 'pro']
 /** 2. pád / lokál: „v září“, „za září“. */
 export const monthLocative = ['lednu', 'únoru', 'březnu', 'dubnu', 'květnu', 'červnu', 'červenci', 'srpnu', 'září', 'říjnu', 'listopadu', 'prosinci']
+/** 2. pád: „od září“, „od ledna“. */
+export const monthGenitive = ['ledna', 'února', 'března', 'dubna', 'května', 'června', 'července', 'srpna', 'září', 'října', 'listopadu', 'prosince']
 export const weekdays = ['Neděle', 'Pondělí', 'Úterý', 'Středa', 'Čtvrtek', 'Pátek', 'Sobota']
 export const weekdaysShort = ['Ne', 'Po', 'Út', 'St', 'Čt', 'Pá', 'So']
 

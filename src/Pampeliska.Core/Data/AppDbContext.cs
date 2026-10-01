@@ -27,6 +27,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<CategorizationNote> CategorizationNotes => Set<CategorizationNote>();
     public DbSet<RecurringPayment> RecurringPayments => Set<RecurringPayment>();
     public DbSet<RecurringSkip> RecurringSkips => Set<RecurringSkip>();
+    public DbSet<SavingTip> SavingTips => Set<SavingTip>();
     public DbSet<InvestmentValue> InvestmentValues => Set<InvestmentValue>();
     public DbSet<InvestmentTrade> InvestmentTrades => Set<InvestmentTrade>();
     public DbSet<ExchangeRate> ExchangeRates => Set<ExchangeRate>();
@@ -118,6 +119,16 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
         b.Entity<RecurringPayment>().HasIndex(r => r.AccountId);
         b.Entity<RecurringSkip>().HasIndex(r => new { r.RecurringPaymentId, r.DueDate }).IsUnique();
+        b.Entity<SavingTip>(e =>
+        {
+            e.Property(t => t.Title).HasMaxLength(SavingTipService.TitleMax);
+            e.Property(t => t.Body).HasMaxLength(SavingTipService.BodyMax);
+            e.Property(t => t.Topic).HasMaxLength(SavingTipService.TopicMax);
+            e.Property(t => t.SavingLabel).HasMaxLength(SavingTipService.LabelMax);
+            e.Property(t => t.Evidence).HasMaxLength(SavingTipService.EvidenceMax);
+            e.Property(t => t.Search).HasMaxLength(100);
+            e.Property(t => t.CreatedBy).HasMaxLength(200);
+        });
         b.Entity<InvestmentValue>().HasIndex(v => new { v.AccountId, v.Date });
         b.Entity<InvestmentTrade>().HasIndex(v => new { v.AccountId, v.Date });
         b.Entity<ExchangeRate>().HasIndex(r => new { r.Date, r.Currency }).IsUnique();

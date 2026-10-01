@@ -8,10 +8,9 @@ public record JoyMonth(string Month, decimal Joy, decimal Total, decimal Share);
 public record JoyCategory(int CategoryId, decimal Amount, decimal Average);
 public record JoySubscription(int RecurringId, string Name, int AccountId, int? CategoryId, decimal Amount, string Currency, Frequency Frequency,
     decimal MonthlyCzk, decimal YearlyCzk, DateOnly? NextDue, bool MarkedToCancel, int? OwnerMemberId);
-public record SavingsInsight(int CategoryId, int Count, decimal YearlyCzk, IReadOnlyList<string> Names);
 
 public record SavingsOverview(string Month, decimal Joy, decimal JoyShare, decimal JoyYear, IReadOnlyList<JoyMonth> History, decimal AverageShare,
-    IReadOnlyList<JoyCategory> TopJoy, IReadOnlyList<JoySubscription> Subscriptions, SavingsInsight? Insight,
+    IReadOnlyList<JoyCategory> TopJoy, IReadOnlyList<JoySubscription> Subscriptions,
     decimal Disposable, decimal MonthlyNet, IReadOnlyList<decimal> Outlook);
 
 /// <summary>Kde ušetřit: výdaje pro radost, pravidelná předplatná pro radost a simulace jejich zrušení.</summary>
@@ -52,8 +51,6 @@ public class SavingsService(AppDbContext db, StatsService stats, RecurringServic
             .Select(r => new JoySubscription(r.Id, r.Name, r.AccountId, r.CategoryId, r.Amount, r.Currency, r.Frequency, -r.MonthlyCzk, -r.YearlyCzk,
                 r.NextDue, r.MarkedToCancel, accounts.TryGetValue(r.AccountId, out var a) ? a.OwnerMemberId : null))
             .OrderByDescending(s => s.YearlyCzk).ToList();
-        var insight = subs.Where(s => s.CategoryId is not null).GroupBy(s => s.CategoryId!.Value).Where(g => g.Count() >= 3)
-            .Select(g => new SavingsInsight(g.Key, g.Count(), g.Sum(s => s.YearlyCzk), g.Select(s => s.Name).ToList())).FirstOrDefault();
 
         // Výhled 12 měsíců: disponibilní zůstatek + průměrná měsíční bilance za poslední 3 měsíce
         var bal = await balances.BalancesAsync();
@@ -65,7 +62,7 @@ public class SavingsService(AppDbContext db, StatsService stats, RecurringServic
         var outlook = Enumerable.Range(1, 12).Select(i => Math.Round(disposable + net * i, 2)).ToList();
 
         return new SavingsOverview($"{month:yyyy-MM}", current.Joy, current.Share, current.Joy * 12, history,
-            history.Count > 0 ? Math.Round(history.Average(h => h.Share), 1) : 0, top, subs, insight, disposable, net, outlook);
+            history.Count > 0 ? Math.Round(history.Average(h => h.Share), 1) : 0, top, subs, disposable, net, outlook);
         // time je k dispozici pro budoucí rozšíření (dnešní den v měsíci)
     }
 

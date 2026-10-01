@@ -19,6 +19,7 @@ import {
   accountLabel, contributorLabel, countedCzk, FLAG_LABELS, isExcludedTx, isTransferKind, KIND_OPTIONS, ratioLabel, whoLabel,
   type KindFilter, type ListRow, type TransferFlow, type TxFlag, type TxSummary,
 } from '../lib/transactions'
+import type { SavingTip } from '../lib/planning'
 import type { Account, TxPage } from '../lib/types'
 import { periodLabel, useMembers, useUi } from '../state/ui'
 import s from './TransactionsPage.module.css'
@@ -72,7 +73,15 @@ export default function TransactionsPage() {
   }
   const [kind, setKind] = useState<KindFilter>('All')
   const [flag, setFlag] = useState<TxFlag | null>(null)
-  const [searchText, setSearchText] = useState('')
+  const [searchText, setSearchText] = useState(() => params.get('hledat') ?? '')
+  // Platby k radě z „Kde ušetřit“ (bez ohledu na období)
+  const [tipId, setTipId] = useState<number | null>(() => Number(params.get('rada')) || null)
+  const tip = useQuery({
+    queryKey: ['saving-tips'],
+    queryFn: () => api.get<SavingTip[]>('/api/savings/tips'),
+    enabled: tipId != null,
+    select: (all) => all.find((t) => t.id === tipId),
+  })
   const search = useDebounced(searchText.trim())
   const [take, setTake] = useState(PAGE)
   const [openSplits, setOpenSplits] = useState<Set<number>>(new Set())
@@ -101,6 +110,7 @@ export default function TransactionsPage() {
   const listParams = {
     ...base, kind: kind === 'All' ? undefined : kind, search: search || undefined, confirmedOnly: filterParams.confirmedOnly, from: from ?? undefined,
     ...(flag ? { [flag]: true } : {}),
+    ...(tipId != null ? { period: undefined, tip: tipId } : {}),
   }
   const listKey = JSON.stringify(listParams)
   const [prevKey, setPrevKey] = useState(listKey)
@@ -169,14 +179,14 @@ export default function TransactionsPage() {
   const account = accountId != null ? accounts.byId.get(accountId) : undefined
   const memberName = member === 'all' ? null : members.get(member)?.name
   const subtitle = [
-    periodLabel(period),
+    tipId != null ? 'platby k radě' : periodLabel(period),
     list.data ? count(total, 'pohyb', 'pohyby', 'pohybů') : null,
     account ? accountLabel(account) : 'všechny účty',
     memberName ? `${memberName} a společné` : 'všichni členové',
   ].filter(Boolean).join(' · ')
 
-  const showFlows = (kind === 'All' || kind === 'Transfer') && (flows.data?.length ?? 0) > 0
-  const filtersActive = kind !== 'All' || flag !== null || !!search || accountId != null
+  const showFlows = tipId == null && (kind === 'All' || kind === 'Transfer') && (flows.data?.length ?? 0) > 0
+  const filtersActive = kind !== 'All' || flag !== null || !!search || accountId != null || tipId != null
   const fromLabel = !from ? null
     : from === 'all' ? 'vše'
       : from === 'ext' ? 'externě'
@@ -253,8 +263,13 @@ export default function TransactionsPage() {
             Příchozí · {fromLabel} <X size={12} />
           </button>
         )}
+        {tipId != null && (
+          <button type="button" className={clsx(commonStyles.chip, commonStyles.chipOn)} onClick={() => setTipId(null)} title="Zrušit filtr rady">
+            <span className="ellipsis" style={{ maxWidth: 280 }}>Rada · {tip.data?.title ?? '…'}</span> <X size={12} />
+          </button>
+        )}
         {filtersActive && (
-          <button type="button" className={s.clear} onClick={() => { setKind('All'); setFlag(null); setSearchText(''); setAccountId(null) }}>
+          <button type="button" className={s.clear} onClick={() => { setKind('All'); setFlag(null); setSearchText(''); setAccountId(null); setTipId(null) }}>
             Zrušit filtry
           </button>
         )}
@@ -264,7 +279,7 @@ export default function TransactionsPage() {
         <section className={s.main}>
           {showFlows && <FlowsCard flows={flows.data!} accountId={accountId} from={from} onPick={setAccountId} onPickCell={pickFlow} />}
 
-          <div className={s.summary}>
+          {tipId == null && <div className={s.summary}>
             <SummaryCard label="Výdaje" value={summary.data ? <Money value={-summary.data.expense} sign /> : null}
               note={summary.data?.refunds ? <>vč. vratek <Money value={summary.data.refunds} sign /></> : periodLabel(period)} />
             <SummaryCard label="Příjmy" value={summary.data ? <Money value={summary.data.income} sign /> : null} color="var(--pos)"
@@ -272,7 +287,7 @@ export default function TransactionsPage() {
             <SummaryCard label="Převody" value={summary.data ? num(summary.data.transfers) : null} note="mimo výdaje i příjmy" />
             <SummaryCard label="Mimo statistiky" value={summary.data ? num(summary.data.excluded + summary.data.corrections) : null} color="var(--ink-3)"
               note="nezapočítávané a korekce" />
-          </div>
+          </div>}
 
           <div className={s.list}>
             {list.isLoading ? (

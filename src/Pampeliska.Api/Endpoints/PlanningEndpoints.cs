@@ -9,6 +9,7 @@ public record SkipInput(DateOnly Due);
 public record PairInput(int TransactionId);
 public record AmountAlertInput(bool Accept);
 public record CancelMarksInput(Dictionary<int, bool> Marks);
+public record TipStatusInput(SavingTipStatus Status);
 public record ValueInput(DateOnly Date, decimal Value);
 
 public static class PlanningEndpoints
@@ -59,6 +60,8 @@ public static class PlanningEndpoints
         api.MapGet("/savings", (SavingsService svc, string? month, int? member, bool? confirmedOnly, TimeProvider time) =>
             svc.OverviewAsync(Month(month, time), member, confirmedOnly == true));
         api.MapPost("/savings/cancel-marks", async (CancelMarksInput i, SavingsService svc) => { await svc.MarkToCancelAsync(i.Marks); return Results.NoContent(); });
+        api.MapGet("/savings/tips", (SavingTipService svc) => svc.ListAsync());
+        api.MapPost("/savings/tips/{id:int}/status", (int id, TipStatusInput i, SavingTipService svc) => svc.SetStatusAsync(id, i.Status));
 
         api.MapGet("/investments", (InvestmentService svc) => svc.AccountsAsync());
         api.MapPost("/investments/{accountId:int}/values", async (int accountId, ValueInput i, InvestmentService svc) =>

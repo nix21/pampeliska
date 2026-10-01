@@ -27,7 +27,8 @@ public record TxFilter(
     TxSort Sort = TxSort.DateDesc,
     int Skip = 0,
     int Take = 200,
-    string? From = null);
+    string? From = null,
+    IReadOnlyList<int>? Ids = null);
 
 public record SplitDto(int CategoryId, decimal Amount, decimal AmountCzk, NeedType? NeedOverride);
 public record AiAlternative(int CategoryId, int Confidence);
@@ -110,6 +111,7 @@ public class TransactionService(AppDbContext db, BatchService batches, RuleServi
         if (f.Range is { } r) q = q.Where(t => t.Date >= r.From && t.Date <= r.To);
         if (f.AccountId is { } a) q = q.Where(t => t.AccountId == a);
         if (f.BatchId is { } b) q = q.Where(t => t.BatchId == b);
+        if (f.Ids is { } only) q = q.Where(t => only.Contains(t.Id));
         if (f.MemberId is { } m) q = q.Where(t => t.Shares.Any(s => s.MemberId == m && s.Percent > 0));
         if (f.From is { Length: > 0 } from) q = FromSource(q, from);
         // Výdaje/příjmy stejně jako statistiky: podle druhu kategorie (u rozdělení kterékoli části), nezařazené podle typu a směru.

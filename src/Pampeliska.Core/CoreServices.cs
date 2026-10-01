@@ -31,6 +31,7 @@ public static class CoreServices
         services.AddScoped<ConditionService>();
         services.AddScoped<BudgetService>();
         services.AddScoped<SavingsService>();
+        services.AddScoped<SavingTipService>();
         services.AddScoped<InvestmentService>();
         services.AddScoped<NotificationService>();
         services.AddScoped<IDailyCheck>(sp => sp.GetRequiredService<NotificationService>());
