@@ -4,6 +4,7 @@ namespace Pampeliska.Api.Endpoints;
 
 public record CorrectionInput(DateOnly Date, decimal ActualBalance);
 public record ArchiveInput(bool Archived = true);
+public record AccountOrderInput(List<int> Ids);
 
 public static class AccountEndpoints
 {
@@ -17,6 +18,11 @@ public static class AccountEndpoints
         {
             await svc.UpdateAsync(id, input);
             return await q.GetAsync(id);
+        });
+        api.MapPut("/accounts/order", async (AccountOrderInput input, AccountService svc) =>
+        {
+            await svc.ReorderAsync(input.Ids);
+            return Results.NoContent();
         });
         api.MapPost("/accounts/{id:int}/archive", async (int id, ArchiveInput input, AccountService svc) =>
         {

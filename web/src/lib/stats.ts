@@ -33,6 +33,8 @@ export interface MonthPoint {
   needs: NeedSplit
   /** Id hlavní kategorie → výdaj (u stromu příjmů příjem); klíč „0“ = nezařazené. */
   byTopCategory: Record<string, number>
+  /** Každá kategorie (i podkategorie) → částka včetně potomků; pro zanoření v grafu po měsících. */
+  byCategory: Record<string, number>
 }
 
 export interface MerchantAmount {

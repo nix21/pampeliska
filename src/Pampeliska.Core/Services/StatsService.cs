@@ -13,7 +13,10 @@ public record CategoryAmount(int? CategoryId, decimal Amount, decimal Previous, 
 
 public record NeedSplit(decimal Need, decimal Joy, decimal None);
 
-public record MonthPoint(string Month, decimal Income, decimal Expense, NeedSplit Needs, IReadOnlyDictionary<int, decimal> ByTopCategory);
+/// <param name="ByTopCategory">Hlavní kategorie → částka; klíč 0 = nezařazené.</param>
+/// <param name="ByCategory">Každá kategorie (i podkategorie) → částka včetně potomků.</param>
+public record MonthPoint(string Month, decimal Income, decimal Expense, NeedSplit Needs, IReadOnlyDictionary<int, decimal> ByTopCategory,
+    IReadOnlyDictionary<int, decimal> ByCategory);
 
 public record MerchantAmount(string Name, decimal Amount, int Count, int? CategoryId);
 
@@ -142,7 +145,7 @@ public class StatsService(AppDbContext db)
         return result;
     }
 
-    /// <summary>Měsíční body; <c>byTopCategory</c> rozpadá výdaje, nebo příjmy pro <paramref name="kind"/> = Income.</summary>
+    /// <summary>Měsíční body; <c>byTopCategory</c> a <c>byCategory</c> rozpadají výdaje, nebo příjmy pro <paramref name="kind"/> = Income.</summary>
     public static List<MonthPoint> Months(IReadOnlyCollection<Category> cats, IReadOnlyList<FlowLine> lines, DateRange range,
         CategoryKind kind = CategoryKind.Expense)
     {
@@ -164,7 +167,11 @@ public class StatsService(AppDbContext db)
                 .GroupBy(l => TopOf(l.CategoryId!.Value)).ToDictionary(g => g.Key, g => g.Sum(val));
             var unc = ml.Where(l => l.Kind == kind && l.CategoryId is null).Sum(val);
             if (unc != 0) byTop[0] = unc;
-            result.Add(new MonthPoint($"{m:yyyy-MM}", ml.Sum(IncomeOf), ml.Sum(ExpenseOf), Needs(ml), byTop));
+            var byCat = new Dictionary<int, decimal>();
+            foreach (var l in ml.Where(l => l.Kind == kind && l.CategoryId is not null))
+                for (int? c = l.CategoryId; c is { } x && parent.ContainsKey(x); c = parent[x])
+                    byCat[x] = byCat.GetValueOrDefault(x) + val(l);
+            result.Add(new MonthPoint($"{m:yyyy-MM}", ml.Sum(IncomeOf), ml.Sum(ExpenseOf), Needs(ml), byTop, byCat));
         }
         return result;
     }

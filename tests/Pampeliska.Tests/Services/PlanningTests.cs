@@ -78,6 +78,25 @@ public class StatsTests : IDisposable
     }
 
     [Fact]
+    public async Task Months_break_down_by_every_category_level_for_drill_down()
+    {
+        var tx = _env.Get<TransactionService>();
+        var albert = await _env.ImportAsync(_env.Bezny, TestEnv.Tx("2026-09-12", -3486, "Albert"));
+        await tx.UpdateAsync(albert.TransactionIds[0], new TxUpdate(Splits: [new SplitInput(_env.Cat("Supermarkety"), -2440), new SplitInput(_env.Cat("Elektronika"), -1046)]), "V");
+        var alza = await _env.ImportAsync(_env.Bezny, TestEnv.Tx("2026-08-05", -7244, "Alza.cz"));
+        await tx.UpdateAsync(alza.TransactionIds[0], new TxUpdate(CategoryId: _env.Cat("Elektronika"), SetCategory: true), "V");
+
+        var tree = await _env.Get<StatsService>().ExpensesAsync(new StatsFilter(DateRange.Parse("2026-Q3")), compare: false);
+        var sep = tree.Months.Single(m => m.Month == "2026-09").ByCategory;
+        var aug = tree.Months.Single(m => m.Month == "2026-08").ByCategory;
+        Assert.Equal(2440, sep[_env.Cat("Supermarkety")]);
+        Assert.Equal(1046, sep[_env.Cat("Elektronika")]);
+        Assert.Equal(1046, sep[_env.Cat("Elektronika a domácnost")]);
+        Assert.Equal(7244, aug[_env.Cat("Elektronika")]);
+        Assert.DoesNotContain(_env.Cat("Supermarkety"), aug.Keys);
+    }
+
+    [Fact]
     public async Task Excluded_category_is_ignored_including_split_parts_and_subcategories()
     {
         var tx = _env.Get<TransactionService>();
@@ -321,5 +340,26 @@ public class BudgetAndCategoryTests : IDisposable
         Assert.Equal(NeedType.Need, drogerie.EffectiveNeed);
         var software = tree.Single(n => n.Name == "Software");
         Assert.Equal(NeedType.None, software.EffectiveNeed); // hlavní „Předplatné“ je Inherit → nic
+    }
+}
+
+public class AccountOrderTests : IDisposable
+{
+    private readonly TestEnv _env = new();
+    public void Dispose() => _env.Dispose();
+
+    [Fact]
+    public async Task Reorder_puts_given_accounts_first_and_keeps_the_rest_in_previous_order()
+    {
+        var svc = _env.Get<AccountService>();
+        var q = _env.Get<AccountQueries>();
+        var before = (await q.ListAsync(true)).Select(a => a.Id).ToList();
+        await svc.ReorderAsync([_env.Eurovy.Id, _env.Spolecny.Id]);
+        var after = (await q.ListAsync(true)).Select(a => a.Id).ToList();
+        Assert.Equal([_env.Eurovy.Id, _env.Spolecny.Id, .. before.Where(id => id != _env.Eurovy.Id && id != _env.Spolecny.Id)], after);
+
+        var added = await svc.CreateAsync(new AccountInput(Name: "Nový", OwnerMemberId: _env.Vasek.Id));
+        Assert.Equal(added.Id, (await q.ListAsync(true)).Last().Id);
+        await Assert.ThrowsAsync<DomainException>(() => svc.ReorderAsync([999]));
     }
 }

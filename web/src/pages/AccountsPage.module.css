@@ -33,6 +33,21 @@
 .rowCzk { font-size: 12px; color: var(--ink-3); white-space: nowrap; }
 .mobileOnly { display: none !important; }
 
+.orderHint { font-size: 12px; color: var(--ink-3); }
+.orderRow { display: flex; align-items: stretch; border-top: 1px solid var(--line); background: var(--surface); }
+.orderRow > .row { border-top: 0; flex: 1; min-width: 0; padding-left: 8px; }
+.orderArrows { display: flex; flex-direction: column; justify-content: center; gap: 2px; padding-left: 8px; }
+.orderBtn {
+  display: flex; align-items: center; justify-content: center; width: 28px; height: 24px; padding: 0; border: 1px solid var(--line);
+  border-radius: var(--radius-sm); background: var(--surface); color: var(--ink-2); cursor: pointer;
+}
+.orderBtn:hover:not(:disabled) { background: var(--surface-2); color: var(--ink); }
+.orderBtn:disabled { opacity: .35; cursor: default; }
+.orderMobile {
+  display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; border: 0; border-radius: var(--radius-sm);
+  background: transparent; color: var(--ink-2); font-size: 14px; font-weight: 700; cursor: pointer;
+}
+
 .detailPanel {
   background: var(--surface); border: var(--card-border); border-radius: var(--radius); box-shadow: var(--shadow); padding: var(--pad);
   position: sticky; top: 20px; max-height: calc(100vh - 40px); overflow-y: auto; scrollbar-width: thin;
@@ -56,6 +71,7 @@
 }
 
 @media (max-width: 767px) {
+  .orderBtn { width: 44px; height: 30px; }
   .totals { display: none; }
   .grand { display: flex; flex-direction: column; gap: 4px; padding: 16px 18px; border-radius: var(--radius); background: var(--surface); border: var(--card-border); }
   .grandValue { font-family: var(--font-display); font-weight: var(--display-weight); letter-spacing: var(--display-tracking); font-size: 34px; font-variant-numeric: tabular-nums; }

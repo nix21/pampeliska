@@ -1,6 +1,6 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import clsx from 'clsx'
-import { Archive, ChevronDown, ChevronRight, Pencil, Plus } from 'lucide-react'
+import { Archive, ArrowUpDown, Check, ChevronDown, ChevronRight, ChevronUp, Pencil, Plus } from 'lucide-react'
 import { useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { AccountDetail } from '../components/accounts/AccountDetail'
@@ -9,15 +9,13 @@ import { accountMembers, belongsTo, shortBank, syncText } from '../components/ac
 import { PageHeader } from '../components/AppShell'
 import { InstitutionBadge, MemberSwitch, Money, Sparkline, useMoney } from '../components/common'
 import { Button, Card, Empty, Skeleton, tokenColor } from '../components/ui'
-import { groupLabel } from '../lib/accounts'
-import { api } from '../lib/api'
+import { GROUP_ORDER, groupLabel, sortAccounts } from '../lib/accounts'
+import { api, notifyError } from '../lib/api'
 import { count, dateLong, num } from '../lib/format'
 import { useIsMobile } from '../lib/household'
 import type { Account, AccountGroup, AccountKind, Member } from '../lib/types'
 import { useMembers, useUi } from '../state/ui'
 import s from './AccountsPage.module.css'
-
-const GROUPS: AccountGroup[] = ['Current', 'Savings', 'Foreign', 'Investment']
 
 function parseKind(v: string | null): AccountKind {
   const k = (v ?? '').toLowerCase()
@@ -37,12 +35,36 @@ export default function AccountsPage() {
   // Otevřená korekce patří konkrétnímu účtu (při přepnutí účtu se zavře)
   const [korFor, setKorFor] = useState<number | null>(null)
   const [showArchived, setShowArchived] = useState(false)
+  const [ordering, setOrdering] = useState(false)
+  const qc = useQueryClient()
 
-  const all = useQuery({ queryKey: ['accounts', 'with-archived'], queryFn: () => api.get<Account[]>('/api/accounts?archived=true') })
+  const all = useQuery({ queryKey: ['accounts', 'with-archived'], queryFn: async () => sortAccounts(await api.get<Account[]>('/api/accounts?archived=true')) })
   const list = useMemo(() => all.data ?? [], [all.data])
   const active = useMemo(() => list.filter((a) => !a.archived), [list])
   const archived = useMemo(() => list.filter((a) => a.archived), [list])
   const visible = useMemo(() => (member === 'all' ? active : active.filter((a) => belongsTo(a, member))), [active, member])
+
+  const reorder = useMutation({
+    mutationFn: (ids: number[]) => api.put('/api/accounts/order', { ids }),
+    onMutate: (ids) => {
+      // Okamžitě přeskládat seznam, server jen potvrdí
+      const byId = new Map(list.map((a) => [a.id, a]))
+      qc.setQueryData(['accounts', 'with-archived'], ids.map((id) => byId.get(id)!).filter(Boolean))
+    },
+    onError: notifyError,
+    onSettled: () => qc.invalidateQueries({ queryKey: ['accounts'] }),
+  })
+  /** Posune účet o jedno místo v rámci jeho skupiny (mezi viditelnými účty). */
+  const move = (a: Account, delta: number) => {
+    const rows = visible.filter((x) => x.group === a.group)
+    const other = rows[rows.indexOf(a) + delta]
+    if (!other) return
+    const ids = list.map((x) => x.id)
+    const i = ids.indexOf(a.id)
+    const j = ids.indexOf(other.id)
+    ;[ids[i], ids[j]] = [ids[j], ids[i]]
+    reorder.mutate(ids)
+  }
 
   const routeId = idParam ? Number(idParam) : undefined
   const selId = routeId ?? (mobile ? undefined : visible[0]?.id)
@@ -100,7 +122,14 @@ export default function AccountsPage() {
           actions={<Button variant="secondary" icon={<Pencil size={16} />} onClick={() => openForm('edit')}>Upravit</Button>} />
       ) : (
         <PageHeader title="Účty" subtitle={subtitle}
-          actions={!mobile && <Button variant="primary" icon={<Plus size={16} />} onClick={() => openForm('new')}>Přidat účet</Button>}
+          actions={!mobile && active.length > 1 ? (
+            <>
+              <Button variant={ordering ? 'dark' : 'secondary'} icon={ordering ? <Check size={16} /> : <ArrowUpDown size={16} />} onClick={() => setOrdering((v) => !v)}>
+                {ordering ? 'Hotovo' : 'Seřadit'}
+              </Button>
+              <Button variant="primary" icon={<Plus size={16} />} onClick={() => openForm('new')}>Přidat účet</Button>
+            </>
+          ) : !mobile && <Button variant="primary" icon={<Plus size={16} />} onClick={() => openForm('new')}>Přidat účet</Button>}
           tools={household.members.length > 1 ? <MemberSwitch full={mobile} /> : undefined} />
       )}
 
@@ -133,15 +162,28 @@ export default function AccountsPage() {
 
           <div className={s.layout}>
             <div className="col" style={{ gap: 12, minWidth: 0 }}>
+              {ordering && <span className={s.orderHint}>Šipkami posuňte účet v rámci skupiny. Pořadí platí pro seznamy a výběr účtu v celé aplikaci.</span>}
               <section className={s.list}>
-                {GROUPS.map((g) => {
+                {GROUP_ORDER.map((g) => {
                   const rows = ofGroup(g)
                   if (!rows.length) return null
                   return (
                     <div key={g} className={s.group}>
                       <div className={s.groupHead}><span>{groupLabel[g]}</span><span className="num">≈ {fmt(sumGroup(g))}</span></div>
                       <div className={s.groupRows}>
-                        {rows.map((a) => <AccountRow key={a.id} a={a} on={a.id === selId} members={members} onSelect={() => select(a)} />)}
+                        {rows.map((a, i) => {
+                          const row = <AccountRow key={a.id} a={a} on={a.id === selId} members={members} onSelect={() => select(a)} />
+                          if (!ordering) return row
+                          return (
+                            <div key={a.id} className={s.orderRow}>
+                              <span className={s.orderArrows}>
+                                <button type="button" className={s.orderBtn} aria-label={`Posunout ${a.name} výš`} disabled={i === 0} onClick={() => move(a, -1)}><ChevronUp size={16} /></button>
+                                <button type="button" className={s.orderBtn} aria-label={`Posunout ${a.name} níž`} disabled={i === rows.length - 1} onClick={() => move(a, 1)}><ChevronDown size={16} /></button>
+                              </span>
+                              {row}
+                            </div>
+                          )
+                        })}
                       </div>
                     </div>
                   )
@@ -149,7 +191,14 @@ export default function AccountsPage() {
                 {visible.length === 0 && <Empty title="Žádný účet">Vybraný člen nemá vlastní ani společné účty.</Empty>}
               </section>
               {mobile && (
-                <button type="button" className={s.addMobile} onClick={() => openForm('new')}><Plus size={16} /> Přidat účet</button>
+                <>
+                  <button type="button" className={s.addMobile} onClick={() => openForm('new')}><Plus size={16} /> Přidat účet</button>
+                  {active.length > 1 && (
+                    <button type="button" className={s.orderMobile} onClick={() => setOrdering((v) => !v)}>
+                      {ordering ? <><Check size={16} /> Hotovo</> : <><ArrowUpDown size={16} /> Seřadit účty</>}
+                    </button>
+                  )}
+                </>
               )}
               {archived.length > 0 && (
                 <div className={s.archived}>

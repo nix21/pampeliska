@@ -2,7 +2,7 @@ import clsx from 'clsx'
 import { ChevronRight, Inbox, Sparkles } from 'lucide-react'
 import { useMemo, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
-import { groupLabel, useAccounts } from '../../lib/accounts'
+import { GROUP_ORDER, groupLabel, useAccounts } from '../../lib/accounts'
 import { useCategories } from '../../lib/categories'
 import { count, currencySymbol, dateShort, num, pct, plural, relative } from '../../lib/format'
 import {
@@ -20,7 +20,6 @@ import s from './overview.module.css'
 // ---------- Pomocné ----------
 
 const GROUP_COLOR: Record<AccountGroup, string> = { Current: 'var(--c1)', Savings: 'var(--c6)', Foreign: 'var(--c4)', Investment: 'var(--c5)' }
-const GROUP_ORDER: AccountGroup[] = ['Current', 'Savings', 'Foreign', 'Investment']
 
 /** „+1,8 %“ s jedním desetinným místem. */
 function signedPct(d: number) {
@@ -436,7 +435,7 @@ export function AccountsCard({ className }: { className?: string }) {
   const money = useMoney()
   const members = useMembers()
   const { items } = useVisibleAccounts()
-  const sorted = [...items].sort((x, y) => GROUP_ORDER.indexOf(x.a.group) - GROUP_ORDER.indexOf(y.a.group))
+  const sorted = items
   const total = items.filter(({ a }) => a.includeInNetWorth).reduce((sum, { a, w }) => sum + a.balanceCzk * w, 0)
   return (
     <Card className={className} style={{ gap: 4 }}>

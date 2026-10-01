@@ -135,7 +135,19 @@ export function FlowPage({ kind }: { kind: CategoryKind }) {
   const fullTops = useMemo(() => (full.data ? buildExpenseTree(cats, full.data.categories, kind) : []), [cats, full.data, kind])
   const columns: StackColumn[] = (full.data?.months ?? []).map((m) => {
     const by = m.byTopCategory
-    if (selCat) return { key: m.month, label: monthKeyShort(m.month), segments: [{ key: selCat.id, value: by[String(selCat.id)] ?? 0, color: tokenVar(selCat.token), label: selCat.name }] }
+    if (selCat) {
+      // Rozpad vybrané kategorie na podkategorie; vybraná podkategorie zůstane v grafu sama
+      const top = fullTops.find((t) => t.id === selCat.id) ?? selCat
+      const topValue = by[String(selCat.id)] ?? 0
+      const kids = top.children.map((c, i) => ({
+        key: c.id, value: c.synthetic ? 0 : (m.byCategory[String(c.id)] ?? 0), color: childColor(top, c, i, mode), label: c.name, synthetic: c.synthetic,
+      }))
+      const rest = topValue - kids.reduce((a, k) => a + Math.max(0, k.value), 0)
+      for (const k of kids) if (k.synthetic) k.value = Math.max(0, rest)
+      const segments = !kids.length ? [{ key: selCat.id, value: topValue, color: tokenVar(selCat.token), label: selCat.name }]
+        : sub != null ? kids.filter((k) => k.key === sub) : kids
+      return { key: m.month, label: monthKeyShort(m.month), segments }
+    }
     const visible = Object.entries(by).filter(([k]) => !hiddenSet.has(Number(k))).reduce((a, [, v]) => a + v, 0)
     if (mode === 'need') {
       const f = m.expense > 0 ? visible / m.expense : 0
@@ -188,6 +200,9 @@ export function FlowPage({ kind }: { kind: CategoryKind }) {
       onSegmentClick={(c, seg) => {
         if (!selCat && mode === 'cat') {
           setSel(Number(seg.key))
+          setMonth(c.key)
+        } else if (selCat && Number(seg.key) > 0 && Number(seg.key) !== selCat.id && sub == null) {
+          setSub(Number(seg.key))
           setMonth(c.key)
         } else setMonth(month === c.key ? null : c.key)
       }} />
@@ -305,7 +320,8 @@ export function FlowPage({ kind }: { kind: CategoryKind }) {
 
   const monthSum = (key: string) => {
     const m = full.data?.months.find((x) => x.month === key)
-    if (m && !sub && sel !== 0) {
+    if (m && sub != null && sub > 0) return m.byCategory[String(sub)] ?? 0
+    if (m && sel !== 0) {
       if (selCat) return m.byTopCategory[String(selCat.id)] ?? 0
       return Object.entries(m.byTopCategory).filter(([k]) => !hiddenSet.has(Number(k))).reduce((a, [, v]) => a + v, 0)
     }

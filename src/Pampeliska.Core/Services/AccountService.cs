@@ -48,7 +48,7 @@ public class AccountService(AppDbContext db, ShareService shares, FxService fx, 
         {
             Kind = kind, InstitutionKey = institution, Name = input.Name.Trim(), Iban = Clean(input.Iban), Currency = currency,
             OpeningBalance = input.OpeningBalance ?? 0, OpeningDate = input.OpeningDate ?? today, OpeningDeposits = input.OpeningDeposits,
-            CreatedAt = time.GetUtcNow(), SortOrder = await db.Accounts.CountAsync(),
+            CreatedAt = time.GetUtcNow(), SortOrder = (await db.Accounts.MaxAsync(x => (int?)x.SortOrder) ?? -1) + 1,
             IncludeInDisposable = kind != AccountKind.Investment, IncludeInNetWorth = true,
             Source = input.Source ?? AccountSource.Mcp,
         };
@@ -169,6 +169,18 @@ public class AccountService(AppDbContext db, ShareService shares, FxService fx, 
     {
         var a = await db.Accounts.FindAsync(id) ?? throw new DomainException($"Účet {id} neexistuje.");
         a.Archived = archived;
+        await db.SaveChangesAsync();
+    }
+
+    /// <summary>Pořadí účtů (seznamy, výběry účtu): zadané účty v daném pořadí, ostatní za nimi v dosavadním pořadí.</summary>
+    public async Task ReorderAsync(IReadOnlyList<int> ids)
+    {
+        var all = await db.Accounts.OrderBy(a => a.SortOrder).ThenBy(a => a.Id).ToListAsync();
+        var unknown = ids.Where(id => all.All(a => a.Id != id)).ToList();
+        if (unknown.Count > 0) throw new DomainException($"Účet {unknown[0]} neexistuje.");
+        if (ids.Distinct().Count() != ids.Count) throw new DomainException("Účet je v pořadí vícekrát.");
+        var order = ids.Select(id => all.First(a => a.Id == id)).Concat(all.Where(a => !ids.Contains(a.Id))).ToList();
+        for (var i = 0; i < order.Count; i++) order[i].SortOrder = i;
         await db.SaveChangesAsync();
     }
 
