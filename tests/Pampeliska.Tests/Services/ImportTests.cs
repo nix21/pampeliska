@@ -139,6 +139,16 @@ public class ImportTests : IDisposable
     }
 
     [Fact]
+    public async Task Buy_links_to_deposit_even_without_investment_account_statement()
+    {
+        var broker = await _env.Get<AccountService>().CreateAsync(new AccountInput(AccountKind.Investment, "xtb", "ETF", "2345678901/2700",
+            InvestmentKind: InvestmentKind.Etf, OwnerMemberId: _env.Vasek.Id, OpeningDate: new DateOnly(2026, 1, 1)));
+        var deposit = await _env.ImportAsync(_env.Bezny, TestEnv.Tx("2026-09-10", -8000, "XTB", counterAccount: "2345678901/2700"));
+        var trade = await _env.Get<InvestmentService>().AddTradeAsync(new TradeInput(broker.Id, new DateOnly(2026, 9, 11), TradeSide.Buy, "VWCE", null, 1, 8000, "CZK", null));
+        Assert.Equal(deposit.TransactionIds[0], trade.LinkedTransactionId);
+    }
+
+    [Fact]
     public async Task Currency_mismatch_is_rejected()
     {
         var ex = await Assert.ThrowsAsync<DomainException>(() =>

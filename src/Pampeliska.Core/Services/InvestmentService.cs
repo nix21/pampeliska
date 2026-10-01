@@ -89,7 +89,7 @@ public class InvestmentService(AppDbContext db, FxService fx, TimeProvider time)
             AccountId = a.Id, Date = input.Date, Side = input.Side, Ticker = input.Ticker.Trim().ToUpperInvariant(), Name = input.Name?.Trim(),
             Quantity = input.Quantity, Price = input.Price, Currency = (input.Currency ?? a.Currency).ToUpperInvariant(), LinkedTransactionId = input.LinkedTransactionId,
         };
-        // Nákup: navázat na nespárovaný převod na tento účet v okně ±5 dní
+        // Nákup: navázat na dosud nenavázaný vklad na tento účet v okně ±5 dní (i bez naimportované strany investičního účtu)
         if (t.LinkedTransactionId is null && t.Side == TradeSide.Buy)
         {
             var used = await db.InvestmentTrades.Where(x => x.LinkedTransactionId != null).Select(x => x.LinkedTransactionId!.Value).ToListAsync();
@@ -97,7 +97,7 @@ public class InvestmentService(AppDbContext db, FxService fx, TimeProvider time)
             var to = t.Date.AddDays(1);
             var candidate = await db.Transactions.AsNoTracking()
                 .Where(x => x.Kind == TransactionKind.InvestmentTransfer && x.Amount < 0 && x.Date >= from && x.Date <= to && !used.Contains(x.Id)
-                            && db.Transactions.Any(p => p.Id == x.TransferPairId && p.AccountId == a.Id))
+                            && x.TransferAccountId == a.Id)
                 .OrderBy(x => x.Date).FirstOrDefaultAsync();
             t.LinkedTransactionId = candidate?.Id;
         }

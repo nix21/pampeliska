@@ -236,10 +236,10 @@ public class StatsService(AppDbContext db)
             txs.Count(t => t.IsSplit), txs.Count(t => t.Status == TransactionStatus.Suggested), txs.Count(t => t.IsRecurring));
     }
 
-    /// <summary>„Kdo kolik poslal na účty“: příchozí převody podle cílového účtu a odesílatele (vlastník zdrojového účtu).</summary>
     /// <summary>
-    /// Kdo kolik poslal na účty: převody z účtů domácnosti (za vlastníka zdrojového účtu) a na společné účty i příchozí
-    /// platby zvenčí – celé připsané jednomu členovi jdou za ním, ostatní (poměrem účtu) jako „externě“.
+    /// Kdo kolik poslal na účty: převody z účtů domácnosti (za vlastníka zdrojového účtu – i když protějšek z jeho výpisu
+    /// ještě není naimportovaný) a na společné účty i příchozí platby zvenčí – celé připsané jednomu členovi jdou za ním,
+    /// ostatní (poměrem účtu) jako „externě“.
     /// </summary>
     public async Task<List<TransferFlow>> TransferFlowsAsync(DateRange range, int? accountId)
     {
@@ -247,7 +247,8 @@ public class StatsService(AppDbContext db)
         var jointIds = accounts.Values.Where(a => a.IsJoint).Select(a => a.Id).ToList();
         var incoming = await db.Transactions.AsNoTracking().Include(t => t.Shares)
             .Where(t => t.Date >= range.From && t.Date <= range.To && t.Amount > 0)
-            .Where(t => ((t.Kind == TransactionKind.Transfer || t.Kind == TransactionKind.InvestmentTransfer) && t.TransferPairId != null)
+            .Where(t => ((t.Kind == TransactionKind.Transfer || t.Kind == TransactionKind.InvestmentTransfer)
+                         && (t.TransferPairId != null || t.TransferAccountId != null))
                         || ((t.Kind == TransactionKind.Income || t.Kind == TransactionKind.Refund) && jointIds.Contains(t.AccountId)))
             .Where(t => accountId == null || t.AccountId == accountId)
             .ToListAsync();
@@ -256,9 +257,9 @@ public class StatsService(AppDbContext db)
 
         (int? Member, int? From, bool External) Sender(Transaction t)
         {
-            if (t.TransferPairId is { } pair)
-                return sources.TryGetValue(pair, out var src) && accounts.TryGetValue(src, out var sa)
-                    ? (sa.OwnerMemberId, sa.OwnerMemberId is null ? src : null, false) : (null, null, false);
+            var src = t.TransferPairId is { } pair && sources.TryGetValue(pair, out var s) ? s : t.TransferAccountId;
+            if (src is { } id)
+                return accounts.TryGetValue(id, out var sa) ? (sa.OwnerMemberId, sa.OwnerMemberId is null ? id : null, false) : (null, null, false);
             return t.Shares.Count == 1 ? (t.Shares[0].MemberId, null, false) : (null, null, true);
         }
 

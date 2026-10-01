@@ -239,4 +239,18 @@ public class TransferFlowTests : IDisposable
         Assert.Equal(10000, await Sum("all"));
         await Assert.ThrowsAsync<DomainException>(() => tx.ListAsync(new TxFilter(From: "x")));
     }
+
+    [Fact]
+    public async Task Transfer_from_member_account_without_imported_statement_counts_for_owner()
+    {
+        var tx = _env.Get<TransactionService>();
+        await _env.Get<AccountService>().CreateAsync(new AccountInput(AccountKind.Current, "cs", "Míšin účet", "555666777/0800",
+            OwnerMemberId: _env.Misa.Id, OpeningDate: new DateOnly(2026, 1, 1)));
+        // Míšin výpis se nenahrává – na společném je jen příchozí strana s jejím protiúčtem
+        await _env.ImportAsync(_env.Spolecny, TestEnv.Tx("2026-09-09", 4000, "Michaela", counterAccount: "555666777/0800"));
+
+        var joint = Assert.Single(await _env.Get<StatsService>().TransferFlowsAsync(DateRange.Month(2026, 9), null));
+        Assert.Equal(4000, joint.Senders.Single(s => s.MemberId == _env.Misa.Id).Amount);
+        Assert.Equal(4000, (await tx.ListAsync(new TxFilter(DateRange.Month(2026, 9), From: $"m{_env.Misa.Id}"))).Items.Sum(i => i.AmountCzk));
+    }
 }

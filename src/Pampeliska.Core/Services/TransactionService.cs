@@ -87,20 +87,25 @@ public class TransactionService(AppDbContext db, BatchService batches, RuleServi
     private IQueryable<Transaction> FromSource(IQueryable<Transaction> q, string from)
     {
         q = q.Where(t => t.Amount > 0);
-        var transfer = q.Where(t => (t.Kind == TransactionKind.Transfer || t.Kind == TransactionKind.InvestmentTransfer) && t.TransferPairId != null);
+        // Zdrojový účet převodu: účet spárovaného protějšku, bez protějšku (výpis odesílatele nenahraný) protiúčet z importu.
+        var transfer = q.Where(t => (t.Kind == TransactionKind.Transfer || t.Kind == TransactionKind.InvestmentTransfer)
+                                    && (t.TransferPairId != null || t.TransferAccountId != null));
         var external = q.Where(t => (t.Kind == TransactionKind.Income || t.Kind == TransactionKind.Refund) && t.Account!.OwnerMemberId == null);
         int? Id(string s) => int.TryParse(s, out var v) ? v : null;
         return from switch
         {
-            "all" => q.Where(t => ((t.Kind == TransactionKind.Transfer || t.Kind == TransactionKind.InvestmentTransfer) && t.TransferPairId != null)
+            "all" => q.Where(t => ((t.Kind == TransactionKind.Transfer || t.Kind == TransactionKind.InvestmentTransfer)
+                                   && (t.TransferPairId != null || t.TransferAccountId != null))
                                   || ((t.Kind == TransactionKind.Income || t.Kind == TransactionKind.Refund) && t.Account!.OwnerMemberId == null)),
             "ext" => external.Where(t => t.Shares.Count(s => s.Percent > 0) != 1),
             ['m', .. var rest] when Id(rest) is { } m => q.Where(t =>
                 ((t.Kind == TransactionKind.Transfer || t.Kind == TransactionKind.InvestmentTransfer)
-                 && db.Transactions.Any(p => p.Id == t.TransferPairId && p.Account!.OwnerMemberId == m))
+                 && (db.Transactions.Any(p => p.Id == t.TransferPairId && p.Account!.OwnerMemberId == m)
+                     || (t.TransferPairId == null && db.Accounts.Any(a => a.Id == t.TransferAccountId && a.OwnerMemberId == m))))
                 || ((t.Kind == TransactionKind.Income || t.Kind == TransactionKind.Refund) && t.Account!.OwnerMemberId == null
                     && t.Shares.Count(s => s.Percent > 0) == 1 && t.Shares.Any(s => s.MemberId == m && s.Percent > 0))),
-            ['a', .. var rest] when Id(rest) is { } a => transfer.Where(t => db.Transactions.Any(p => p.Id == t.TransferPairId && p.AccountId == a)),
+            ['a', .. var rest] when Id(rest) is { } a => transfer.Where(t => db.Transactions.Any(p => p.Id == t.TransferPairId && p.AccountId == a)
+                                                                             || (t.TransferPairId == null && t.TransferAccountId == a)),
             _ => throw new DomainException($"Neznámý zdroj „{from}“."),
         };
     }
