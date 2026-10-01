@@ -253,4 +253,31 @@ public class TransferFlowTests : IDisposable
         Assert.Equal(4000, joint.Senders.Single(s => s.MemberId == _env.Misa.Id).Amount);
         Assert.Equal(4000, (await tx.ListAsync(new TxFilter(DateRange.Month(2026, 9), From: $"m{_env.Misa.Id}"))).Items.Sum(i => i.AmountCzk));
     }
+
+    [Fact]
+    public async Task Deleting_batch_keeps_counterpart_as_unpaired_transfer()
+    {
+        var misin = await _env.Get<AccountService>().CreateAsync(new AccountInput(AccountKind.Current, "cs", "Míšin účet", "555666777/0800",
+            OwnerMemberId: _env.Misa.Id, OpeningDate: new DateOnly(2026, 1, 1)));
+        var joint = await _env.ImportAsync(_env.Spolecny, TestEnv.Tx("2026-09-09", 4000, "Michaela", counterAccount: "555666777/0800"));
+        // Dopočtený protějšek bez výpisu (spáruje se) a nesouvisející pohyb bez protiúčtu
+        await _env.ImportAsync(_env.Bezny, TestEnv.Tx("2026-09-12", 700, "Vašek hotově"));
+        var mirror = await _env.ImportAsync(misin, TestEnv.Tx("2026-09-09", -4000, "Společný", counterAccount: "2900111222/2010"),
+            TestEnv.Tx("2026-09-12", -700, "Vašek"));
+        var cash = await _env.FreshDb().Transactions.SingleAsync(t => t.Counterparty == "Vašek hotově");
+        await _env.Get<TransferMatcher>().LinkAsync(cash.Id, (await _env.FreshDb().Transactions.SingleAsync(t => t.Counterparty == "Vašek")).Id);
+        Assert.NotNull((await _env.FreshDb().Transactions.FindAsync(joint.TransactionIds[0]))!.TransferPairId);
+
+        Assert.Equal(2, await _env.Get<TransactionService>().DeleteBatchAsync(mirror.BatchId));
+
+        var db = _env.FreshDb();
+        Assert.False(await db.ImportBatches.AnyAsync(b => b.Id == mirror.BatchId));
+        var kept = await db.Transactions.FindAsync(joint.TransactionIds[0]);
+        Assert.Equal(TransactionKind.Transfer, kept!.Kind);
+        Assert.Null(kept.TransferPairId);
+        Assert.Equal(misin.Id, kept.TransferAccountId);
+        Assert.Equal(TransactionStatus.Confirmed, kept.Status);
+        // Bez protiúčtu se převod nedá určit → zpět mezi příjmy
+        Assert.Equal(TransactionKind.Income, (await db.Transactions.FindAsync(cash.Id))!.Kind);
+    }
 }

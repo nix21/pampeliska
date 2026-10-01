@@ -92,6 +92,7 @@ public static class TransactionEndpoints
         api.MapPost("/batches/{id:int}/categorize", async (int id, BatchService svc) => new { categorized = await svc.RunRulesAsync(id) });
         api.MapPost("/batches/{id:int}/confirm", async (int id, BatchService svc, CurrentUser user) =>
             new { confirmed = await svc.ConfirmAllAsync(id, await user.ActorAsync()) });
+        api.MapDelete("/batches/{id:int}", async (int id, TransactionService svc) => new { deleted = await svc.DeleteBatchAsync(id) });
 
         api.MapGet("/export/transactions.csv", async (ExportService svc, string period) =>
             Results.File(await svc.TransactionsCsvAsync(DateRange.Parse(period)), "text/csv; charset=utf-8", $"pampeliska-pohyby-{period.Replace("..", "_")}.csv"));

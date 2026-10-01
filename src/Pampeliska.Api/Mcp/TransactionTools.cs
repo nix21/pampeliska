@@ -159,6 +159,21 @@ public class TransactionTools(ImportService import, TransactionService txs, Inbo
         return (await batches.GetAsync(batchId)).Batch;
     });
 
+    [McpServerTool(Name = "delete_batch", Title = "Smazat dávku", ReadOnly = false, Destructive = true, Idempotent = false, OpenWorld = false)]
+    [Description("Smaže celou dávku importu i s jejími pohyby (omylem nahraný výpis). Protějšky převodů mimo dávku zůstanou převodem, " +
+                 "když protiúčet určuje účet domácnosti. Nevratné – jen na výslovný pokyn uživatele.")]
+    public Task<string> DeleteBatch([Description("Id dávky.")] int batchId) => McpSetup.Guard(async () =>
+        $"Smazáno pohybů: {await txs.DeleteBatchAsync(batchId)}.");
+
+    [McpServerTool(Name = "delete_transaction", Title = "Smazat pohyb", ReadOnly = false, Destructive = true, Idempotent = false, OpenWorld = false)]
+    [Description("Smaže ručně přidaný pohyb nebo korekci zůstatku (importované pohyby ne – ty jde vyřadit ze statistik nebo smazat celou dávkou). " +
+                 "Jen na výslovný pokyn uživatele.")]
+    public Task<string> DeleteTransaction([Description("Id pohybu.")] int transactionId) => McpSetup.Guard(async () =>
+    {
+        await txs.DeleteAsync(transactionId);
+        return "Smazáno.";
+    });
+
     [McpServerTool(Name = "list_batches", Title = "Dávky", ReadOnly = true, Idempotent = true, OpenWorld = false)]
     [Description("Poslední dávky importu se stavem (Uploaded → Categorized → Confirmed) a počty.")]
     public Task<List<BatchSummary>> ListBatches([Description("Kolik dávek.")] int take = 20) => McpSetup.Guard(() => batches.ListAsync(take));

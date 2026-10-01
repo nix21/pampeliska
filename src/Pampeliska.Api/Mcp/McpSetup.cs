@@ -27,6 +27,8 @@ public static class McpSetup
            Vyplň date, amount (se znaménkem, v měně účtu), counterparty (obchodník / protistrana), message, raw_text (původní text řádku),
            counterparty_account, time a payment_type (Card u platby kartou – důležité pro podmínky účtů), external_id jen když ho výpis má.
            Duplicity server pozná sám, opakovaný import stejného výpisu nevadí.
+           Importuj jen pohyby z výpisu, který máš. Nedopočítávej protějšky převodů na účtech, jejichž výpis nemáš (třeba účet
+           jiného člena) – převod se pozná podle protiúčtu i bez protějšku a do statistik se započítá správně.
         3. list_notes – poznámky ke kategorizaci, které sis ty nebo jiný klient uložili dřív (zvyklosti domácnosti, výjimky).
            get_categorization_queue – nezařazené a nepotvrzené pohyby i s podobnými dřív zařazenými pohyby a s poznámkami
            navázanými na obchodníka nebo kategorii. list_categories a list_rules ti dají strom kategorií a pravidla.

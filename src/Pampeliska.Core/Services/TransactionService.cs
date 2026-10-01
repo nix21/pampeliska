@@ -513,11 +513,35 @@ public class TransactionService(AppDbContext db, BatchService batches, RuleServi
         await batches.RecomputeAsync([t.BatchId]);
     }
 
+    /// <summary>
+    /// Smazání celé dávky importu (třeba omylem nahraný nebo dopočtený výpis). Protějšky převodů mimo dávku zůstanou
+    /// převodem, pokud protiúčet určuje účet domácnosti; jinak se vrátí mezi výdaje/příjmy.
+    /// </summary>
+    public async Task<int> DeleteBatchAsync(int batchId)
+    {
+        var batch = await db.ImportBatches.Include(b => b.SkippedDuplicates).FirstOrDefaultAsync(b => b.Id == batchId)
+            ?? throw new DomainException($"Dávka {batchId} neexistuje.");
+        var txs = await db.Transactions.Where(t => t.BatchId == batchId).ToListAsync();
+        foreach (var t in txs) await DeleteInternalAsync(t);
+        db.ImportBatches.Remove(batch);
+        await db.SaveChangesAsync();
+        return txs.Count;
+    }
+
     private async Task DeleteInternalAsync(Transaction t)
     {
-        foreach (var o in await db.Transactions.Include(x => x.Splits).Where(x => x.TransferPairId == t.Id || x.RefundOfId == t.Id || x.SuspectedDuplicateOfId == t.Id).ToListAsync())
+        var related = await db.Transactions.Include(x => x.Splits).Where(x => x.TransferPairId == t.Id || x.RefundOfId == t.Id || x.SuspectedDuplicateOfId == t.Id).ToListAsync();
+        var counterIds = related.Where(o => o.TransferPairId == t.Id && o.TransferAccountId != null).Select(o => o.TransferAccountId!.Value).ToList();
+        var counters = await db.Accounts.AsNoTracking().Where(a => counterIds.Contains(a.Id)).ToDictionaryAsync(a => a.Id);
+        foreach (var o in related)
         {
-            if (o.TransferPairId == t.Id) TransferMatcher.Unmark(o);
+            if (o.TransferPairId == t.Id)
+            {
+                // Protiúčet pořád určuje účet domácnosti → zůstává nespárovaným převodem
+                if (o.TransferAccountId is { } c && counters.TryGetValue(c, out var ca) && AccountNumber.Same(ca.Iban, o.CounterpartyAccount))
+                    o.TransferPairId = null;
+                else TransferMatcher.Unmark(o);
+            }
             if (o.RefundOfId == t.Id) o.RefundOfId = null;
             if (o.SuspectedDuplicateOfId == t.Id) o.SuspectedDuplicateOfId = null;
         }

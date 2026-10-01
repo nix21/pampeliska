@@ -1,18 +1,19 @@
 import { useQueryClient } from '@tanstack/react-query'
 import clsx from 'clsx'
-import { Check, Copy, FileText, Landmark, Plug, Sparkles, Upload, type LucideIcon } from 'lucide-react'
+import { Check, Copy, FileText, Landmark, Plug, Sparkles, Trash2, Upload, type LucideIcon } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { PageHeader } from '../components/AppShell'
 import { Money } from '../components/common'
 import { ImportHelpButton } from '../components/ImportHelp'
-import { Button, Empty, Spinner } from '../components/ui'
+import { Button, Dialog, Empty, Spinner } from '../components/ui'
 import { api, notifyError, notifyOk } from '../lib/api'
 import { count, dateShort, num, plural } from '../lib/format'
 import {
   batchSourceLabel, invalidateInbox, UNSURE_BELOW, useBatch, useBatches, useIsMobile, useMcpConnections, whenLabel, type BatchDetail, type BatchItem,
   type BatchSummary,
 } from '../lib/inbox'
+import { invalidateTx } from '../lib/transactions'
 import type { BatchState } from '../lib/types'
 import s from './BatchesPage.module.css'
 
@@ -94,6 +95,43 @@ function PrimaryAction({ b, busy, onRun }: { b: BatchSummary; busy: boolean; onR
     <Button variant="primary" size="lg" loading={busy} icon={b.state === 'Uploaded' ? <Sparkles size={16} /> : <Check size={16} />} onClick={onRun}>
       {b.state === 'Uploaded' ? 'Spustit kategorizaci' : 'Potvrdit celou dávku'}
     </Button>
+  )
+}
+
+/** Smazání celé dávky (omylem nahraný výpis) s potvrzením. */
+function DeleteBatch({ b, block }: { b: BatchSummary; block?: boolean }) {
+  const qc = useQueryClient()
+  const nav = useNavigate()
+  const [open, setOpen] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const remove = async () => {
+    setBusy(true)
+    try {
+      const r = await api.del<{ deleted: number }>(`/api/batches/${b.id}`)
+      notifyOk(`Dávka smazána · ${count(r.deleted, 'platba', 'platby', 'plateb')}`)
+      setOpen(false)
+      nav('/davky', { replace: true })
+      invalidateTx(qc)
+    } catch (e) {
+      notifyError(e)
+    } finally {
+      setBusy(false)
+    }
+  }
+  return (
+    <>
+      <Button variant="ghost" block={block} icon={<Trash2 size={15} />} onClick={() => setOpen(true)}>Smazat dávku</Button>
+      <Dialog open={open} onOpenChange={setOpen} title="Smazat celou dávku?"
+        description="Pohyby z dávky se trvale odstraní. Převody na jiných účtech zůstanou převodem, pokud je pozná podle protiúčtu."
+        footer={(
+          <>
+            <Button variant="ghost" onClick={() => setOpen(false)}>Zrušit</Button>
+            <Button variant="danger" icon={<Trash2 size={15} />} loading={busy} onClick={remove}>Smazat</Button>
+          </>
+        )}>
+        <span className="muted">{whenLabel(b.createdAt)} · {count(b.count, 'platba', 'platby', 'plateb')}{b.note ? ` · ${b.note}` : ''}</span>
+      </Dialog>
+    </>
   )
 }
 
@@ -220,6 +258,7 @@ function BatchPanel({ b, detail, loading, busy, onRun }: { b: BatchSummary; deta
         <PrimaryAction b={b} busy={busy} onRun={onRun} />
         {b.state !== 'Confirmed' && <Button size="lg" onClick={() => nav('/trideni')}>Zařadit ručně</Button>}
       </div>
+      <DeleteBatch b={b} />
     </aside>
   )
 }
@@ -310,6 +349,7 @@ export default function BatchesPage() {
                       <PrimaryAction b={b} busy={busy === b.id} onRun={() => run(b)} />
                     </div>
                     {b.state !== 'Confirmed' && <Button block onClick={() => nav('/trideni')}>Zařadit ručně</Button>}
+                    <DeleteBatch b={b} block />
                   </div>
                 )}
               </div>
