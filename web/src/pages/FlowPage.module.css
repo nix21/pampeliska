@@ -1,6 +1,5 @@
 /* Výdaje – souhrn s grafem, legenda se skrýváním kategorií, seznam plateb. */
 
-.toolsEnd { margin-left: auto; }
 .clickable { cursor: pointer; }
 
 /* ---------- Souhrn ---------- */
@@ -97,7 +96,6 @@
 }
 
 @media (max-width: 767px) {
-  .toolsEnd { margin-left: 0; }
   .big { font-size: 34px; }
   .levelHead { height: 44px; margin-bottom: 4px; }
   .backBtn { width: 36px; height: 36px; margin-right: 4px; }

@@ -42,7 +42,7 @@ test('všechny obrazovky se načtou bez chyby', async ({ page }) => {
   const errors: string[] = []
   page.on('pageerror', (e) => errors.push(e.message))
   const screens: [string, string][] = [
-    ['/', 'Přehled'], ['/ucty', 'Účty'], ['/pohyby', 'Pohyby'], ['/vydaje', 'Výdaje'], ['/trideni', 'Ke kategorizaci'], ['/davky', 'Dávky'],
+    ['/', 'Přehled'], ['/ucty', 'Účty'], ['/pohyby', 'Pohyby'], ['/vydaje', 'Výdaje'], ['/prijmy', 'Příjmy'], ['/trideni', 'Ke kategorizaci'], ['/davky', 'Dávky'],
     ['/kategorie', 'Kategorie'], ['/pravidla', 'Pravidla'], ['/pravidelne', 'Pravidelné platby a výhled'], ['/rozpocty', 'Rozpočty'],
     ['/usetrit', 'Kde ušetřit'], ['/investice', 'Investice a jmění'], ['/clenove', 'Členové'], ['/nastaveni', 'Nastavení'],
   ]

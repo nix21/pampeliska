@@ -6,7 +6,7 @@ import { useAccounts } from '../../lib/accounts'
 import { api, notifyError } from '../../lib/api'
 import { useCategories } from '../../lib/categories'
 import { useInvalidateAfterTxChange } from '../../lib/stats'
-import type { NeedType, Share, TxDetail, TxRow, TxUpdate } from '../../lib/types'
+import type { CategoryKind, NeedType, Share, TxDetail, TxRow, TxUpdate } from '../../lib/types'
 import { useUi } from '../../state/ui'
 import { CategoryPicker, SplitEditor, useEffectiveNeed, type SplitPart } from '../category'
 import { Button, Pill, Segmented, tokenColor } from '../ui'
@@ -21,8 +21,8 @@ const NEED_OPTS: { value: NeedType; label: string; color: string }[] = [
 const partsOf = (tx: TxRow): SplitPart[] | null =>
   tx.splits.length ? tx.splits.map((p) => ({ categoryId: p.categoryId, amount: Math.abs(p.amount), need: p.needOverride ?? null })) : null
 
-/** Úprava platby přímo v seznamu: kategorie / rozdělení, typ výdaje, člen, pravidlo, potvrzení. */
-export function PaymentEditor({ tx, onClose }: { tx: TxRow; onClose: () => void }) {
+/** Úprava platby přímo v seznamu: kategorie / rozdělení, typ výdaje (jen u výdajů), člen, pravidlo, potvrzení. */
+export function PaymentEditor({ tx, onClose, kind = 'Expense' }: { tx: TxRow; onClose: () => void; kind?: CategoryKind }) {
   const cats = useCategories()
   const effNeed = useEffectiveNeed()
   const { household } = useUi()
@@ -91,21 +91,21 @@ export function PaymentEditor({ tx, onClose }: { tx: TxRow; onClose: () => void 
           <span className={s.fieldLabel}>Kategorie</span>
           {draft ? (
             <>
-              <SplitEditor total={tx.amount} currency={tx.currency} parts={draft} onChange={setDraft} kind="Expense" onUnsplit={cancelSplit} />
+              <SplitEditor total={tx.amount} currency={tx.currency} parts={draft} onChange={setDraft} kind={kind} onUnsplit={cancelSplit} />
               <div className="row wrap">
                 <Button variant="dark" size="sm" disabled={!splitValid || !splitDirty} loading={patch.isPending} onClick={saveSplit}>Uložit rozdělení</Button>
               </div>
             </>
           ) : (
             <>
-              <CategoryPicker value={tx.categoryId} kind="Expense" block placeholder="Vyberte kategorii"
+              <CategoryPicker value={tx.categoryId} kind={kind} block placeholder="Vyberte kategorii"
                 onChange={(id) => id !== tx.categoryId && patch.mutate({ categoryId: id, setCategory: true })} />
               <button type="button" className={s.textBtn} onClick={startSplit}><Scissors size={15} /> Rozdělit platbu do více kategorií</button>
             </>
           )}
         </div>
         <div className="col" style={{ gap: 14, minWidth: 0 }}>
-          <div className="col" style={{ gap: 6 }}>
+          {kind === 'Expense' && <div className="col" style={{ gap: 6 }}>
             <span className={s.fieldLabel}>Typ výdaje</span>
             {draft ? (
               <span className={s.hint} style={{ lineHeight: 1.45 }}>U rozdělené platby se typ bere z kategorie každé části.</span>
@@ -119,7 +119,7 @@ export function PaymentEditor({ tx, onClose }: { tx: TxRow; onClose: () => void 
                 </span>
               </>
             )}
-          </div>
+          </div>}
           {members.length > 1 && (
             <div className="col" style={{ gap: 6 }}>
               <span className={s.fieldLabel}>Člen</span>

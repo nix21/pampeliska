@@ -3,23 +3,22 @@ import { useMemo, useState } from 'react'
 import { useCategories, needShort } from '../../lib/categories'
 import { count, pct } from '../../lib/format'
 import { buildExpenseTree, compareShort, deltaPct, spentHeading, type OverviewStats } from '../../lib/stats'
-import { useUi } from '../../state/ui'
+import { elapsedMonths, periodMonths, useUi } from '../../state/ui'
 import { Sunburst, Treemap, type ChartNode } from '../charts'
 import { useMoney } from '../common'
 import { Card, Segmented } from '../ui'
-import { BackLink, Label, MoreLink, RingCenter, SectionHead, Swatch } from './parts'
-import { childColor, drilledTiles, expenseDeltaColor, formatDelta, ringNodes, tileNodes, topColor, type ColorMode } from './spending'
+import { AvgToggle, BackLink, Label, MoreLink, RingCenter, SectionHead, Swatch, type AvgMode } from './parts'
+import { childColor, drilledTiles, expenseDeltaColor, formatDelta, ringNodes, tileNodes, topColor } from './spending'
 import s from './overview.module.css'
 
-const COLOR_OPTS = [{ value: 'cat' as const, label: 'Kategorie' }, { value: 'need' as const, label: 'Nezbytné / radost' }]
 const VIEW_OPTS = [{ value: 'ring' as const, label: 'Prstenec' }, { value: 'tree' as const, label: 'Treemap' }]
 
-/** „Kam peníze odlétají“ – prstenec nebo treemap výdajů podle kategorií s legendou a rozpadem kategorie. */
+/** „Kam peníze odlétají“ – prstenec nebo treemap výdajů podle kategorií (součet nebo průměr za měsíc) s legendou a rozpadem kategorie. */
 export function SpendingCard({ stats, mobile, className }: { stats?: OverviewStats; mobile?: boolean; className?: string }) {
   const cats = useCategories()
   const { period, compare, household } = useUi()
   const money = useMoney()
-  const [mode, setMode] = useState<ColorMode>('cat')
+  const [avgSel, setAvg] = useState<AvgMode>('sum')
   const [view, setView] = useState<'ring' | 'tree'>(household.settings.mainChart === 'Treemap' ? 'tree' : 'ring')
   const [sel, setSel] = useState<number | null>(null)
   const [hover, setHover] = useState<{ node: ChartNode; parent?: ChartNode } | null>(null)
@@ -28,26 +27,32 @@ export function SpendingCard({ stats, mobile, className }: { stats?: OverviewSta
   const total = tops.reduce((a, t) => a + t.amount, 0)
   const selCat = tops.find((t) => t.id === sel)
   const cmp = compareShort(period)
+  const multi = periodMonths(period) > 1
+  const avgN = avgSel === 'avg' && multi ? elapsedMonths(period, household.today) : 1
+  const isAvg = avgN > 1
+  const av = (v: number) => v / avgN
 
   const center = hover
-    ? { title: hover.node.label, value: money(hover.node.value), sub: `${pct((hover.node.value / (total || 1)) * 100, 1)} výdajů` }
+    ? { title: hover.node.label, value: money(av(hover.node.value)), sub: `${pct((hover.node.value / (total || 1)) * 100, 1)} výdajů` }
     : selCat
-      ? { title: selCat.name, value: money(selCat.amount), sub: 'Klikni pro návrat' }
-      : { title: spentHeading(period), value: money(total), sub: count(tops.length, 'kategorie', 'kategorie', 'kategorií') }
+      ? { title: selCat.name, value: money(av(selCat.amount)), sub: 'Klikni pro návrat' }
+      : isAvg
+        ? { title: 'Ø za měsíc', value: money(av(total)), sub: `celkem ${money(total)}` }
+        : { title: spentHeading(period), value: money(total), sub: count(tops.length, 'kategorie', 'kategorie', 'kategorií') }
 
-  const ring = ringNodes(selCat ? [selCat] : tops, mode)
+  const ring = ringNodes(selCat ? [selCat] : tops, 'cat')
   const hotTop = hover ? (hover.parent?.id ?? hover.node.id) : null
 
   const legend = selCat
     ? selCat.children.map((c, i) => ({
-      key: c.id, name: c.name, value: money(c.amount), share: pct((c.amount / (selCat.amount || 1)) * 100),
-      delta: needShort[c.need === 'Inherit' ? 'None' : c.need], deltaColor: 'var(--ink-3)', color: childColor(selCat, c, i, mode), dim: false,
+      key: c.id, name: c.name, value: money(av(c.amount)), share: pct((c.amount / (selCat.amount || 1)) * 100),
+      delta: needShort[c.need === 'Inherit' ? 'None' : c.need], deltaColor: 'var(--ink-3)', color: childColor(selCat, c, i, 'cat'), dim: false,
       onClick: undefined as (() => void) | undefined, top: undefined as number | undefined,
     }))
     : tops.map((t) => {
       const d = compare ? deltaPct(t.amount, t.previous) : null
       return {
-        key: t.id, name: t.name, value: money(t.amount), share: pct((t.amount / (total || 1)) * 100),
+        key: t.id, name: t.name, value: money(av(t.amount)), share: pct((t.amount / (total || 1)) * 100),
         delta: compare ? formatDelta(d) : '', deltaColor: expenseDeltaColor(d), color: topColor(t, 'cat'), dim: hotTop != null && hotTop !== t.id,
         onClick: t.children.length ? () => (setSel(t.id), setHover(null)) : undefined, top: t.id,
       }
@@ -66,8 +71,8 @@ export function SpendingCard({ stats, mobile, className }: { stats?: OverviewSta
       onCenterClick={selCat ? back : undefined}
       center={<RingCenter title={center.title} value={center.value} sub={mobile ? undefined : center.sub} small={mobile} />} />
   ) : (
-    <Treemap height={mobile ? 300 : 340} formatValue={(v) => money(v)} formatShare={(x) => pct(x * 100)}
-      items={selCat ? drilledTiles(selCat, mode) : tileNodes(tops, mode)}
+    <Treemap height={mobile ? 300 : 340} formatValue={(v) => money(av(v))} formatShare={(x) => pct(x * 100)}
+      items={selCat ? drilledTiles(selCat, 'cat') : tileNodes(tops, 'cat')}
       onTileClick={selCat ? undefined : (_, group) => group && setSel(Number(group.id))} />
   )
 
@@ -96,7 +101,7 @@ export function SpendingCard({ stats, mobile, className }: { stats?: OverviewSta
           <h2 style={{ flex: 1 }}>Kam peníze odlétají</h2>
           <Segmented size="sm" value={view} onChange={(v) => (setView(v), setHover(null))} options={VIEW_OPTS} />
         </div>
-        <Segmented full value={mode} onChange={setMode} options={COLOR_OPTS} />
+        <AvgToggle full size="md" value={isAvg ? 'avg' : 'sum'} onChange={setAvg} disabled={!multi} />
         <div style={{ display: 'flex', justifyContent: 'center' }}>{chart}</div>
         {selCat && <BackLink onClick={back} />}
         {legendRows}
@@ -111,7 +116,7 @@ export function SpendingCard({ stats, mobile, className }: { stats?: OverviewSta
     <Card className={className} style={{ gap: 16 }}>
       <SectionHead title="Kam peníze odlétají" size={22}>
         <span style={{ flex: 1 }} />
-        <Segmented size="sm" value={mode} onChange={setMode} options={COLOR_OPTS} />
+        <AvgToggle value={isAvg ? 'avg' : 'sum'} onChange={setAvg} disabled={!multi} />
         <Segmented size="sm" value={view} onChange={(v) => (setView(v), setHover(null))} options={VIEW_OPTS} />
         <MoreLink to="/vydaje">Detail a platby</MoreLink>
       </SectionHead>

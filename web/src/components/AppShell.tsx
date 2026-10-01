@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import clsx from 'clsx'
 import {
-  ChevronLeft, Eye, EyeOff, Inbox, Layers, LayoutGrid, List, Menu, Moon, PieChart, Plus, Repeat, Scissors, SlidersHorizontal,
+  ArrowDownToLine, ChevronLeft, Eye, EyeOff, Inbox, Layers, LayoutGrid, List, Menu, Moon, PieChart, Plus, Repeat, Scissors, SlidersHorizontal,
   Sun, Target, TrendingUp, Users, Wallet, Wand2, Workflow, type LucideIcon,
 } from 'lucide-react'
 import type { ReactNode } from 'react'
@@ -34,6 +34,7 @@ export const NAV: NavDef[] = [
   { to: '/ucty', label: 'Účty', icon: Wallet },
   { to: '/pohyby', label: 'Pohyby', icon: List },
   { to: '/vydaje', label: 'Výdaje', icon: PieChart },
+  { to: '/prijmy', label: 'Příjmy', icon: ArrowDownToLine },
   { to: '/trideni', label: 'Ke kategorizaci', icon: Inbox, group: 'Třídění', badge: 'inbox' },
   { to: '/davky', label: 'Dávky', icon: Layers, badge: 'batches' },
   { to: '/kategorie', label: 'Kategorie', icon: Workflow },
@@ -47,7 +48,7 @@ export const NAV: NavDef[] = [
 ]
 
 /** Hotové obrazovky (přibývají s milníky). */
-export const ENABLED = new Set<string>(['/', '/vydaje', '/ucty', '/pohyby', '/trideni', '/davky', '/kategorie', '/pravidla', '/pravidelne', '/rozpocty', '/usetrit', '/investice', '/clenove', '/nastaveni'])
+export const ENABLED = new Set<string>(['/', '/vydaje', '/prijmy', '/ucty', '/pohyby', '/trideni', '/davky', '/kategorie', '/pravidla', '/pravidelne', '/rozpocty', '/usetrit', '/investice', '/clenove', '/nastaveni'])
 
 export const navItems = () => NAV.filter((n) => ENABLED.has(n.to))
 

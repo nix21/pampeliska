@@ -142,8 +142,11 @@ public class StatsService(AppDbContext db)
         return result;
     }
 
-    public static List<MonthPoint> Months(IReadOnlyCollection<Category> cats, IReadOnlyList<FlowLine> lines, DateRange range)
+    /// <summary>Měsíční body; <c>byTopCategory</c> rozpadá výdaje, nebo příjmy pro <paramref name="kind"/> = Income.</summary>
+    public static List<MonthPoint> Months(IReadOnlyCollection<Category> cats, IReadOnlyList<FlowLine> lines, DateRange range,
+        CategoryKind kind = CategoryKind.Expense)
     {
+        Func<FlowLine, decimal> val = kind == CategoryKind.Expense ? ExpenseOf : IncomeOf;
         var top = new Dictionary<int, int>();
         var parent = cats.ToDictionary(c => c.Id, c => c.ParentId);
         int TopOf(int id)
@@ -157,9 +160,9 @@ public class StatsService(AppDbContext db)
         for (var m = new DateOnly(range.From.Year, range.From.Month, 1); m <= range.To; m = m.AddMonths(1))
         {
             var ml = lines.Where(l => l.Date.Year == m.Year && l.Date.Month == m.Month).ToList();
-            var byTop = ml.Where(l => l.Kind == CategoryKind.Expense && l.CategoryId is not null)
-                .GroupBy(l => TopOf(l.CategoryId!.Value)).ToDictionary(g => g.Key, g => g.Sum(ExpenseOf));
-            var unc = ml.Where(l => l.Kind == CategoryKind.Expense && l.CategoryId is null).Sum(ExpenseOf);
+            var byTop = ml.Where(l => l.Kind == kind && l.CategoryId is not null)
+                .GroupBy(l => TopOf(l.CategoryId!.Value)).ToDictionary(g => g.Key, g => g.Sum(val));
+            var unc = ml.Where(l => l.Kind == kind && l.CategoryId is null).Sum(val);
             if (unc != 0) byTop[0] = unc;
             result.Add(new MonthPoint($"{m:yyyy-MM}", ml.Sum(IncomeOf), ml.Sum(ExpenseOf), Needs(ml), byTop));
         }
@@ -192,7 +195,7 @@ public class StatsService(AppDbContext db)
         var (lines, cats) = await LinesAsync(f);
         var prev = compare ? await LinesAsync(f with { Range = f.Range.Previous() }, cats) : null;
         Func<FlowLine, decimal> val = kind == CategoryKind.Expense ? ExpenseOf : IncomeOf;
-        return new ExpenseTree(ByCategory(cats, lines, prev, kind), lines.Sum(val), prev?.Sum(val) ?? 0, Months(cats, lines, f.Range), Needs(lines));
+        return new ExpenseTree(ByCategory(cats, lines, prev, kind), lines.Sum(val), prev?.Sum(val) ?? 0, Months(cats, lines, f.Range, kind), Needs(lines));
     }
 
     /// <summary>Souhrnné karty na stránce Pohyby (podle stejných filtrů jako seznam).</summary>

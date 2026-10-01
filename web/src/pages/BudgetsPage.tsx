@@ -7,7 +7,7 @@ import { Legend, MonthSwitcher } from '../components/budgets/BudgetBar'
 import { BudgetDetail } from '../components/budgets/BudgetDetail'
 import { BudgetSummary } from '../components/budgets/BudgetSummary'
 import { MobileMonthly, MobileYearly, MonthlyTable, YearlyTable, type TableProps } from '../components/budgets/BudgetTable'
-import { ConfirmedToggle, MemberSwitch } from '../components/common'
+import { MemberSwitch } from '../components/common'
 import { Button, Callout, Card, Empty, Segmented, Spinner } from '../components/ui'
 import { isMonth, useBudgets, useLineTree, type BudgetOverview, type ColorBy } from '../lib/budgets'
 import { useUi } from '../state/ui'
@@ -106,7 +106,6 @@ export default function BudgetsPage() {
             { value: 'need', label: 'Nezbytné / radost' },
           ]} />
         </div>
-        <div className={s.desktopOnly}><ConfirmedToggle /></div>
         <Legend />
       </>}
     />

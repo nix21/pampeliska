@@ -58,6 +58,26 @@ public class StatsTests : IDisposable
     }
 
     [Fact]
+    public async Task Income_tree_breaks_months_down_by_income_categories()
+    {
+        var tx = _env.Get<TransactionService>();
+        var salary = await _env.ImportAsync(_env.Bezny, TestEnv.Tx("2026-09-10", 68880, "Mzda Škoda Auto"));
+        await tx.UpdateAsync(salary.TransactionIds[0], new TxUpdate(CategoryId: _env.Cat("Mzda"), SetCategory: true), "V");
+        await _env.ImportAsync(_env.Bezny, TestEnv.Tx("2026-08-12", 1500, "Neznámý příjem"));
+        await _env.ImportAsync(_env.Bezny, TestEnv.Tx("2026-09-12", -3486, "Albert"));
+
+        var tree = await _env.Get<StatsService>().ExpensesAsync(new StatsFilter(DateRange.Parse("2026-Q3")), compare: false, CategoryKind.Income);
+        Assert.Equal(68880 + 1500, tree.Total);
+        var mzda = _env.Cat("Mzda");
+        Assert.Equal(68880, tree.Categories.Single(c => c.CategoryId == mzda).Amount);
+        var aug = tree.Months.Single(m => m.Month == "2026-08");
+        var sep = tree.Months.Single(m => m.Month == "2026-09");
+        Assert.Equal(1500, aug.ByTopCategory[0]);
+        Assert.Equal(68880, sep.ByTopCategory.Values.Sum());
+        Assert.DoesNotContain(0, sep.ByTopCategory.Keys);
+    }
+
+    [Fact]
     public async Task Excluded_category_is_ignored_including_split_parts_and_subcategories()
     {
         var tx = _env.Get<TransactionService>();

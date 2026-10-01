@@ -7,7 +7,7 @@ import { useEffect, useMemo, useState, useSyncExternalStore, type ReactNode } fr
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { PageHeader } from '../components/AppShell'
 import { NeedChip, useEffectiveNeed } from '../components/category'
-import { commonStyles, ConfirmedToggle, MemberSwitch, Money, PeriodPicker, useMoney } from '../components/common'
+import { commonStyles, MemberSwitch, Money, PeriodPicker, useMoney } from '../components/common'
 import { TransactionPanel } from '../components/transactions/TransactionPanel'
 import { AddTransactionDialog, CorrectionDialog } from '../components/transactions/TxDialogs'
 import { Button, Empty, Popover, PopoverClose, Segmented, Skeleton, tokenColor } from '../components/ui'
@@ -232,7 +232,6 @@ export default function TransactionsPage() {
             </button>
           )
         })}
-        <ConfirmedToggle />
         {filtersActive && (
           <button type="button" className={s.clear} onClick={() => { setKind('All'); setFlag(null); setSearchText(''); setAccountId(null) }}>
             Zrušit filtry

@@ -126,16 +126,6 @@ export function PeriodPicker({ allowCompare = true, compact }: { allowCompare?: 
   )
 }
 
-/** Přepínač „Jen potvrzené“. */
-export function ConfirmedToggle() {
-  const { confirmedOnly, setConfirmedOnly } = useUi()
-  return (
-    <button type="button" className={clsx(s.chip, confirmedOnly && s.chipOn)} onClick={() => setConfirmedOnly(!confirmedOnly)} aria-pressed={confirmedOnly}>
-      Jen potvrzené
-    </button>
-  )
-}
-
 /** Značka banky: zkratka na barvě instituce. */
 export function InstitutionBadge({ institution, size = 36 }: { institution: Pick<Institution, 'abbrev' | 'color'>; size?: number }) {
   return (

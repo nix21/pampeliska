@@ -20,8 +20,8 @@ public static class PlanningEndpoints
     {
         api.MapGet("/stats/overview", (StatsService svc, string period, int? member, bool? confirmedOnly, bool? compare) =>
             svc.OverviewAsync(new StatsFilter(DateRange.Parse(period), member, confirmedOnly == true), compare != false));
-        api.MapGet("/stats/expenses", (StatsService svc, string period, int? member, bool? confirmedOnly, bool? compare) =>
-            svc.ExpensesAsync(new StatsFilter(DateRange.Parse(period), member, confirmedOnly == true), compare != false));
+        api.MapGet("/stats/expenses", (StatsService svc, string period, int? member, bool? confirmedOnly, bool? compare, CategoryKind? kind) =>
+            svc.ExpensesAsync(new StatsFilter(DateRange.Parse(period), member, confirmedOnly == true), compare != false, kind ?? CategoryKind.Expense));
         api.MapGet("/stats/members", (StatsService svc, string period, bool? confirmedOnly) => svc.MembersAsync(DateRange.Parse(period), confirmedOnly == true));
         api.MapGet("/stats/net-worth", (InvestmentService svc, int? months, int? member) => svc.NetWorthAsync(months ?? 12, member));
 

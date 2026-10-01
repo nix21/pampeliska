@@ -2,6 +2,7 @@ import clsx from 'clsx'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import type { CSSProperties, ReactNode } from 'react'
 import { Link } from 'react-router-dom'
+import { Segmented } from '../ui'
 import s from './overview.module.css'
 
 /** Popisek karty („Disponibilní zůstatek“). */
@@ -63,4 +64,19 @@ export function Swatch({ color, size = 10 }: { color: string; size?: number }) {
 /** Štítek typu výdaje v barvě (Nezbytné / Pro radost). */
 export function NeedPill({ label, color }: { label: string; color: string }) {
   return <span className={s.needPill} style={{ background: `color-mix(in oklch, ${color} 22%, var(--surface))` }}>{label}</span>
+}
+
+export type AvgMode = 'sum' | 'avg'
+
+/** Přepínač „Součet / Ø za měsíc“ nad grafem kategorií; průměr jde jen u období delšího než měsíc. */
+export function AvgToggle({ value, onChange, disabled, full, size = 'sm' }: {
+  value: AvgMode; onChange: (v: AvgMode) => void; disabled?: boolean; full?: boolean; size?: 'sm' | 'md'
+}) {
+  return (
+    <Segmented full={full} size={size} value={value} onChange={onChange} aria-label="Součet nebo průměr za měsíc"
+      options={[
+        { value: 'sum', label: 'Součet' },
+        { value: 'avg', label: 'Ø za měsíc', disabled, title: disabled ? 'Jen pro období delší než měsíc' : undefined },
+      ]} />
+  )
 }

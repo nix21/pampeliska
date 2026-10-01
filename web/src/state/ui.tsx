@@ -88,6 +88,16 @@ export function periodMonths(p: Period) {
   return (t.getFullYear() - f.getFullYear()) * 12 + t.getMonth() - f.getMonth() + 1
 }
 
+/** Počet měsíců pro průměr „Ø za měsíc“: u běžícího období jen uplynulé měsíce včetně aktuálního. */
+export function elapsedMonths(p: Period, todayIso: string) {
+  const { from, to } = periodRange(p)
+  const end = to < todayIso ? to : todayIso
+  if (end < from) return periodMonths(p)
+  const f = parseIso(from)
+  const t = parseIso(end)
+  return Math.max(1, (t.getFullYear() - f.getFullYear()) * 12 + t.getMonth() - f.getMonth() + 1)
+}
+
 // ---------- Kontext ----------
 
 export type MemberFilter = 'all' | number
@@ -105,8 +115,8 @@ interface UiState {
   setPeriod: (p: Period) => void
   compare: boolean
   setCompare: (v: boolean) => void
+  /** Jen potvrzené platby – řídí se nastavením domácnosti (v hlavičkách už přepínač není). */
   confirmedOnly: boolean
-  setConfirmedOnly: (v: boolean) => void
   /** Parametry pro API: member, period, confirmedOnly. */
   filterParams: { member?: number; period: string; confirmedOnly?: boolean; compare?: boolean }
 }
@@ -174,7 +184,7 @@ export function UiProvider({ me, household, children }: { me: Me; household: Hou
   const [member, setMemberState] = useState<MemberFilter>(() => loadSession('pampeliska.member', 'all'))
   const [period, setPeriodState] = useState<Period>(() => loadSession('pampeliska.period', currentPeriod(s.defaultPeriod, household.today)))
   const [compare, setCompareState] = useState<boolean>(() => loadSession('pampeliska.compare', true))
-  const [confirmedOnly, setConfirmedOnlyState] = useState<boolean>(() => loadSession('pampeliska.confirmed', s.confirmedOnlyDefault))
+  const confirmedOnly = s.confirmedOnlyDefault
 
   const toggleMode = useCallback(() => {
     const next = mode === 'dark' ? 'light' : 'dark'
@@ -186,16 +196,15 @@ export function UiProvider({ me, household, children }: { me: Me; household: Hou
   const setMember = useCallback((m: MemberFilter) => (setMemberState(m), saveSession('pampeliska.member', m)), [])
   const setPeriod = useCallback((p: Period) => (setPeriodState(p), saveSession('pampeliska.period', p)), [])
   const setCompare = useCallback((v: boolean) => (setCompareState(v), saveSession('pampeliska.compare', v)), [])
-  const setConfirmedOnly = useCallback((v: boolean) => (setConfirmedOnlyState(v), saveSession('pampeliska.confirmed', v)), [])
 
   const value = useMemo<UiState>(() => ({
     me, household, mode, toggleMode, hidden, toggleHidden, member, setMember, period, setPeriod, compare, setCompare,
-    confirmedOnly, setConfirmedOnly,
+    confirmedOnly,
     filterParams: {
       member: member === 'all' ? undefined : member, period: period.value, confirmedOnly: confirmedOnly || undefined,
       compare: compare || undefined,
     },
-  }), [me, household, mode, toggleMode, hidden, toggleHidden, member, setMember, period, setPeriod, compare, setCompare, confirmedOnly, setConfirmedOnly])
+  }), [me, household, mode, toggleMode, hidden, toggleHidden, member, setMember, period, setPeriod, compare, setCompare, confirmedOnly])
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }

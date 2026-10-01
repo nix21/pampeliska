@@ -29,9 +29,11 @@
 - UI kit v `web/src/components/ui` (Radix primitives + `ui.module.css`): Button, IconButton, Segmented, Switch, Checkbox, RadioCards,
   Select, Field/TextInput/NumberInput/DateInput, Dialog, Popover, DropdownMenu, Tooltip, toast, Card/CardHeader, Pill, Avatar,
   Callout, ProgressBar, Empty, Spinner. Nové komponenty stylovat přes `*.module.css`.
-- Sdílené: `components/common.tsx` (Money, MemberSwitch, PeriodPicker, ConfirmedToggle, InstitutionBadge, Dot, Sparkline),
+- Sdílené: `components/common.tsx` (Money, MemberSwitch, PeriodPicker, InstitutionBadge, Dot, Sparkline),
   `components/AppShell.tsx` (navigace, `PageHeader`, `ENABLED` = obrazovky v menu).
-- Globální stav `state/ui.tsx` (`useUi()`): člen, období, porovnání, jen potvrzené, skrytí částek, režim. `filterParams` jde do API.
+- Globální stav `state/ui.tsx` (`useUi()`): člen, období, porovnání, skrytí částek, režim; „jen potvrzené“ jen z nastavení domácnosti
+  (přepínač v hlavičkách není). `filterParams` jde do API.
+- Výdaje i Příjmy = `pages/FlowPage.tsx` (`kind`); přepínač „Součet / Ø za měsíc“ (`AvgToggle`) dělí `elapsedMonths()`.
 - Data přes TanStack Query + `lib/api.ts` (`api.get/post/put/del`, `notifyError`, `qs`). Typy DTO ručně v `lib/types.ts`.
 - Formátování v `lib/format.ts`: `money()` (typografické minus, ` Kč`), `count()` (české plurály), data „28. 9.“.
 - Mobil: breakpoint 767 px, dotykové cíle ≥ 44 px, detaily jako samostatné stránky / spodní sheet.

@@ -24,6 +24,7 @@ const SavingsPage = lazy(() => import('./pages/SavingsPage'))
 const InvestmentsPage = lazy(() => import('./pages/InvestmentsPage'))
 const OverviewPage = lazy(() => import('./pages/OverviewPage'))
 const ExpensesPage = lazy(() => import('./pages/ExpensesPage'))
+const IncomePage = lazy(() => import('./pages/IncomePage'))
 
 export default function App() {
   const qc = useQueryClient()
@@ -63,6 +64,7 @@ function MainRoutes() {
         <Routes>
           <Route path="/" element={<OverviewPage />} />
           <Route path="/vydaje" element={<ExpensesPage />} />
+          <Route path="/prijmy" element={<IncomePage />} />
           <Route path="/ucty" element={<AccountsPage />} />
           <Route path="/ucty/:id" element={<AccountsPage />} />
           <Route path="/pohyby" element={<TransactionsPage />} />

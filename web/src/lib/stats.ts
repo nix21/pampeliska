@@ -6,7 +6,7 @@ import { compareLabel, periodLabel, periodRange, shiftPeriod, type MemberFilter,
 import { api, qs } from './api'
 import type { Categories } from './categories'
 import { monthLocative, monthNames, monthNamesCap, monthShort } from './format'
-import type { Account, AccountGroup, BatchSource, BatchState, CategorySource, ConditionType, NeedType, TxRow } from './types'
+import type { Account, AccountGroup, BatchSource, BatchState, CategoryKind, CategorySource, ConditionType, NeedType, TxRow } from './types'
 
 // ---------- Statistiky ----------
 
@@ -31,7 +31,7 @@ export interface MonthPoint {
   income: number
   expense: number
   needs: NeedSplit
-  /** Id hlavní kategorie → výdaj; klíč „0“ = nezařazené. */
+  /** Id hlavní kategorie → výdaj (u stromu příjmů příjem); klíč „0“ = nezařazené. */
   byTopCategory: Record<string, number>
 }
 
@@ -213,8 +213,9 @@ export function useOverviewStats(f: Filter) {
   })
 }
 
-export function useExpenseTree(f: Filter, enabled = true) {
-  const params = { ...f, compare: !!f.compare }
+/** Strom výdajů (nebo příjmů pro kind = Income) s měsíčním rozpadem podle hlavních kategorií. */
+export function useExpenseTree(f: Filter, enabled = true, kind: CategoryKind = 'Expense') {
+  const params = { ...f, compare: !!f.compare, kind: kind === 'Income' ? kind : undefined }
   return useQuery({
     queryKey: ['stats', 'expenses', params],
     queryFn: () => api.get<ExpenseTree>(`/api/stats/expenses${qs(params)}`),
@@ -303,9 +304,9 @@ export interface CatAgg {
 }
 
 /** Hlavní kategorie výdajů s částkami a přímými podkategoriemi (seřazeno sestupně). */
-export function buildExpenseTree(cats: Categories, amounts: CategoryAmount[]): CatAgg[] {
+export function buildExpenseTree(cats: Categories, amounts: CategoryAmount[], kind: CategoryKind = 'Expense'): CatAgg[] {
   const by = new Map<number | null, CategoryAmount>(amounts.map((a) => [a.categoryId, a]))
-  const tops = (cats.children.get(undefined) ?? []).filter((c) => c.kind === 'Expense')
+  const tops = (cats.children.get(undefined) ?? []).filter((c) => c.kind === kind)
   const result: CatAgg[] = []
   for (const t of tops) {
     const a = by.get(t.id)

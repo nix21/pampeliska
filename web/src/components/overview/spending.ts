@@ -55,3 +55,6 @@ export function formatDelta(d: number | null) {
 
 /** Barva změny výdajů: víc = červeně, míň = zeleně, do ±5 % neutrálně. */
 export const expenseDeltaColor = (d: number | null) => (d == null ? 'var(--ink-3)' : d > 5 ? 'var(--neg)' : d < -5 ? 'var(--pos)' : 'var(--ink-3)')
+
+/** Barva změny příjmů: víc = zeleně, míň = červeně, do ±5 % neutrálně. */
+export const incomeDeltaColor = (d: number | null) => (d == null ? 'var(--ink-3)' : d > 5 ? 'var(--pos)' : d < -5 ? 'var(--neg)' : 'var(--ink-3)')

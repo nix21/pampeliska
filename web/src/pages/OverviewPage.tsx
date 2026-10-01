@@ -1,6 +1,6 @@
 import { PageHeader } from '../components/AppShell'
 import { useIsMobile } from '../components/charts'
-import { ConfirmedToggle, MemberSwitch, PeriodPicker } from '../components/common'
+import { MemberSwitch, PeriodPicker } from '../components/common'
 import {
   AccountsCard, BudgetsCard, ConditionsKpi, DisposableCard, EatersCard, InboxCard, KpiCards, MobileSpentCard, NeedsCard, NetWorthCard,
 } from '../components/overview/cards'
@@ -37,7 +37,7 @@ export default function OverviewPage() {
   return (
     <>
       <PageHeader title="Přehled" subtitle={subtitle}
-        tools={<><PeriodPicker compact={mobile} /><MemberSwitch full={mobile} /><span className={s.toolsEnd}><ConfirmedToggle /></span></>} />
+        tools={<><PeriodPicker compact={mobile} /><MemberSwitch full={mobile} /></>} />
       {accounts.isLoading ? <Spinner center /> : empty ? <EmptyDashboard /> : mobile ? (
         <div className={s.mobileStack}>
           <DisposableCard mobile />

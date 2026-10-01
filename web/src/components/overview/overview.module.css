@@ -9,7 +9,6 @@
 .s8 { grid-column: span 8; }
 .s4Stack { grid-column: span 4; display: flex; flex-direction: column; gap: var(--gap); min-width: 0; }
 .mobileStack { display: flex; flex-direction: column; gap: 12px; }
-.toolsEnd { margin-left: auto; }
 
 @media (max-width: 1240px) {
   .s3 { grid-column: span 6; }
@@ -181,7 +180,6 @@
 .emptySecondary:hover { background: var(--surface-2); }
 
 @media (max-width: 767px) {
-  .toolsEnd { margin-left: 0; }
   .ringLayout { flex-direction: column; }
   .emptySteps { grid-template-columns: 1fr; }
   .emptyTitle { font-size: 22px; }
