@@ -16,7 +16,7 @@ import { api, qs } from '../lib/api'
 import { needLabel, useCategories } from '../lib/categories'
 import { count, dayHeading, num } from '../lib/format'
 import {
-  accountLabel, countedCzk, FLAG_LABELS, isExcludedTx, isTransferKind, KIND_OPTIONS, ratioLabel, whoLabel,
+  accountLabel, contributorLabel, countedCzk, FLAG_LABELS, isExcludedTx, isTransferKind, KIND_OPTIONS, ratioLabel, whoLabel,
   type KindFilter, type ListRow, type TransferFlow, type TxFlag, type TxSummary,
 } from '../lib/transactions'
 import type { Account, TxPage } from '../lib/types'
@@ -398,7 +398,7 @@ function FlowsCard({ flows, accountId, onPick }: { flows: TransferFlow[]; accoun
   const target = accountId != null ? accounts.byId.get(accountId) : undefined
 
   // Sloupce = odesílatelé napříč účty: členové v pořadí domácnosti, pak zdrojové účty
-  const senderKey = (x: TransferFlow['senders'][number]) => (x.memberId != null ? `m${x.memberId}` : `a${x.fromAccountId ?? ''}`)
+  const senderKey = (x: TransferFlow['senders'][number]) => (x.external ? 'ext' : x.memberId != null ? `m${x.memberId}` : `a${x.fromAccountId ?? ''}`)
   const colMap = new Map<string, { key: string; label: string; short: string; color: string; order: number }>()
   for (const f of flows) for (const x of f.senders) {
     if (x.amount <= 0) continue
@@ -408,10 +408,10 @@ function FlowsCard({ flows, accountId, onPick }: { flows: TransferFlow[]; accoun
     const src = x.fromAccountId != null ? accounts.byId.get(x.fromAccountId) : undefined
     colMap.set(key, {
       key,
-      label: m ? m.name : src && !src.joint ? `Z účtu ${src.name}` : 'Ze společného',
-      short: m ? m.name : src && !src.joint ? src.name : 'společný',
-      color: m ? tokenColor(m.colorToken) : 'var(--ink-3)',
-      order: m ? [...members.keys()].indexOf(m.id) : 1000 + (src ? accounts.list.indexOf(src) : accounts.list.length),
+      label: x.external ? 'Externě' : m ? m.name : src && !src.joint ? `Z účtu ${src.name}` : 'Ze společného',
+      short: x.external ? 'externě' : m ? m.name : src && !src.joint ? src.name : 'společný',
+      color: x.external ? 'var(--none)' : m ? tokenColor(m.colorToken) : 'var(--ink-3)',
+      order: x.external ? 10_000 : m ? [...members.keys()].indexOf(m.id) : 1000 + (src ? accounts.list.indexOf(src) : accounts.list.length),
     })
   }
   const cols = [...colMap.values()].sort((a, b) => a.order - b.order)
@@ -454,7 +454,7 @@ function FlowsCard({ flows, accountId, onPick }: { flows: TransferFlow[]; accoun
     <div className={s.flows}>
       <div className={s.flowsHead}>
         <span className={s.flowsTitle}>{target ? `Kdo kolik poslal na ${target.name}` : 'Kdo kolik poslal na účty'}</span>
-        <span className={s.flowsSub}>{periodLabel(period)} · převody mezi účty, mimo výdaje i příjmy</span>
+        <span className={s.flowsSub} title="Na společné účty i příchozí platby zvenčí: připsané členovi jdou za ním, ostatní jako externě">{periodLabel(period)} · převody mezi účty a příchozí peníze na společné účty</span>
       </div>
       {mobile ? (
         <div className="col" style={{ gap: 0 }}>
@@ -524,7 +524,6 @@ function TxListRow({ row, selected, open, onToggle, onSelect, accountFiltered }:
 
   const acct = accounts.byId.get(tx.accountId)
   const acctName = accountLabel(acct)
-  const who = whoLabel(tx.shares, members)
   const isSplit = tx.splits.length > 0
   const excl = isExcludedTx(tx, cats.isExcluded)
   const unconfirmed = tx.status === 'Suggested'
@@ -532,6 +531,8 @@ function TxListRow({ row, selected, open, onToggle, onSelect, accountFiltered }:
   const incoming = transfer && tx.amount > 0
   const pairAcctId = pair?.accountId ?? tx.transferPairAccountId
   const pairAcct = pairAcctId != null ? accounts.byId.get(pairAcctId) : undefined
+  // Na společný účet: za kým peníze jdou (člen / poměr), jinak komu pohyb patří
+  const who = contributorLabel(tx, acct, pairAcct, members) ?? whoLabel(tx.shares, members)
   const cat = tx.categoryId != null ? cats.byId.get(tx.categoryId) : undefined
   const color = cats.colorOf(tx.categoryId)
 

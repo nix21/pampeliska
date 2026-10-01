@@ -19,6 +19,8 @@ export interface TransferSender {
   memberId?: number
   fromAccountId?: number
   amount: number
+  /** Peníze zvenčí bez připsaného člena (jdou poměrem účtu). */
+  external?: boolean
 }
 
 /** GET /api/transfers/flows – „Kdo kolik poslal na účty“. */
@@ -130,6 +132,24 @@ export function whoLabel(shares: Share[], members: Map<number, Member>) {
   const o = shareOwner(shares)
   if (o === null) return 'bez člena'
   if (o === 'joint') return `společná ${ratioLabel(shares.filter((s) => s.percent > 0))}`
+  return members.get(o)?.name ?? 'člen'
+}
+
+/**
+ * Za kým jdou peníze přicházející na společný účet (jako v „Kdo kolik poslal“): převod za vlastníkem zdrojového účtu,
+ * jiná platba za připsaným členem, jinak „poměr 50 : 50“ (zvenčí). Null = netýká se.
+ */
+export function contributorLabel(tx: TxRow, account: Account | undefined, source: Account | undefined, members: Map<number, Member>) {
+  if (!account?.joint || tx.amount <= 0) return null
+  if (isTransferKind(tx.kind)) {
+    if (!tx.transferPairId || !source) return null
+    return source.ownerMemberId != null ? members.get(source.ownerMemberId)?.name ?? 'člen' : 'ze společného'
+  }
+  if (tx.kind !== 'Income' && tx.kind !== 'Refund') return null
+  const o = shareOwner(tx.shares)
+  const order = [...members.keys()]
+  const active = tx.shares.filter((s) => s.percent > 0).sort((x, y) => order.indexOf(x.memberId) - order.indexOf(y.memberId))
+  if (o === null || o === 'joint') return `poměr ${ratioLabel(active)}`
   return members.get(o)?.name ?? 'člen'
 }
 

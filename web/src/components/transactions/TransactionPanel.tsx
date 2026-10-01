@@ -9,7 +9,7 @@ import { api, notifyError, notifyOk } from '../../lib/api'
 import { needColor, useCategories } from '../../lib/categories'
 import { currencySymbol, dateLong, dateShort, dayHeading, num, parseIso, relative } from '../../lib/format'
 import {
-  accountLabel, correctionBalance, equalShares, invalidateTx, isCategorizable, isExcludedTx, isTransferKind, kindLabel, shareOwner, sourceLabel, whoLabel,
+  accountLabel, contributorLabel, correctionBalance, equalShares, invalidateTx, isCategorizable, isExcludedTx, isTransferKind, kindLabel, shareOwner, sourceLabel, whoLabel,
 } from '../../lib/transactions'
 import type { CategoryKind, NeedType, TxDetail, TxRef, TxRow, TxUpdate } from '../../lib/types'
 import { useMembers, useUi } from '../../state/ui'
@@ -167,6 +167,12 @@ function Detail({ d, variant, onClose, backLabel, onOpen }: { d: TxDetail; varia
     else patch.mutate({ shares: equalShares(household.members) })
   }
   const memberHint = tx.sharesOverridden ? 'Přebito na platbě' : accountJoint ? 'Společný účet, člen per platba' : 'Podle vlastníka účtu'
+  // Peníze na společný účet: za kým jdou v „Kdo kolik poslal“ (převod podle zdrojového účtu, jinak podle člena / poměrem)
+  const contributor = contributorLabel(tx, account, tx.transferPairAccountId != null ? accounts.byId.get(tx.transferPairAccountId) : undefined, members)
+  const contributorHint = !contributor ? null
+    : isTransfer ? `Do „Kdo kolik poslal“ jde za vlastníkem zdrojového účtu: ${contributor}`
+      : owner === 'joint' ? 'Do „Kdo kolik poslal“ jde jako externě (poměrem). Vyberte člena, pokud jsou peníze od něj.'
+        : `Do „Kdo kolik poslal“ jde za členem: ${contributor}`
 
   return (
     <aside className={clsx(s.panel, variant === 'page' && s.page)}>
@@ -325,7 +331,7 @@ function Detail({ d, variant, onClose, backLabel, onOpen }: { d: TxDetail; varia
                   })),
                   {
                     value: 'joint',
-                    label: owner === 'joint' ? `Společné ${tx.shares.filter((x) => x.percent > 0).map((x) => Math.round(x.percent)).join(' : ')}` : 'Společné',
+                    label: `${contributor && !isTransfer ? 'Poměr' : 'Společné'}${owner === 'joint' ? ` ${tx.shares.filter((x) => x.percent > 0).map((x) => Math.round(x.percent)).join(' : ')}` : ''}`,
                     mark: <span className={s.vsegAvatar} style={{ background: 'var(--ink-3)' }}>SP</span>,
                   },
                 ]}
@@ -336,6 +342,7 @@ function Detail({ d, variant, onClose, backLabel, onOpen }: { d: TxDetail; varia
                   <> · <button type="button" className={s.link} onClick={() => patch.mutate({ setMember: true, memberId: null })}>podle účtu</button></>
                 )}
               </span>
+              {contributorHint && <span className={s.hint}>{contributorHint}</span>}
             </div>
           )}
         </div>

@@ -29,7 +29,8 @@ public record ExpenseTree(IReadOnlyList<CategoryAmount> Categories, decimal Tota
 public record TxSummary(decimal Expense, decimal Refunds, decimal Income, int IncomeCount, int Transfers, int Excluded, int Corrections, int Count,
     int Split, int Unconfirmed, int Recurring);
 
-public record TransferSender(int? MemberId, int? FromAccountId, decimal Amount);
+/// <param name="External">Peníze zvenčí (ne z účtu domácnosti) bez připsaného člena – jdou poměrem účtu.</param>
+public record TransferSender(int? MemberId, int? FromAccountId, decimal Amount, bool External = false);
 public record TransferFlow(int AccountId, decimal Total, IReadOnlyList<TransferSender> Senders);
 
 public record MemberStat(int MemberId, decimal Income, decimal Expense, decimal OwnExpense, decimal JointExpense, decimal IncomeShare, decimal ExpenseShare);
@@ -236,19 +237,34 @@ public class StatsService(AppDbContext db)
     }
 
     /// <summary>„Kdo kolik poslal na účty“: příchozí převody podle cílového účtu a odesílatele (vlastník zdrojového účtu).</summary>
+    /// <summary>
+    /// Kdo kolik poslal na účty: převody z účtů domácnosti (za vlastníka zdrojového účtu) a na společné účty i příchozí
+    /// platby zvenčí – celé připsané jednomu členovi jdou za ním, ostatní (poměrem účtu) jako „externě“.
+    /// </summary>
     public async Task<List<TransferFlow>> TransferFlowsAsync(DateRange range, int? accountId)
     {
-        var incoming = await db.Transactions.AsNoTracking()
-            .Where(t => t.Date >= range.From && t.Date <= range.To && t.Amount > 0
-                        && (t.Kind == TransactionKind.Transfer || t.Kind == TransactionKind.InvestmentTransfer) && t.TransferPairId != null)
+        var accounts = await db.Accounts.AsNoTracking().ToDictionaryAsync(a => a.Id);
+        var jointIds = accounts.Values.Where(a => a.IsJoint).Select(a => a.Id).ToList();
+        var incoming = await db.Transactions.AsNoTracking().Include(t => t.Shares)
+            .Where(t => t.Date >= range.From && t.Date <= range.To && t.Amount > 0)
+            .Where(t => ((t.Kind == TransactionKind.Transfer || t.Kind == TransactionKind.InvestmentTransfer) && t.TransferPairId != null)
+                        || ((t.Kind == TransactionKind.Income || t.Kind == TransactionKind.Refund) && jointIds.Contains(t.AccountId)))
             .Where(t => accountId == null || t.AccountId == accountId)
             .ToListAsync();
-        var pairIds = incoming.Select(t => t.TransferPairId!.Value).ToList();
+        var pairIds = incoming.Where(t => t.TransferPairId != null).Select(t => t.TransferPairId!.Value).ToList();
         var sources = await db.Transactions.AsNoTracking().Where(t => pairIds.Contains(t.Id)).ToDictionaryAsync(t => t.Id, t => t.AccountId);
-        var accounts = await db.Accounts.AsNoTracking().ToDictionaryAsync(a => a.Id);
+
+        (int? Member, int? From, bool External) Sender(Transaction t)
+        {
+            if (t.TransferPairId is { } pair)
+                return sources.TryGetValue(pair, out var src) && accounts.TryGetValue(src, out var sa)
+                    ? (sa.OwnerMemberId, sa.OwnerMemberId is null ? src : null, false) : (null, null, false);
+            return t.Shares.Count == 1 ? (t.Shares[0].MemberId, null, false) : (null, null, true);
+        }
+
         return incoming.GroupBy(t => t.AccountId).Select(g => new TransferFlow(g.Key, g.Sum(t => t.AmountCzk),
-            g.GroupBy(t => sources.TryGetValue(t.TransferPairId!.Value, out var src) && accounts.TryGetValue(src, out var sa) ? (sa.OwnerMemberId, sa.OwnerMemberId is null ? (int?)src : null) : (null, null))
-                .Select(s => new TransferSender(s.Key.Item1, s.Key.Item2, s.Sum(t => t.AmountCzk))).OrderByDescending(s => s.Amount).ToList()))
+            g.GroupBy(Sender).Select(s => new TransferSender(s.Key.Member, s.Key.From, s.Sum(t => t.AmountCzk), s.Key.External))
+                .OrderByDescending(s => s.Amount).ToList()))
             .OrderByDescending(f => f.Total).ToList();
     }
 

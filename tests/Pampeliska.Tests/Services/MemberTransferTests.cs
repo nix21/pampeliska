@@ -201,3 +201,33 @@ public class MemberTransferTests : IDisposable
         Assert.Equal(_env.Sporici.Id, saving.TransferAccountId);
     }
 }
+
+public class TransferFlowTests : IDisposable
+{
+    private readonly TestEnv _env = new();
+    public void Dispose() => _env.Dispose();
+
+    [Fact]
+    public async Task Joint_account_flows_split_members_and_external_money()
+    {
+        var tx = _env.Get<TransactionService>();
+        // Vašek převede z běžného na společný (spárovaný převod)
+        await _env.ImportAsync(_env.Bezny, TestEnv.Tx("2026-09-03", -5000, "Na společný", counterAccount: "2900111222/2010"));
+        await _env.ImportAsync(_env.Spolecny, TestEnv.Tx("2026-09-03", 5000, "Vašek", counterAccount: "123-4567890/0800"));
+        // Výplata z účtu mimo domácnost jde poměrem → externě
+        await _env.ImportAsync(_env.Spolecny, TestEnv.Tx("2026-09-10", 3000, "Pracovní účet", counterAccount: "1173399034/3030"));
+        // Příspěvek připsaný Míše jde za ní
+        var misa = await _env.ImportAsync(_env.Spolecny, TestEnv.Tx("2026-09-12", 2000, "Míša hotově"));
+        await tx.UpdateAsync(misa.TransactionIds[0], new TxUpdate(MemberId: _env.Misa.Id, SetMember: true), "V");
+        // Příjem na Vaškův vlastní účet do přehledu nepatří
+        await _env.ImportAsync(_env.Bezny, TestEnv.Tx("2026-09-15", 40000, "Mzda"));
+
+        var flows = await _env.Get<StatsService>().TransferFlowsAsync(DateRange.Month(2026, 9), null);
+        var joint = Assert.Single(flows);
+        Assert.Equal(_env.Spolecny.Id, joint.AccountId);
+        Assert.Equal(10000, joint.Total);
+        Assert.Equal(5000, joint.Senders.Single(s => s.MemberId == _env.Vasek.Id).Amount);
+        Assert.Equal(2000, joint.Senders.Single(s => s.MemberId == _env.Misa.Id).Amount);
+        Assert.Equal(3000, joint.Senders.Single(s => s.External).Amount);
+    }
+}
