@@ -20,10 +20,10 @@ public static class TransactionEndpoints
     {
         api.MapGet("/transactions", (TransactionService svc, string? period, int? account, int? member, KindFilter? kind, int? category, string? search,
                 bool? split, bool? unconfirmed, bool? recurring, bool? excluded, bool? corrections, bool? uncategorized, bool? suspected, bool? confirmedOnly,
-                int? batch, TxSort? sort, int? skip, int? take) =>
+                int? batch, TxSort? sort, int? skip, int? take, string? from) =>
             svc.ListAsync(new TxFilter(Range(period), account, member, kind ?? KindFilter.All, category, search, split == true, unconfirmed == true,
                 recurring == true, excluded == true, corrections == true, uncategorized == true, suspected == true, confirmedOnly == true, batch,
-                sort ?? TxSort.DateDesc, skip ?? 0, take ?? 200)));
+                sort ?? TxSort.DateDesc, skip ?? 0, take ?? 200, from)));
 
         api.MapGet("/transactions/summary", (StatsService svc, string period, int? account, int? member, bool? confirmedOnly) =>
             svc.SummaryAsync(DateRange.Parse(period), account, member, confirmedOnly == true));

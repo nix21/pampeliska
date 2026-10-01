@@ -61,7 +61,15 @@ export default function TransactionsPage() {
   const location = useLocation()
   const navigate = useNavigate()
 
-  const [accountId, setAccountId] = useState<number | null>(() => Number(params.get('ucet')) || null)
+  const [accountId, setAccountIdRaw] = useState<number | null>(() => Number(params.get('ucet')) || null)
+  // Zdroj příchozích peněz z „Kdo kolik poslal“ (m{člen} / a{účet} / ext / all); platí jen spolu s účtem
+  const [from, setFrom] = useState<string | null>(null)
+  const setAccountId = (id: number | null) => (setAccountIdRaw(id), setFrom(null))
+  const pickFlow = (id: number, key: string | null) => {
+    const same = accountId === id && from === key
+    setAccountIdRaw(id)
+    setFrom(same ? null : key)
+  }
   const [kind, setKind] = useState<KindFilter>('All')
   const [flag, setFlag] = useState<TxFlag | null>(null)
   const [searchText, setSearchText] = useState('')
@@ -90,7 +98,10 @@ export default function TransactionsPage() {
 
   // Při změně filtrů začít znovu od první stránky.
   const base = { period: period.value, account: accountId ?? undefined, member: filterParams.member }
-  const listParams = { ...base, kind: kind === 'All' ? undefined : kind, search: search || undefined, confirmedOnly: filterParams.confirmedOnly, ...(flag ? { [flag]: true } : {}) }
+  const listParams = {
+    ...base, kind: kind === 'All' ? undefined : kind, search: search || undefined, confirmedOnly: filterParams.confirmedOnly, from: from ?? undefined,
+    ...(flag ? { [flag]: true } : {}),
+  }
   const listKey = JSON.stringify(listParams)
   const [prevKey, setPrevKey] = useState(listKey)
   if (prevKey !== listKey) {
@@ -166,6 +177,11 @@ export default function TransactionsPage() {
 
   const showFlows = (kind === 'All' || kind === 'Transfer') && (flows.data?.length ?? 0) > 0
   const filtersActive = kind !== 'All' || flag !== null || !!search || accountId != null
+  const fromLabel = !from ? null
+    : from === 'all' ? 'vše'
+      : from === 'ext' ? 'externě'
+        : from.startsWith('m') ? members.get(Number(from.slice(1)))?.name ?? 'člen'
+          : `z účtu ${accounts.byId.get(Number(from.slice(1)))?.name ?? '?'}`
 
   const header = (
     <PageHeader
@@ -232,6 +248,11 @@ export default function TransactionsPage() {
             </button>
           )
         })}
+        {fromLabel && (
+          <button type="button" className={clsx(commonStyles.chip, commonStyles.chipOn)} onClick={() => setFrom(null)} title="Zrušit filtr zdroje">
+            Příchozí · {fromLabel} <X size={12} />
+          </button>
+        )}
         {filtersActive && (
           <button type="button" className={s.clear} onClick={() => { setKind('All'); setFlag(null); setSearchText(''); setAccountId(null) }}>
             Zrušit filtry
@@ -241,7 +262,7 @@ export default function TransactionsPage() {
 
       <div className={s.layout}>
         <section className={s.main}>
-          {showFlows && <FlowsCard flows={flows.data!} accountId={accountId} onPick={setAccountId} />}
+          {showFlows && <FlowsCard flows={flows.data!} accountId={accountId} from={from} onPick={setAccountId} onPickCell={pickFlow} />}
 
           <div className={s.summary}>
             <SummaryCard label="Výdaje" value={summary.data ? <Money value={-summary.data.expense} sign /> : null}
@@ -388,7 +409,14 @@ function MiniPie({ parts, size = 24 }: { parts: { value: number; color: string }
 }
 
 /** Tabulka převodů na účty: kdo kolik poslal (sloupec za člena / zdrojový účet), koláč podílů a srovnání s poměrem. */
-function FlowsCard({ flows, accountId, onPick }: { flows: TransferFlow[]; accountId: number | null; onPick: (id: number) => void }) {
+function FlowsCard({ flows, accountId, from, onPick, onPickCell }: {
+  flows: TransferFlow[]
+  accountId: number | null
+  from: string | null
+  onPick: (id: number) => void
+  /** Proklik na částku: filtr pohybů na účet a zdroj (null = zrušit). */
+  onPickCell: (id: number, key: string | null) => void
+}) {
   const { period } = useUi()
   const accounts = useAccounts()
   const members = useMembers()
@@ -459,7 +487,8 @@ function FlowsCard({ flows, accountId, onPick }: { flows: TransferFlow[]; accoun
       {mobile ? (
         <div className="col" style={{ gap: 0 }}>
           {shown.map((r) => (
-            <button key={r.f.accountId} type="button" className={s.flowRowMobile} onClick={() => onPick(r.f.accountId)} title="Filtrovat na tento účet">
+            <button key={r.f.accountId} type="button" className={clsx(s.flowRowMobile, accountId === r.f.accountId && from === 'all' && s.flowCellOn)}
+              onClick={() => onPickCell(r.f.accountId, 'all')} title="Zobrazit příchozí peníze na tento účet">
               <MiniPie parts={r.pie} />
               <span className="col" style={{ gap: 1, flex: 1, minWidth: 0 }}>
                 <span className={clsx('ellipsis', s.flowName)}>{r.name}</span>
@@ -483,13 +512,21 @@ function FlowsCard({ flows, accountId, onPick }: { flows: TransferFlow[]; accoun
                 <span className={clsx('ellipsis', s.flowName)}>{r.name}</span>
                 {r.note && <span className={clsx('ellipsis', s.flowNote)} style={{ color: r.noteStrong ? 'var(--ink-2)' : undefined }} title={r.note}>{r.note}</span>}
               </button>
-              {r.cells.map((c) => (
-                <div key={c.key} className={clsx(s.flowTd, s.flowCell)}>
-                  {c.value ? <Money value={c.value} className={s.flowVal} /> : <span className={s.flowVal} style={{ color: 'var(--ink-3)' }}>—</span>}
+              {r.cells.map((c) => c.value ? (
+                <button key={c.key} type="button" className={clsx(s.flowTd, s.flowCell, s.flowCellBtn, accountId === r.f.accountId && from === c.key && s.flowCellOn)}
+                  onClick={() => onPickCell(r.f.accountId, c.key)} title="Zobrazit tyto pohyby">
+                  <Money value={c.value} className={s.flowVal} />
                   <span className={s.flowShare}>{c.share}</span>
+                </button>
+              ) : (
+                <div key={c.key} className={clsx(s.flowTd, s.flowCell)}>
+                  <span className={s.flowVal} style={{ color: 'var(--ink-3)' }}>—</span>
                 </div>
               ))}
-              <span className={clsx(s.flowTd, s.flowCell)}><Money value={r.f.total} className={s.flowTotal} /></span>
+              <button type="button" className={clsx(s.flowTd, s.flowCell, s.flowCellBtn, accountId === r.f.accountId && from === 'all' && s.flowCellOn)}
+                onClick={() => onPickCell(r.f.accountId, 'all')} title="Zobrazit všechny příchozí peníze na účet">
+                <Money value={r.f.total} className={s.flowTotal} />
+              </button>
             </div>
           ))}
         </div>

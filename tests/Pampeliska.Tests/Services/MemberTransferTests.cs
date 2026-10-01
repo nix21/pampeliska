@@ -229,5 +229,14 @@ public class TransferFlowTests : IDisposable
         Assert.Equal(5000, joint.Senders.Single(s => s.MemberId == _env.Vasek.Id).Amount);
         Assert.Equal(2000, joint.Senders.Single(s => s.MemberId == _env.Misa.Id).Amount);
         Assert.Equal(3000, joint.Senders.Single(s => s.External).Amount);
+
+        // Proklik ze součtů: seznam pohybů podle zdroje odpovídá panelu
+        async Task<decimal> Sum(string from) =>
+            (await tx.ListAsync(new TxFilter(DateRange.Month(2026, 9), AccountId: _env.Spolecny.Id, From: from))).Items.Sum(i => i.AmountCzk);
+        Assert.Equal(5000, await Sum($"m{_env.Vasek.Id}"));
+        Assert.Equal(2000, await Sum($"m{_env.Misa.Id}"));
+        Assert.Equal(3000, await Sum("ext"));
+        Assert.Equal(10000, await Sum("all"));
+        await Assert.ThrowsAsync<DomainException>(() => tx.ListAsync(new TxFilter(From: "x")));
     }
 }

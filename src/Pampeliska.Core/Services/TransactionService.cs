@@ -26,7 +26,8 @@ public record TxFilter(
     int? BatchId = null,
     TxSort Sort = TxSort.DateDesc,
     int Skip = 0,
-    int Take = 200);
+    int Take = 200,
+    string? From = null);
 
 public record SplitDto(int CategoryId, decimal Amount, decimal AmountCzk, NeedType? NeedOverride);
 public record AiAlternative(int CategoryId, int Confidence);
@@ -78,6 +79,31 @@ public class TransactionService(AppDbContext db, BatchService batches, RuleServi
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
+    /// <summary>
+    /// Příchozí peníze podle zdroje jako v „Kdo kolik poslal“: „m{člen}“ (převody z jeho účtů a na společném účtu platby
+    /// připsané jen jemu), „a{účet}“ (převody ze společného účtu), „ext“ (na společném účtu platby zvenčí poměrem), „all“.
+    /// </summary>
+    private IQueryable<Transaction> FromSource(IQueryable<Transaction> q, string from)
+    {
+        q = q.Where(t => t.Amount > 0);
+        var transfer = q.Where(t => (t.Kind == TransactionKind.Transfer || t.Kind == TransactionKind.InvestmentTransfer) && t.TransferPairId != null);
+        var external = q.Where(t => (t.Kind == TransactionKind.Income || t.Kind == TransactionKind.Refund) && t.Account!.OwnerMemberId == null);
+        int? Id(string s) => int.TryParse(s, out var v) ? v : null;
+        return from switch
+        {
+            "all" => q.Where(t => ((t.Kind == TransactionKind.Transfer || t.Kind == TransactionKind.InvestmentTransfer) && t.TransferPairId != null)
+                                  || ((t.Kind == TransactionKind.Income || t.Kind == TransactionKind.Refund) && t.Account!.OwnerMemberId == null)),
+            "ext" => external.Where(t => t.Shares.Count(s => s.Percent > 0) != 1),
+            ['m', .. var rest] when Id(rest) is { } m => q.Where(t =>
+                ((t.Kind == TransactionKind.Transfer || t.Kind == TransactionKind.InvestmentTransfer)
+                 && db.Transactions.Any(p => p.Id == t.TransferPairId && p.Account!.OwnerMemberId == m))
+                || ((t.Kind == TransactionKind.Income || t.Kind == TransactionKind.Refund) && t.Account!.OwnerMemberId == null
+                    && t.Shares.Count(s => s.Percent > 0) == 1 && t.Shares.Any(s => s.MemberId == m && s.Percent > 0))),
+            ['a', .. var rest] when Id(rest) is { } a => transfer.Where(t => db.Transactions.Any(p => p.Id == t.TransferPairId && p.AccountId == a)),
+            _ => throw new DomainException($"Neznámý zdroj „{from}“."),
+        };
+    }
+
     public IQueryable<Transaction> Query(TxFilter f, IReadOnlyCollection<Category>? categories = null)
     {
         var q = db.Transactions.AsNoTracking().AsQueryable();
@@ -85,6 +111,7 @@ public class TransactionService(AppDbContext db, BatchService batches, RuleServi
         if (f.AccountId is { } a) q = q.Where(t => t.AccountId == a);
         if (f.BatchId is { } b) q = q.Where(t => t.BatchId == b);
         if (f.MemberId is { } m) q = q.Where(t => t.Shares.Any(s => s.MemberId == m && s.Percent > 0));
+        if (f.From is { Length: > 0 } from) q = FromSource(q, from);
         // Výdaje/příjmy stejně jako statistiky: podle druhu kategorie (u rozdělení kterékoli části), nezařazené podle typu a směru.
         // Příjem ve výdajové kategorii (např. vrácený podíl) tak patří mezi výdaje. Převody mezi členy jen v pohledu člena.
         var member = f.MemberId is not null;
