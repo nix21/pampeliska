@@ -367,72 +367,136 @@ function AccountFilter({ value, onChange }: { value: number | null; onChange: (i
 
 // ---------- Kdo kolik poslal ----------
 
+const FLOW_LIMIT = 5
+
+/** Malý koláč podílů odesílatelů. */
+function MiniPie({ parts, size = 24 }: { parts: { value: number; color: string }[]; size?: number }) {
+  const total = parts.reduce((a, p) => a + p.value, 0) || 1
+  const r = size / 2
+  let a = -Math.PI / 2
+  return (
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className={s.flowPie} aria-hidden>
+      {parts.length === 1 ? <circle cx={r} cy={r} r={r} fill={parts[0].color} /> : parts.map((p, i) => {
+        const a1 = a + (p.value / total) * Math.PI * 2
+        const large = a1 - a > Math.PI ? 1 : 0
+        const d = `M${r} ${r}L${r + r * Math.cos(a)} ${r + r * Math.sin(a)}A${r} ${r} 0 ${large} 1 ${r + r * Math.cos(a1)} ${r + r * Math.sin(a1)}Z`
+        a = a1
+        return <path key={i} d={d} fill={p.color} stroke="var(--surface)" strokeWidth={1} />
+      })}
+    </svg>
+  )
+}
+
+/** Tabulka převodů na účty: kdo kolik poslal (sloupec za člena / zdrojový účet), koláč podílů a srovnání s poměrem. */
 function FlowsCard({ flows, accountId, onPick }: { flows: TransferFlow[]; accountId: number | null; onPick: (id: number) => void }) {
   const { period } = useUi()
   const accounts = useAccounts()
   const members = useMembers()
   const fm = useMoney()
+  const mobile = useIsMobile()
+  const [all, setAll] = useState(false)
   const target = accountId != null ? accounts.byId.get(accountId) : undefined
+
+  // Sloupce = odesílatelé napříč účty: členové v pořadí domácnosti, pak zdrojové účty
+  const senderKey = (x: TransferFlow['senders'][number]) => (x.memberId != null ? `m${x.memberId}` : `a${x.fromAccountId ?? ''}`)
+  const colMap = new Map<string, { key: string; label: string; short: string; color: string; order: number }>()
+  for (const f of flows) for (const x of f.senders) {
+    if (x.amount <= 0) continue
+    const key = senderKey(x)
+    if (colMap.has(key)) continue
+    const m = x.memberId != null ? members.get(x.memberId) : undefined
+    const src = x.fromAccountId != null ? accounts.byId.get(x.fromAccountId) : undefined
+    colMap.set(key, {
+      key,
+      label: m ? m.name : src && !src.joint ? `Z účtu ${src.name}` : 'Ze společného',
+      short: m ? m.name : src && !src.joint ? src.name : 'společný',
+      color: m ? tokenColor(m.colorToken) : 'var(--ink-3)',
+      order: m ? [...members.keys()].indexOf(m.id) : 1000,
+    })
+  }
+  const cols = [...colMap.values()].sort((a, b) => a.order - b.order)
+
+  const rows = [...flows].sort((a, b) => b.total - a.total).map((f) => {
+    const acc = accounts.byId.get(f.accountId)
+    const by = new Map<string, number>()
+    for (const x of f.senders) if (x.amount > 0) by.set(senderKey(x), (by.get(senderKey(x)) ?? 0) + x.amount)
+    const share = (v: number) => `${f.total ? Math.round((v / f.total) * 100) : 0} %`
+    // Porovnání s výchozím poměrem společného účtu
+    let note: string | null = null
+    let noteStrong = false
+    const ratio = acc?.ratio.filter((r) => r.percent > 0) ?? []
+    if (ratio.length > 1) {
+      const byMember = ratio.map((r) => ({ r, sent: by.get(`m${r.memberId}`) ?? 0 }))
+      const sum = byMember.reduce((a, x) => a + x.sent, 0)
+      if (sum > 0) {
+        const top = byMember.map((x) => ({ ...x, d: x.sent - (sum * x.r.percent) / 100 })).sort((a, b) => b.d - a.d)[0]
+        if (Math.abs(top.d) < 500) note = `Odpovídá výchozímu poměru ${ratioLabel(ratio)}.`
+        else {
+          note = `Od ${members.get(top.r.memberId)?.name ?? 'člena'} přišlo o ${fm(top.d)} víc, než odpovídá výchozímu poměru ${ratioLabel(ratio)}.`
+          noteStrong = true
+        }
+      }
+    }
+    const used = cols.filter((c) => by.has(c.key))
+    return {
+      f, name: acc ? accountLabel(acc) : 'účet', note, noteStrong,
+      pie: used.map((c) => ({ value: by.get(c.key)!, color: c.color })),
+      cells: cols.map((c) => ({ key: c.key, value: by.get(c.key) ?? 0, share: by.has(c.key) ? share(by.get(c.key)!) : '' })),
+      split: used.map((c) => `${c.short} ${share(by.get(c.key)!)}`).join(' · '),
+    }
+  })
+  const shown = all ? rows : rows.slice(0, FLOW_LIMIT)
+  const rest = rows.length - FLOW_LIMIT
+
   return (
     <div className={s.flows}>
       <div className={s.flowsHead}>
         <span className={s.flowsTitle}>{target ? `Kdo kolik poslal na ${target.name}` : 'Kdo kolik poslal na účty'}</span>
         <span className={s.flowsSub}>{periodLabel(period)} · převody mezi účty, mimo výdaje i příjmy</span>
       </div>
-      {flows.map((f) => {
-        const acc = accounts.byId.get(f.accountId)
-        const parts = f.senders.filter((x) => x.amount > 0).map((x) => {
-          const m = x.memberId != null ? members.get(x.memberId) : undefined
-          const src = x.fromAccountId != null ? accounts.byId.get(x.fromAccountId) : undefined
-          return {
-            key: `${x.memberId ?? ''}-${x.fromAccountId ?? ''}`,
-            label: m ? m.name : src ? `Z účtu ${src.name}` : 'Ze společného účtu',
-            ini: m ? m.initials : 'SP',
-            color: m ? tokenColor(m.colorToken) : 'var(--ink-3)',
-            amount: x.amount,
-            memberId: x.memberId,
-          }
-        })
-        // Porovnání s výchozím poměrem společného účtu
-        let note: string | null = null
-        let noteStrong = false
-        const ratio = acc?.ratio.filter((r) => r.percent > 0) ?? []
-        if (ratio.length > 1) {
-          const byMember = ratio.map((r) => ({ r, sent: parts.filter((p) => p.memberId === r.memberId).reduce((a, p) => a + p.amount, 0) }))
-          const sum = byMember.reduce((a, x) => a + x.sent, 0)
-          if (sum > 0) {
-            const devs = byMember.map((x) => ({ ...x, d: x.sent - (sum * x.r.percent) / 100 })).sort((a, b) => b.d - a.d)
-            const top = devs[0]
-            if (Math.abs(top.d) < 500) note = `Odpovídá výchozímu poměru ${ratioLabel(ratio)}.`
-            else {
-              note = `Od ${members.get(top.r.memberId)?.name ?? 'člena'} přišlo o ${fm(top.d)} víc, než odpovídá výchozímu poměru ${ratioLabel(ratio)}.`
-              noteStrong = true
-            }
-          }
-        }
-        return (
-          <div key={f.accountId} className={s.flow}>
-            <div className={s.flowHead}>
-              <button type="button" className={s.flowName} onClick={() => onPick(f.accountId)} title="Filtrovat na tento účet">→ {acc ? accountLabel(acc) : 'účet'}</button>
-              <Money value={f.total} className={s.flowTotal} />
-            </div>
-            <div className={s.flowBar}>
-              {parts.map((p) => <span key={p.key} style={{ flex: p.amount, background: p.color }} />)}
-            </div>
-            <div className={s.flowParts}>
-              {parts.map((p) => (
-                <div key={p.key} className={s.flowPart}>
-                  <span className={s.flowIni} style={{ background: p.color }}>{p.ini}</span>
-                  <span className="ellipsis" style={{ color: 'var(--ink-2)' }}>{p.label}</span>
-                  <Money value={p.amount} className={s.flowVal} />
-                  <span className={s.flowShare}>{f.total ? Math.round((p.amount / f.total) * 100) : 0} %</span>
+      {mobile ? (
+        <div className="col" style={{ gap: 0 }}>
+          {shown.map((r) => (
+            <button key={r.f.accountId} type="button" className={s.flowRowMobile} onClick={() => onPick(r.f.accountId)} title="Filtrovat na tento účet">
+              <MiniPie parts={r.pie} />
+              <span className="col" style={{ gap: 1, flex: 1, minWidth: 0 }}>
+                <span className={clsx('ellipsis', s.flowName)}>{r.name}</span>
+                <span className={clsx('ellipsis', s.flowNote)}>{r.split}</span>
+              </span>
+              <Money value={r.f.total} className={s.flowTotal} />
+            </button>
+          ))}
+        </div>
+      ) : (
+        <div className={s.flowTable} style={{ gridTemplateColumns: `42px minmax(0, 1fr) ${cols.map(() => '118px').join(' ')} 124px` }}>
+          <span /><span className={s.flowTh} style={{ justifyContent: 'flex-start' }}>Na účet</span>
+          {cols.map((c) => (
+            <span key={c.key} className={s.flowTh}><span className={s.flowDot} style={{ background: c.color }} />{c.label}</span>
+          ))}
+          <span className={s.flowTh}>Celkem</span>
+          {shown.map((r) => (
+            <div key={r.f.accountId} style={{ display: 'contents' }}>
+              <span className={s.flowTd}><MiniPie parts={r.pie} /></span>
+              <button type="button" className={clsx(s.flowTd, s.flowNameCell)} onClick={() => onPick(r.f.accountId)} title="Filtrovat na tento účet">
+                <span className={clsx('ellipsis', s.flowName)}>{r.name}</span>
+                {r.note && <span className={clsx('ellipsis', s.flowNote)} style={{ color: r.noteStrong ? 'var(--ink-2)' : undefined }} title={r.note}>{r.note}</span>}
+              </button>
+              {r.cells.map((c) => (
+                <div key={c.key} className={clsx(s.flowTd, s.flowCell)}>
+                  {c.value ? <Money value={c.value} className={s.flowVal} /> : <span className={s.flowVal} style={{ color: 'var(--ink-3)' }}>—</span>}
+                  <span className={s.flowShare}>{c.share}</span>
                 </div>
               ))}
+              <span className={clsx(s.flowTd, s.flowCell)}><Money value={r.f.total} className={s.flowTotal} /></span>
             </div>
-            {note && <span className={s.flowNote} style={{ color: noteStrong ? 'var(--ink-2)' : 'var(--ink-3)' }}>{note}</span>}
-          </div>
-        )
-      })}
+          ))}
+        </div>
+      )}
+      {rest > 0 && (
+        <button type="button" className={s.flowMore} onClick={() => setAll((v) => !v)}>
+          {all ? 'Zobrazit méně' : `Zobrazit další ${count(rest, 'účet', 'účty', 'účtů')}`}
+        </button>
+      )}
     </div>
   )
 }

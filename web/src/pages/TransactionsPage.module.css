@@ -40,22 +40,35 @@
 .statNote { font-size: 11px; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* ---------- Kdo kolik poslal ---------- */
-.flows { display: flex; flex-direction: column; gap: 14px; padding: 16px 20px; border-radius: var(--radius); background: var(--surface); border: var(--card-border); box-shadow: var(--shadow); }
+.flows { display: flex; flex-direction: column; gap: 10px; padding: 16px 20px; border-radius: var(--radius); background: var(--surface); border: var(--card-border); box-shadow: var(--shadow); }
 .flowsHead { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
 .flowsTitle { font-size: 15px; font-weight: 800; }
 .flowsSub { font-size: 12px; color: var(--ink-3); }
-.flow { display: flex; flex-direction: column; gap: 8px; padding-top: 12px; border-top: 1px solid var(--line); }
-.flowHead { display: flex; align-items: baseline; gap: 10px; }
-.flowName { flex: 1; min-width: 0; border: 0; background: transparent; padding: 0; text-align: left; font-size: 14px; font-weight: 700; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.flowName:hover { text-decoration: underline; text-underline-offset: 2px; }
-.flowTotal { font-size: 15px; font-weight: 800; }
-.flowBar { display: flex; height: 10px; border-radius: var(--radius-pill); overflow: hidden; gap: 2px; }
-.flowParts { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 6px 16px; }
-.flowPart { display: flex; align-items: center; gap: 8px; font-size: 13px; min-width: 0; }
-.flowIni { width: 18px; height: 18px; flex-shrink: 0; border-radius: 9px; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 800; }
-.flowVal { margin-left: auto; font-weight: 700; }
-.flowShare { min-width: 44px; flex-shrink: 0; text-align: right; white-space: nowrap; color: var(--ink-3); font-variant-numeric: tabular-nums; }
-.flowNote { font-size: 12px; line-height: 1.45; }
+.flowTable { display: grid; align-items: center; font-size: 13px; }
+.flowTh {
+  display: flex; align-items: center; justify-content: flex-end; gap: 6px; padding-bottom: 6px; font-size: 12px; font-weight: 600;
+  color: var(--ink-3); white-space: nowrap;
+}
+.flowDot { width: 8px; height: 8px; flex-shrink: 0; border-radius: 4px; }
+.flowTd { align-self: stretch; display: flex; align-items: center; padding: 7px 0; border-top: 1px solid var(--line); min-width: 0; }
+.flowNameCell {
+  flex-direction: column; align-items: flex-start; justify-content: center; gap: 1px; border-left: 0; border-right: 0; border-bottom: 0;
+  background: transparent; text-align: left; color: inherit; font: inherit; cursor: pointer;
+}
+.flowNameCell:hover .flowName, .flowRowMobile:hover .flowName { text-decoration: underline; text-underline-offset: 2px; }
+.flowName { max-width: 100%; font-weight: 700; }
+.flowCell { flex-direction: column; align-items: flex-end; justify-content: center; padding-left: 14px; font-variant-numeric: tabular-nums; }
+.flowVal { font-weight: 600; white-space: nowrap; }
+.flowShare { font-size: 11px; color: var(--ink-3); }
+.flowTotal { font-weight: 800; white-space: nowrap; }
+.flowNote { max-width: 100%; font-size: 11px; color: var(--ink-3); }
+.flowPie { display: block; flex-shrink: 0; }
+.flowMore { align-self: flex-start; padding: 0; border: 0; background: transparent; font-size: 12px; font-weight: 700; color: var(--ink-2); cursor: pointer; }
+.flowRowMobile {
+  display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 6px 0; border: 0; border-top: 1px solid var(--line);
+  background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer;
+}
+.flowRowMobile .flowTotal { font-size: 14px; }
 
 /* ---------- Seznam ---------- */
 .list { background: var(--surface); border: var(--card-border); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
@@ -139,7 +152,7 @@
   .onlyMobileChip { display: inline-flex; }
   .layout { grid-template-columns: minmax(0, 1fr); }
   .flows { padding: 14px 16px; }
-  .flowParts { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+  .flowMore { min-height: 40px; font-size: 13px; }
   .summary { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
   .summary > :nth-child(n + 3) { display: none; }
   .stat { padding: 10px 12px; gap: 2px; }
