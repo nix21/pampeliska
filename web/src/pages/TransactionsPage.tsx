@@ -411,12 +411,14 @@ function FlowsCard({ flows, accountId, onPick }: { flows: TransferFlow[]; accoun
       label: m ? m.name : src && !src.joint ? `Z účtu ${src.name}` : 'Ze společného',
       short: m ? m.name : src && !src.joint ? src.name : 'společný',
       color: m ? tokenColor(m.colorToken) : 'var(--ink-3)',
-      order: m ? [...members.keys()].indexOf(m.id) : 1000,
+      order: m ? [...members.keys()].indexOf(m.id) : 1000 + (src ? accounts.list.indexOf(src) : accounts.list.length),
     })
   }
   const cols = [...colMap.values()].sort((a, b) => a.order - b.order)
 
-  const rows = [...flows].sort((a, b) => b.total - a.total).map((f) => {
+  // Účty v nastaveném pořadí (jako na Účtech a ve výběru účtu)
+  const rank = (id: number) => { const i = accounts.list.findIndex((a) => a.id === id); return i < 0 ? accounts.list.length : i }
+  const rows = [...flows].sort((a, b) => rank(a.accountId) - rank(b.accountId)).map((f) => {
     const acc = accounts.byId.get(f.accountId)
     const by = new Map<string, number>()
     for (const x of f.senders) if (x.amount > 0) by.set(senderKey(x), (by.get(senderKey(x)) ?? 0) + x.amount)
