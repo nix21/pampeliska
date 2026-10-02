@@ -126,11 +126,19 @@ export function PeriodPicker({ allowCompare = true, compact }: { allowCompare?: 
   )
 }
 
-/** Značka banky: zkratka na barvě instituce. */
-export function InstitutionBadge({ institution, size = 36 }: { institution: Pick<Institution, 'abbrev' | 'color'>; size?: number }) {
+/** Iniciály názvu účtu („ETF portfolio“ → EP, „Portu“ → PO). */
+function initials(name: string) {
+  const words = name.split(/[\s\-–·/]+/).map((w) => w.replace(/[^\p{L}\p{N}]/gu, '')).filter(Boolean)
+  if (!words.length) return ''
+  return (words.length === 1 ? words[0].slice(0, 2) : words[0][0] + words[1][0]).toUpperCase()
+}
+
+/** Značka banky: zkratka na barvě instituce. U „Jiná banka / platforma“ (zkratka „?“) iniciály názvu účtu. */
+export function InstitutionBadge({ institution, name, size = 36 }: { institution: Pick<Institution, 'abbrev' | 'color'>; name?: string; size?: number }) {
+  const text = institution.abbrev === '?' && name ? initials(name) || '?' : institution.abbrev
   return (
-    <span className={s.bank} style={{ width: size, height: size, background: institution.color, fontSize: institution.abbrev.length > 3 ? 9 : size > 32 ? 11 : 10 }}>
-      {institution.abbrev}
+    <span className={s.bank} style={{ width: size, height: size, background: institution.color, fontSize: text.length > 3 ? 9 : size > 32 ? 11 : 10 }}>
+      {text}
     </span>
   )
 }

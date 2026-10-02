@@ -2,6 +2,7 @@ import clsx from 'clsx'
 import { ArrowLeftRight, Check, ChevronLeft, ChevronRight, EyeOff, Plus, Sparkles, Split, Wand2 } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import { useAccounts } from '../../lib/accounts'
+import { accountLabel } from '../../lib/transactions'
 import { needColor, useCategories } from '../../lib/categories'
 import { dateLong, num, parseIso, weekdays } from '../../lib/format'
 import { categoryKindFor, effective, merchantKey, txMember, type InboxDraft, type InboxItem } from '../../lib/inbox'
@@ -206,7 +207,7 @@ export function InboxDetail({ item, draft, setDraft, onConfirm, onSkip, onPrev, 
       <div className={s.head}>
         <div className={s.headMeta}>
           <span className="faint ellipsis" style={{ fontSize: 12, flex: 1 }}>
-            {dateText}{acc ? ` · ${acc.name} · ${acc.institution.abbrev}` : ''}
+            {dateText}{acc ? ` · ${accountLabel(acc)}` : ''}
           </span>
           <button type="button" className={s.navBtn} aria-label="Předchozí platba" disabled={!onPrev} onClick={onPrev}><ChevronLeft size={16} /></button>
           <button type="button" className={s.navBtn} aria-label="Další platba" disabled={!onNext} onClick={onNext}><ChevronRight size={16} /></button>

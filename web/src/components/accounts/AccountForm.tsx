@@ -126,6 +126,8 @@ function FormBody({ account, kind, jointDefault, onClose, onSaved, onBalanceActi
   const edit = !!account
   const inv = f.kind === 'Investment'
   const locked = edit && (account?.transactionCount ?? 0) > 0
+  // S pohyby jde přepnout jen běžný ↔ spořicí
+  const kindLocked = (k: AccountKind) => locked && k !== f.kind && (k === 'Investment' || f.kind === 'Investment')
   const joint = f.owner === 'joint'
 
   const banks = institutions.filter((i) => i.kind === 'Bank')
@@ -226,7 +228,7 @@ function FormBody({ account, kind, jointDefault, onClose, onSaved, onBalanceActi
   return (
     <>
       <div className={s.head}>
-        <InstitutionBadge institution={inst ?? { abbrev: '?', color: '#6B6557' }} size={40} />
+        <InstitutionBadge institution={inst ?? { abbrev: '?', color: '#6B6557' }} name={f.name} size={40} />
         <div className={s.headText}>
           <DialogPrimitive.Title className={s.title}>{title}</DialogPrimitive.Title>
           <span className={s.sub}>{sub}</span>
@@ -236,12 +238,18 @@ function FormBody({ account, kind, jointDefault, onClose, onSaved, onBalanceActi
 
       <div className={s.body}>
         <Section title="Typ účtu">
-          <RadioCards<AccountKind> columns={3} value={f.kind} onChange={(k) => !locked && setKind(k)} options={[
-            { value: 'Current', title: 'Běžný', icon: <Wallet size={20} />, description: 'Platby kartou, výplaty, inkasa. Vstupuje do výdajů a výhledu.', disabled: locked && f.kind !== 'Current' },
-            { value: 'Savings', title: 'Spořicí', icon: <PiggyBank size={20} />, description: 'Rezerva s úrokem. Převody sem nejsou výdaj.', disabled: locked && f.kind !== 'Savings' },
-            { value: 'Investment', title: 'Investiční', icon: <TrendingUp size={20} />, description: 'ETF, akcie, penzijko. Sleduje hodnotu a výnos.', disabled: locked && f.kind !== 'Investment' },
+          <RadioCards<AccountKind> columns={3} value={f.kind} onChange={(k) => !kindLocked(k) && setKind(k)} options={[
+            { value: 'Current', title: 'Běžný', icon: <Wallet size={20} />, description: 'Platby kartou, výplaty, inkasa. Vstupuje do výdajů a výhledu.', disabled: kindLocked('Current') },
+            { value: 'Savings', title: 'Spořicí', icon: <PiggyBank size={20} />, description: 'Rezerva s úrokem. Převody sem nejsou výdaj.', disabled: kindLocked('Savings') },
+            { value: 'Investment', title: 'Investiční', icon: <TrendingUp size={20} />, description: 'ETF, akcie, penzijko. Sleduje hodnotu a výnos.', disabled: kindLocked('Investment') },
           ]} />
-          {locked && <span className={s.help}>Typ a měnu nelze u existujícího účtu změnit, účet už má pohyby. Založ nový účet a starý archivuj.</span>}
+          {locked && (
+            <span className={s.help}>
+              {account!.kind === 'Investment'
+                ? 'Typ a měnu nelze u investičního účtu s pohyby změnit. Založ nový účet a starý archivuj.'
+                : 'Účet už má pohyby: přepnout jde jen mezi běžným a spořicím, měnu ani investiční typ změnit nelze.'}
+            </span>
+          )}
         </Section>
 
         <Section title="Základní údaje" gap={12}>
@@ -252,7 +260,7 @@ function FormBody({ account, kind, jointDefault, onClose, onSaved, onBalanceActi
             </label>
             <div className={s.label}>{inv ? 'Broker / platforma' : 'Banka'}
               <div className={s.bankSelect}>
-                {inst && <span className={s.bankSelectBadge}><InstitutionBadge institution={inst} size={28} /></span>}
+                {inst && <span className={s.bankSelectBadge}><InstitutionBadge institution={inst} name={f.name} size={28} /></span>}
                 <Select value={instKey || null} onChange={(v) => set('institutionKey', v)} aria-label={inv ? 'Broker' : 'Banka'} className={s.bankTrigger}
                   options={instOptions.map((i) => ({ value: i.key, label: i.name, group: inv ? (i.kind === 'Broker' ? 'Brokeři a platformy' : 'Banky') : undefined }))} />
               </div>

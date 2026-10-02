@@ -84,7 +84,7 @@ public class HouseholdTools(AppDbContext db, FxService fx, AccountQueries accoun
     });
 
     [McpServerTool(Name = "update_account", Title = "Upravit účet", ReadOnly = false, Destructive = false, Idempotent = true, OpenWorld = false)]
-    [Description("Upraví účet (název, číslo, vlastník, poměr – nový poměr platí pro nové platby, limit…). Typ a měnu účtu s pohyby změnit nejde.")]
+    [Description("Upraví účet (název, číslo, vlastník, poměr – nový poměr platí pro nové platby, limit…). Měnu účtu s pohyby změnit nejde, typ jen mezi běžným a spořicím.")]
     public Task<string> UpdateAccount([Description("Id účtu.")] int accountId, [Description("Změny (vynechané se nemění).")] AccountArgs changes) =>
         McpSetup.Guard(async () => { await accounts.UpdateAsync(accountId, Input(changes)); return "Uloženo."; });
 

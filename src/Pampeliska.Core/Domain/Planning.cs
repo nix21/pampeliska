@@ -82,6 +82,8 @@ public class InvestmentValue
     public int AccountId { get; set; }
     public DateOnly Date { get; set; }
     public decimal Value { get; set; }
+    /// <summary>Ručně zadané „vloženo celkem“ k datu; další vklady se od něj dopočítávají z převodů.</summary>
+    public decimal? Deposits { get; set; }
 }
 
 public enum TradeSide { Buy, Sell }

@@ -239,7 +239,7 @@ function AccountRow({ a, on, members, onSelect }: { a: Account; on: boolean; mem
   const owners = accountMembers(a, members)
   return (
     <button type="button" className={clsx(s.row, on && s.rowOn, a.archived && s.rowArchived)} onClick={onSelect} aria-current={on || undefined}>
-      <InstitutionBadge institution={a.institution} size={40} />
+      <InstitutionBadge institution={a.institution} name={a.name} size={40} />
       <span className={s.rowMain}>
         <span className={s.rowTitle}>
           <span className={s.rowName}>{a.name}</span>

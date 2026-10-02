@@ -165,7 +165,7 @@ export default function StartPage() {
               <div className="col">
                 {accounts.map((a, i) => (
                   <div key={i} className={s.accRow}>
-                    <InstitutionBadge institution={inst(a.institutionKey)} />
+                    <InstitutionBadge institution={inst(a.institutionKey)} name={a.name} />
                     <div className="col grow" style={{ gap: 1 }}>
                       <input className={s.bare} value={a.name} aria-label="Název účtu" style={{ fontSize: 14 }}
                         onChange={(e) => setAccounts((x) => x.map((y, j) => (j === i ? { ...y, name: e.target.value } : y)))} />

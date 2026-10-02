@@ -139,7 +139,14 @@ function Detail({ d, variant, onClose, backLabel, onOpen }: { d: TxDetail; varia
   const SrcIcon = src === 'Rule' ? Wand2 : src === 'Ai' ? Sparkles : src === 'Auto' ? Link2 : Check
   const srcText = src ? (src === 'Ai' && tx.aiConfidence != null ? `${sourceLabel[src]} · ${tx.aiConfidence} %` : sourceLabel[src]) : d.batchLabel ?? null
   const when = `${dayHeading(tx.date)} ${parseIso(tx.date).getFullYear()}${tx.time ? ` · ${tx.time.slice(0, 5)}` : ''}`
-  const amountColor = isTransfer || isExcludedTx(tx, cats.isExcluded) || kind === 'Correction' ? 'var(--ink-2)' : tx.amount > 0 ? 'var(--pos)' : 'var(--ink)'
+  // Z / Na: vlastní účet a protistrana (spárovaný účet, jinak číslo protiúčtu z výpisu)
+  const pairAccountId = d.transferPair?.accountId ?? tx.transferPairAccountId
+  const otherLabel = pairAccountId != null && accounts.byId.get(pairAccountId) ? accountLabel(accounts.byId.get(pairAccountId))
+    : d.counterpartyAccount ?? null
+  const ownLabel = accountLabel(account)
+  const fromLabel = tx.amount < 0 ? ownLabel : otherLabel
+  const toLabel = tx.amount < 0 ? otherLabel : ownLabel
+  const amountColor =isTransfer || isExcludedTx(tx, cats.isExcluded) || kind === 'Correction' ? 'var(--ink-2)' : tx.amount > 0 ? 'var(--pos)' : 'var(--ink)'
 
   const menu: MenuItemDef[] = []
   if ((kind === 'Expense' || kind === 'Income') && !isSplit) menu.push({ label: 'Spárovat jako převod', icon: <Link2 size={15} />, onSelect: () => setPairing(true) })
@@ -210,7 +217,9 @@ function Detail({ d, variant, onClose, backLabel, onOpen }: { d: TxDetail; varia
             </span>
           )}
         </div>
-        <span className={s.when}>{when} · {accountLabel(account)} · {who}</span>
+        <span className={s.when}>{when} · {who}</span>
+        {fromLabel && <span className={s.when}>Z: {fromLabel}</span>}
+        {toLabel && <span className={s.when}>Na: {toLabel}</span>}
         {tx.suspectedDuplicateOfId && (
           <span className={s.warnNote}>Možná duplicita pohybu z {dateShort(d.suspectedDuplicateOf?.date)} – vyřeš ji v Třídění.</span>
         )}

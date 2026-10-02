@@ -33,7 +33,7 @@ export function JointAccountsCard({ accounts, onEdit, onAdd }: { accounts: Accou
         return (
           <div key={a.id} className={s.joint}>
             <div className="row" style={{ gap: 10 }}>
-              <InstitutionBadge institution={a.institution} size={28} />
+              <InstitutionBadge institution={a.institution} name={a.name} size={28} />
               <div className="col grow" style={{ gap: 1 }}>
                 <span style={{ fontSize: 14, fontWeight: 700 }} className="ellipsis">{a.name}</span>
                 <span className="faint" style={{ fontSize: 12 }}>{a.institution.name} · {a.currency} · {fmt(a.balance, { currency: a.currency })}</span>

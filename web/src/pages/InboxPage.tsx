@@ -12,6 +12,7 @@ import { InboxDetail } from '../components/inbox/InboxDetail'
 import { Logo } from '../components/Logo'
 import { Button, Checkbox, Empty, Popover, Spinner } from '../components/ui'
 import { useAccounts } from '../lib/accounts'
+import { accountLabel as accountName } from '../lib/transactions'
 import { api, notifyError, notifyOk } from '../lib/api'
 import { count, dateShort, num, plural } from '../lib/format'
 import {
@@ -92,7 +93,7 @@ export default function InboxPage() {
 
   const accountLabel = (tx: TxRow) => {
     const a = accounts.byId.get(tx.accountId)
-    return a ? `${a.name} · ${a.institution.abbrev}` : ''
+    return a ? accountName(a) : ''
   }
   const memberLabel = (m: number | 'shared' | null) => (m === 'shared' ? 'společná' : m != null ? membersById.get(m)?.name ?? '' : '')
 

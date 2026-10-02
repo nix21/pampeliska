@@ -10,7 +10,7 @@ public record PairInput(int TransactionId);
 public record AmountAlertInput(bool Accept);
 public record CancelMarksInput(Dictionary<int, bool> Marks);
 public record TipStatusInput(SavingTipStatus Status);
-public record ValueInput(DateOnly Date, decimal Value);
+public record ValueInput(DateOnly Date, decimal Value, decimal? Deposits = null);
 
 public static class PlanningEndpoints
 {
@@ -66,7 +66,7 @@ public static class PlanningEndpoints
         api.MapGet("/investments", (InvestmentService svc) => svc.AccountsAsync());
         api.MapPost("/investments/{accountId:int}/values", async (int accountId, ValueInput i, InvestmentService svc) =>
         {
-            await svc.AddValueAsync(accountId, i.Date, i.Value);
+            await svc.AddValueAsync(accountId, i.Date, i.Value, i.Deposits);
             return Results.NoContent();
         });
         api.MapPost("/investments/trades", async (TradeInput i, InvestmentService svc) => { var t = await svc.AddTradeAsync(i); return new { t.Id }; });

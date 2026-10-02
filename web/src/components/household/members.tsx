@@ -7,6 +7,7 @@ import { count, pct, relative } from '../../lib/format'
 import { MEMBER_COLORS, type MemberInput, type MemberStat } from '../../lib/household'
 import type { Account, Member, MemberRole } from '../../lib/types'
 import { useUi } from '../../state/ui'
+import { shortBank } from '../accounts/helpers'
 import { useMoney } from '../common'
 import { Avatar, Button, Dialog, DropdownMenu, Field, IconButton, Segmented, TextInput, tokenColor } from '../ui'
 import s from './household.module.css'
@@ -87,7 +88,7 @@ export function MemberCard({ member: m, stat, accounts, periodText }: {
               <span key={a.id} className={clsx(s.acctChip, a.joint && s.acctChipJoint)} title={a.joint ? 'Společný účet' : 'Vlastní účet'}>
                 {a.name}
                 <span className="faint" style={{ fontWeight: 500 }}>
-                  {a.institution.name.length > 12 ? a.institution.abbrev : a.institution.name}{a.currency !== 'CZK' ? ` · ${a.currency}` : ''}
+                  {shortBank(a)}{a.currency !== 'CZK' ? ` · ${a.currency}` : ''}
                 </span>
               </span>
             ))}

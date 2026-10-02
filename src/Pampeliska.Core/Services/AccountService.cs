@@ -64,8 +64,9 @@ public class AccountService(AppDbContext db, ShareService shares, FxService fx, 
         var a = await db.Accounts.Include(x => x.Shares).Include(x => x.Conditions).FirstOrDefaultAsync(x => x.Id == id)
             ?? throw new DomainException($"Účet {id} neexistuje.");
         var hasTx = await db.Transactions.AnyAsync(t => t.AccountId == id);
-        if (hasTx && input.Kind is { } k && k != a.Kind)
-            throw new DomainException("Typ nelze u účtu s pohyby změnit. Založte nový účet a starý archivujte.");
+        // Běžný ↔ spořicí jde i s pohyby; investiční účet má jinou evidenci (hodnota, vklady), ten se měnit nedá
+        if (hasTx && input.Kind is { } k && k != a.Kind && (k == AccountKind.Investment || a.Kind == AccountKind.Investment))
+            throw new DomainException("Investiční účet s pohyby nelze změnit na jiný typ (ani obráceně). Založte nový účet a starý archivujte.");
         if (hasTx && input.Currency is { } c && !string.Equals(c, a.Currency, StringComparison.OrdinalIgnoreCase))
             throw new DomainException("Měnu nelze u účtu s pohyby změnit. Založte nový účet a starý archivujte.");
         if (input.Kind is { } kind) a.Kind = kind;

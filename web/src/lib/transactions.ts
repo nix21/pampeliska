@@ -112,7 +112,7 @@ export function countedCzk(tx: TxRow, isExcluded: (id?: number | null) => boolea
 export function accountLabel(a?: Pick<Account, 'name' | 'institution'>, short = false) {
   if (!a) return 'Neznámý účet'
   if (short) return a.name
-  const inst = a.institution.name.length <= 12 ? a.institution.name : a.institution.abbrev
+  const inst = a.institution.name.length <= 12 || a.institution.abbrev === '?' ? a.institution.name : a.institution.abbrev
   return `${a.name} · ${inst}`
 }
 

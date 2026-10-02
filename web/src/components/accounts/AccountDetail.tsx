@@ -59,7 +59,7 @@ export function AccountDetail({ account: a, onEdit, korOpen, setKorOpen }: {
   return (
     <div className={s.detail}>
       <div className={s.detailHead}>
-        <InstitutionBadge institution={a.institution} size={44} />
+        <InstitutionBadge institution={a.institution} name={a.name} size={44} />
         <div className="col grow" style={{ gap: 2 }}>
           <span className={s.detailName}>{a.name}</span>
           <span className={s.detailSub}>
@@ -208,12 +208,13 @@ function CorrectionPanel({ account: a, onClose }: { account: Account; onClose: (
   const inv = a.kind === 'Investment'
   const [date, setDate] = useState<string | null>(household.today)
   const [value, setValue] = useState<number | null>(a.balance)
+  const [deposits, setDeposits] = useState<number | null>(null)
   const isToday = date === household.today
   const diff = value != null ? Math.round((value - a.balance) * 100) / 100 : 0
 
   const save = useMutation({
     mutationFn: () => inv
-      ? api.post(`/api/investments/${a.id}/values`, { date, value })
+      ? api.post(`/api/investments/${a.id}/values`, { date, value, deposits })
       : api.post<{ id: number; amount: number; date: string }>(`/api/accounts/${a.id}/corrections`, { date, actualBalance: value }),
     onSuccess: (r) => {
       notifyOk(inv ? 'Hodnota portfolia uložena' : `Korekce ${fmt((r as { amount: number }).amount, { currency: a.currency, sign: true })} uložena`)
@@ -231,6 +232,11 @@ function CorrectionPanel({ account: a, onClose }: { account: Account; onClose: (
         <label className={s.korLabel}>{inv ? 'Aktuální hodnota' : 'Skutečný zůstatek'} ({a.currency})
           <NumberInput value={value} onChange={setValue} suffix={sym(a.currency)} autoFocus />
         </label>
+        {inv && (
+          <label className={s.korLabel}>Vloženo celkem (nepovinné)
+            <NumberInput value={deposits} onChange={setDeposits} suffix={sym(a.currency)} />
+          </label>
+        )}
       </div>
       {isToday ? (
         <div className="row" style={{ justifyContent: 'space-between', fontSize: 13 }}>
@@ -243,7 +249,7 @@ function CorrectionPanel({ account: a, onClose }: { account: Account; onClose: (
         <span className="muted" style={{ fontSize: 12 }}>{inv ? `Hodnota se uloží k ${dateLong(date)}.` : `Rozdíl se dopočítá proti zůstatku k ${dateLong(date)}.`}</span>
       )}
       <span className="muted" style={{ fontSize: 12, lineHeight: 1.5 }}>
-        {inv ? 'Hodnota se mění jen zadáním nové hodnoty nebo obchodem. Z rozdílu hodnoty a vkladů se počítá výnos.'
+        {inv ? 'Hodnota se mění jen zadáním nové hodnoty nebo obchodem. Z rozdílu hodnoty a vkladů se počítá výnos. Vloženo celkem vyplň, když vklady neodpovídají převodům – další se dopočítají od tohoto dne.'
           : 'Korekce je zvláštní pohyb mimo statistiky. Grafy vývoje zůstatku se od tohoto dne zpětně dopočítají.'}
       </span>
       <div className="row">

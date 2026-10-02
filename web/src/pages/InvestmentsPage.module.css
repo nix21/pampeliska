@@ -9,7 +9,7 @@
 .stats .faint { font-size: 11px; }
 .statV { font-size: 20px; font-weight: 800; letter-spacing: -0.02em; color: var(--ink); }
 .valueBox { display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--line); }
-.valueRow { display: grid; grid-template-columns: 150px minmax(0, 1fr) auto; gap: 8px; align-items: end; }
+.valueRow { display: grid; grid-template-columns: 150px minmax(0, 1fr) minmax(0, 1fr) auto; gap: 8px; align-items: end; }
 .pos { display: grid; grid-template-columns: minmax(0, 1fr) 70px 90px 110px 60px; gap: 10px; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
 .pos > :not(:first-child) { text-align: right; }
 .posHead { font-size: 12px; font-weight: 600; color: var(--ink-3); }

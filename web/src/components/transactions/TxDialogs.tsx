@@ -12,7 +12,7 @@ import { InstitutionBadge, useMoney } from '../common'
 import { Button, DateInput, Dialog, Field, NumberInput, Segmented, Select, TextInput } from '../ui'
 
 const accountOptions = (list: Account[]) =>
-  list.map((a) => ({ value: String(a.id), label: accountLabel(a), prefix: <InstitutionBadge institution={a.institution} size={20} /> }))
+  list.map((a) => ({ value: String(a.id), label: accountLabel(a), prefix: <InstitutionBadge institution={a.institution} name={a.name} size={20} /> }))
 
 /** „+ Přidat pohyb“ – ruční pohyb (hotovost, účet bez výpisu). */
 export function AddTransactionDialog({ open, onOpenChange, defaultAccountId, onCreated }: {

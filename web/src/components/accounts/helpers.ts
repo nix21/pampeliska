@@ -55,4 +55,4 @@ export function memberRule(a: Account) {
 }
 
 /** Krátký název banky do štítku („ČS“, „Air Bank“). */
-export const shortBank = (a: Account) => (a.institution.name.length > 12 ? a.institution.abbrev : a.institution.name)
+export const shortBank = (a: Pick<Account, 'institution'>) => (a.institution.name.length > 12 && a.institution.abbrev !== '?' ? a.institution.abbrev : a.institution.name)

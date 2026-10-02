@@ -147,9 +147,10 @@ function AccountDetail({ account: a, view }: { account: Account; view?: Investme
   const { household } = useUi()
   const [date, setDate] = useState<string | null>(household.today)
   const [value, setValue] = useState<number | null>(null)
+  const [deposits, setDeposits] = useState<number | null>(null)
   const add = useMutation({
-    mutationFn: () => api.post(`/api/investments/${a.id}/values`, { date, value }),
-    onSuccess: () => (notifyOk('Hodnota uložena'), setValue(null), qc.invalidateQueries({ queryKey: ['investments'] }),
+    mutationFn: () => api.post(`/api/investments/${a.id}/values`, { date, value, deposits }),
+    onSuccess: () => (notifyOk('Hodnota uložena'), setValue(null), setDeposits(null), qc.invalidateQueries({ queryKey: ['investments'] }),
       qc.invalidateQueries({ queryKey: ['net-worth'] }), qc.invalidateQueries({ queryKey: ['accounts'] })),
     onError: notifyError,
   })
@@ -167,10 +168,11 @@ function AccountDetail({ account: a, view }: { account: Account; view?: Investme
   const gap = vp + [...deps].reverse().map((v, j) => `L${IX(N - 1 - j)} ${IY(v)}`).join('') + 'Z'
   const last = view?.value ?? a.balance
   const change = value != null && last ? value - last : null
+  const sym = a.currency === 'EUR' ? '€' : a.currency === 'USD' ? '$' : 'Kč'
   return (
     <>
       <div className="row" style={{ gap: 10 }}>
-        <InstitutionBadge institution={a.institution} size={40} />
+        <InstitutionBadge institution={a.institution} name={a.name} size={40} />
         <div className="col grow" style={{ gap: 2 }}>
           <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 22 }}>{a.name}</span>
           <span className="faint" style={{ fontSize: 12 }}>{a.institution.name} · {a.currency} · {owners}{view?.lastDate ? ` · hodnota zadána ${dateShort(view.lastDate)}` : ''}</span>
@@ -205,12 +207,13 @@ function AccountDetail({ account: a, view }: { account: Account; view?: Investme
         <span style={{ fontSize: 13, fontWeight: 800 }}>Zadat aktuální hodnotu portfolia</span>
         <div className={s.valueRow}>
           <Field label="Ke dni"><DateInput value={date} onChange={setDate} /></Field>
-          <Field label={`Hodnota podle ${a.institution.name} (${a.currency})`}><NumberInput value={value} onChange={setValue} suffix={a.currency === 'EUR' ? '€' : a.currency === 'USD' ? '$' : 'Kč'} /></Field>
+          <Field label={`Aktuální hodnota (${a.currency})`}><NumberInput value={value} onChange={setValue} suffix={sym} /></Field>
+          <Field label="Vloženo celkem (nepovinné)"><NumberInput value={deposits} onChange={setDeposits} suffix={sym} placeholder={view ? num(view.deposits, 0) : undefined} /></Field>
           <Button variant="primary" icon={<Check size={14} />} disabled={value == null || !date} loading={add.isPending} onClick={() => add.mutate()}>Uložit</Button>
         </div>
         <span className="muted" style={{ fontSize: 12 }}>
           {change != null ? `Změna proti ${view?.lastDate ? dateShort(view.lastDate) : 'minule'}: ${money(change, { currency: a.currency, decimals: 0, sign: true })} (${last ? `${change >= 0 ? '+' : '−'}${num(Math.abs((change / last) * 100), 1)} %` : '—'}). Graf vývoje a čisté jmění se přepočítají.`
-            : 'Zadej hodnotu z aplikace brokera. Stahování cen z pozic připravujeme.'}
+            : 'Zadej hodnotu z aplikace brokera. Vloženo celkem vyplň, když vklady neodpovídají převodům (např. pravidelné investice) – další vklady se pak dopočítají od tohoto dne.'}
         </span>
       </div>
       {(view?.positions.length ?? 0) > 0 && (

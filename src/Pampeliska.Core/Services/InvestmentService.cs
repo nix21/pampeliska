@@ -23,10 +23,16 @@ public record TradeInput(int AccountId, DateOnly Date, TradeSide Side, string Ti
 /// <summary>Investice: ručně zadávaná hodnota, vklady (převody na investiční účet), obchody a pozice; čisté jmění po vrstvách.</summary>
 public class InvestmentService(AppDbContext db, FxService fx, TimeProvider time)
 {
-    /// <summary>Vklady k datu: počáteční „vloženo celkem“ + příchozí převody na účet (mínus odchozí).</summary>
-    public static decimal DepositsAt(Account a, IEnumerable<Transaction> txs, DateOnly date) =>
-        (a.OpeningDeposits ?? 0) + txs.Where(t => t.AccountId == a.Id && t.Date <= date && t.Date > a.OpeningDate
+    /// <summary>Vklady k datu: poslední ručně zadané „vloženo celkem“ (u hodnoty portfolia, jinak počáteční)
+    /// + příchozí převody na účet od toho dne (mínus odchozí).</summary>
+    public static decimal DepositsAt(Account a, IEnumerable<Transaction> txs, IEnumerable<InvestmentValue> values, DateOnly date)
+    {
+        var anchor = values.Where(v => v.AccountId == a.Id && v.Deposits != null && v.Date <= date && v.Date >= a.OpeningDate)
+            .OrderByDescending(v => v.Date).FirstOrDefault();
+        var from = anchor?.Date ?? a.OpeningDate;
+        return (anchor?.Deposits ?? a.OpeningDeposits ?? 0) + txs.Where(t => t.AccountId == a.Id && t.Date <= date && t.Date > from
                                                   && (t.Kind is TransactionKind.InvestmentTransfer or TransactionKind.Transfer)).Sum(t => t.Amount);
+    }
 
     public async Task<List<InvestmentAccountView>> AccountsAsync()
     {
@@ -42,11 +48,11 @@ public class InvestmentService(AppDbContext db, FxService fx, TimeProvider time)
         {
             var vals = values[a.Id].ToList();
             var history = new List<ValuePoint> { new(a.OpeningDate, a.OpeningBalance, a.OpeningDeposits ?? 0) };
-            history.AddRange(vals.Select(v => new ValuePoint(v.Date, v.Value, DepositsAt(a, txs, v.Date))));
+            history.AddRange(vals.Select(v => new ValuePoint(v.Date, v.Value, DepositsAt(a, txs, vals, v.Date))));
             history = history.GroupBy(h => h.Date).Select(g => g.Last()).OrderBy(h => h.Date).ToList();
             var last = history[^1];
             var prev = history.Count > 1 ? history[^2] : null;
-            var deposits = DepositsAt(a, txs, time.Today());
+            var deposits = DepositsAt(a, txs, vals, time.Today());
             var positions = Positions(trades[a.Id]);
             var gain = last.Value - deposits;
             return new InvestmentAccountView(a.Id, last.Value, deposits, gain, deposits > 0 ? Math.Round(gain / deposits * 100, 1) : null,
@@ -67,14 +73,20 @@ public class InvestmentService(AppDbContext db, FxService fx, TimeProvider time)
             })
             .Where(p => p.Quantity > 0).OrderByDescending(p => p.Value).ToList();
 
-    public async Task AddValueAsync(int accountId, DateOnly date, decimal value)
+    /// <param name="deposits">Nepovinně „vloženo celkem“ k datu (přepíše dopočet z převodů).</param>
+    public async Task AddValueAsync(int accountId, DateOnly date, decimal value, decimal? deposits = null)
     {
         var a = await db.Accounts.FindAsync(accountId) ?? throw new DomainException($"Účet {accountId} neexistuje.");
         if (a.Kind != AccountKind.Investment) throw new DomainException("Hodnota se zadává jen u investičního účtu.");
         if (value < 0) throw new DomainException("Hodnota nesmí být záporná.");
+        if (deposits < 0) throw new DomainException("Vloženo celkem nesmí být záporné.");
         var existing = await db.InvestmentValues.FirstOrDefaultAsync(v => v.AccountId == accountId && v.Date == date);
-        if (existing is null) db.InvestmentValues.Add(new InvestmentValue { AccountId = accountId, Date = date, Value = value });
-        else existing.Value = value;
+        if (existing is null) db.InvestmentValues.Add(new InvestmentValue { AccountId = accountId, Date = date, Value = value, Deposits = deposits });
+        else
+        {
+            existing.Value = value;
+            if (deposits is not null) existing.Deposits = deposits;
+        }
         await db.SaveChangesAsync();
     }
 

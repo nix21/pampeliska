@@ -98,9 +98,11 @@ public class PlanningTools(RecurringService recurring, ForecastService forecast,
     public Task<List<InvestmentAccountView>> GetInvestments() => McpSetup.Guard(investments.AccountsAsync);
 
     [McpServerTool(Name = "add_investment_value", Title = "Zadat hodnotu portfolia", ReadOnly = false, Destructive = false, Idempotent = true, OpenWorld = false)]
-    [Description("Zapíše hodnotu investičního účtu k datu (v měně účtu), např. z výpisu brokera.")]
-    public Task<string> AddValue([Description("Id investičního účtu.")] int accountId, [Description("Datum.")] DateOnly date, [Description("Hodnota.")] decimal value) =>
-        McpSetup.Guard(async () => { await investments.AddValueAsync(accountId, date, value); return "Uloženo."; });
+    [Description("Zapíše hodnotu investičního účtu k datu (v měně účtu), např. z výpisu brokera. Nepovinně i „vloženo celkem“ k tomuto datu – "
+        + "od něj se pak další vklady dopočítávají z převodů na účet.")]
+    public Task<string> AddValue([Description("Id investičního účtu.")] int accountId, [Description("Datum.")] DateOnly date, [Description("Hodnota.")] decimal value,
+        [Description("Nepovinně: vloženo celkem k datu (součet všech vkladů mínus výběrů, v měně účtu).")] decimal? deposits = null) =>
+        McpSetup.Guard(async () => { await investments.AddValueAsync(accountId, date, value, deposits); return "Uloženo."; });
 
     [McpServerTool(Name = "add_investment_trade", Title = "Zapsat obchod", ReadOnly = false, Destructive = false, Idempotent = false, OpenWorld = false)]
     [Description("Zapíše nákup/prodej (ticker, kusy, cena). Nákup se sám naváže na převod na investiční účet v okolí data.")]
