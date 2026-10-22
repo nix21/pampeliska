@@ -28,6 +28,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<RecurringPayment> RecurringPayments => Set<RecurringPayment>();
     public DbSet<RecurringSkip> RecurringSkips => Set<RecurringSkip>();
     public DbSet<SavingTip> SavingTips => Set<SavingTip>();
+    public DbSet<ForecastScenario> ForecastScenarios => Set<ForecastScenario>();
+    public DbSet<ExpectedPayment> ExpectedPayments => Set<ExpectedPayment>();
+    public DbSet<ForecastSnapshot> ForecastSnapshots => Set<ForecastSnapshot>();
     public DbSet<InvestmentValue> InvestmentValues => Set<InvestmentValue>();
     public DbSet<InvestmentTrade> InvestmentTrades => Set<InvestmentTrade>();
     public DbSet<ExchangeRate> ExchangeRates => Set<ExchangeRate>();
@@ -128,6 +131,18 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.Property(t => t.Evidence).HasMaxLength(SavingTipService.EvidenceMax);
             e.Property(t => t.Search).HasMaxLength(100);
             e.Property(t => t.CreatedBy).HasMaxLength(200);
+        });
+        b.Entity<ForecastScenario>().Property(f => f.UpdatedBy).HasMaxLength(200);
+        b.Entity<ExpectedPayment>(e =>
+        {
+            e.Property(x => x.Name).HasMaxLength(PredictionService.NameMax);
+            e.Property(x => x.Note).HasMaxLength(PredictionService.NameMax);
+            e.Property(x => x.CreatedBy).HasMaxLength(200);
+        });
+        b.Entity<ForecastSnapshot>(e =>
+        {
+            e.Property(x => x.Name).HasMaxLength(PredictionService.NameMax);
+            e.Property(x => x.CreatedBy).HasMaxLength(200);
         });
         b.Entity<InvestmentValue>().HasIndex(v => new { v.AccountId, v.Date });
         b.Entity<InvestmentTrade>().HasIndex(v => new { v.AccountId, v.Date });

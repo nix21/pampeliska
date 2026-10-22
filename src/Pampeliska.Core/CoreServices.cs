@@ -28,6 +28,7 @@ public static class CoreServices
         services.AddScoped<StatsService>();
         services.AddScoped<RecurringService>();
         services.AddScoped<ForecastService>();
+        services.AddScoped<PredictionService>();
         services.AddScoped<ConditionService>();
         services.AddScoped<BudgetService>();
         services.AddScoped<SavingsService>();

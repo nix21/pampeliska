@@ -21,6 +21,7 @@ const RulesPage = lazy(() => import('./pages/RulesPage'))
 const RecurringPage = lazy(() => import('./pages/RecurringPage'))
 const BudgetsPage = lazy(() => import('./pages/BudgetsPage'))
 const SavingsPage = lazy(() => import('./pages/SavingsPage'))
+const PredictionPage = lazy(() => import('./pages/PredictionPage'))
 const InvestmentsPage = lazy(() => import('./pages/InvestmentsPage'))
 const OverviewPage = lazy(() => import('./pages/OverviewPage'))
 const ExpensesPage = lazy(() => import('./pages/ExpensesPage'))
@@ -74,6 +75,7 @@ function MainRoutes() {
           <Route path="/kategorie" element={<CategoriesPage />} />
           <Route path="/pravidla" element={<RulesPage />} />
           <Route path="/pravidelne" element={<RecurringPage />} />
+          <Route path="/predikce" element={<PredictionPage />} />
           <Route path="/rozpocty" element={<BudgetsPage />} />
           <Route path="/usetrit" element={<SavingsPage />} />
           <Route path="/investice" element={<InvestmentsPage />} />

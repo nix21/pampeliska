@@ -210,7 +210,9 @@ public class RecurringService(AppDbContext db, FxService fx, TimeProvider time)
     /// <summary>Po založení/potvrzení spáruje odpovídající pohyby za posledních 6 měsíců.</summary>
     public async Task<int> PairHistoryAsync(RecurringPayment r)
     {
-        var from = time.Today().AddMonths(-6);
+        // Celé měsíce – průměr v predikci bere 6 uzavřených měsíců a nespárovaný výskyt by se započítal dvakrát
+        var today = time.Today();
+        var from = new DateOnly(today.Year, today.Month, 1).AddMonths(-6).AddDays(-r.ToleranceDays);
         var txs = await db.Transactions.Where(t => t.AccountId == r.AccountId && t.Date >= from && t.RecurringPaymentId == null).ToListAsync();
         var n = 0;
         foreach (var t in txs.Where(t => RecurringSchedule.FindMatch([r], t) is not null))

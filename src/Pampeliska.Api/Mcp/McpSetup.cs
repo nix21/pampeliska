@@ -53,6 +53,11 @@ public static class McpSetup
            Žádné obecné poučky. Uživateli pak rady krátce shrň.
         4. Předplatná ke zrušení poznamenej (mark_subscriptions_to_cancel) jen na pokyn uživatele – je to připomínka, nic se nevypovídá.
 
+        Predikce (uživatel se ptá, kolik bude mít za pár měsíců, nebo chce zpřesnit predikci):
+        1. get_prediction – zůstatek po měsících, položky a očekávané jednorázové platby.
+        2. Sezónní výdaje, které predikce nezná (Vánoce, dovolená, vyúčtování energií), najdi v loňských pohybech a přidej přes
+           add_expected_payment (yearly=true, poznámka „odhad z loňska“). Nejdřív zkontroluj ExpectedPayments, ať je nepřidáš dvakrát.
+
         Důležité:
         - Před založením, přejmenováním, sloučením nebo smazáním kategorie či pravidla a před přímým potvrzením
           (categorize_transactions s confirm=true, confirm_transactions) shrň uživateli změny a počkej na souhlas.
@@ -82,6 +87,7 @@ public static class McpSetup
             .WithTools<NoteTools>(JsonOptions)
             .WithTools<PlanningTools>(JsonOptions)
             .WithTools<SavingTools>(JsonOptions)
+            .WithTools<PredictionTools>(JsonOptions)
             .WithRequestFilters(f => f.AddCallToolFilter(next => async (request, ct) =>
             {
                 var services = request.Services!;
