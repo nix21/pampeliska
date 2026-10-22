@@ -4,7 +4,7 @@ import { monthLocative, parseIso } from './format'
 import type {
   AccountKind, AccountSource, ConditionType, HouseholdSettings, InvestmentKind, MemberRole, ShareRecalcMode, ValueTracking,
 } from './types'
-import type { Period } from '../state/ui'
+import { periodLabel, type Period } from '../state/ui'
 
 // ---------- Statistiky členů (GET /api/stats/members) ----------
 
@@ -155,7 +155,7 @@ export const investmentKindLabel: Record<InvestmentKind, string> = {
 
 export const MEMBER_COLORS = ['c1', 'c4', 'c3', 'c5', 'c6', 'c7', 'c2', 'c8', 'c9', 'c10', 'c11', 'c12']
 
-/** „v září“, „v Q3 2026“, „v roce 2026“, „za období“ – pro popisky statistik. */
+/** „v září“, „v Q3 2026“, „v roce 2026“, „za posledních 12 měsíců“, „za období“ – pro popisky statistik. */
 export function periodIn(p: Period, todayIso: string) {
   const thisYear = parseIso(todayIso).getFullYear()
   if (p.kind === 'Month') {
@@ -164,6 +164,8 @@ export function periodIn(p: Period, todayIso: string) {
   }
   if (p.kind === 'Quarter') return `v ${p.value.replace('-', ' ')}`
   if (p.kind === 'Year') return `v roce ${p.value}`
+  if (p.kind === 'RollingYear') return 'za posledních 12 měsíců'
+  if (p.kind === 'YearToDate') return `za ${periodLabel(p).toLowerCase()}`
   return 'za období'
 }
 

@@ -122,7 +122,8 @@ export default function SettingsPage() {
             </Row>
             <Row label="Výchozí období" note="Přehled, Kategorie, Rozpočty" wide>
               <Seg value={st.defaultPeriod} onChange={(v) => set('defaultPeriod', v)}
-                options={[{ value: 'Month', label: 'Měsíc' }, { value: 'Quarter', label: 'Čtvrtletí' }, { value: 'Year', label: 'Rok' }]} />
+                options={[{ value: 'Month', label: 'Měsíc' }, { value: 'Quarter', label: 'Čtvrtletí' }, { value: 'Year', label: 'Rok' },
+                  { value: 'YearToDate', label: 'Letos' }, { value: 'RollingYear', label: 'Plovoucí rok' }]} />
             </Row>
             <Row label="Jen potvrzené platby ve výchozím stavu" note="Nepotvrzené se jinak zobrazují odlišeně">
               <Switch checked={st.confirmedOnlyDefault} onChange={(v) => set('confirmedOnlyDefault', v)} label="Jen potvrzené platby ve výchozím stavu" />
@@ -273,9 +274,9 @@ function DataSection({ isOwner }: { isOwner: boolean }) {
     let q = currentPeriod('Quarter', household.today)
     for (let i = 0; i < 4; i++, q = shiftPeriod(q, -1)) list.push(q)
     const y = currentPeriod('Year', household.today)
-    list.push(y, shiftPeriod(y, -1))
+    list.push(currentPeriod('YearToDate', household.today), currentPeriod('RollingYear', household.today), y, shiftPeriod(y, -1))
     if (period.kind === 'Custom' || !list.some((p) => p.value === period.value)) list.unshift(period)
-    return list.map((p) => ({ value: p.value, label: periodLabel(p), group: p.kind === 'Month' ? 'Měsíce' : p.kind === 'Quarter' ? 'Čtvrtletí' : p.kind === 'Year' ? 'Roky' : 'Vybrané období' }))
+    return list.map((p) => ({ value: p.value, label: periodLabel(p), group: p.kind === 'Month' ? 'Měsíce' : p.kind === 'Quarter' ? 'Čtvrtletí' : p.kind === 'Year' || p.kind === 'YearToDate' || p.kind === 'RollingYear' ? 'Roky' : 'Vybrané období' }))
   }, [household.today, period])
   const [exportPeriod, setExportPeriod] = useState(period.value)
   const doExport = () => {

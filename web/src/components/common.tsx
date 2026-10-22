@@ -51,10 +51,18 @@ const KINDS: { value: Period['kind']; label: string }[] = [
   { value: 'Custom', label: 'Vlastní' },
 ]
 
+/** Plovoucí rok a letošek jsou v záložce Rok. */
+const kindTab = (k: Period['kind']) => (k === 'RollingYear' || k === 'YearToDate' ? 'Year' : k)
+
+const CHIP_HINTS: Partial<Record<Period['kind'], string>> = {
+  RollingYear: 'Plovoucí rok – posledních 12 celých měsíců',
+  YearToDate: 'Letošek do konce minulého měsíce',
+}
+
 /** Výběr období: šipky ‹ › a popover s druhem období, seznamem a porovnáním. */
 export function PeriodPicker({ allowCompare = true, compact }: { allowCompare?: boolean; compact?: boolean }) {
   const { period, setPeriod, compare, setCompare, household } = useUi()
-  const [kind, setKind] = useState(period.kind)
+  const [kind, setKind] = useState<Period['kind']>(kindTab(period.kind))
   const nowKey = currentPeriod(period.kind === 'Custom' ? 'Month' : period.kind, household.today).value
   const atEnd = period.kind !== 'Custom' && period.value >= nowKey
   const choices = (() => {
@@ -63,6 +71,7 @@ export function PeriodPicker({ allowCompare = true, compact }: { allowCompare?: 
     const n = kind === 'Month' ? 12 : kind === 'Quarter' ? 6 : 4
     const list: Period[] = []
     for (let i = 0; i < n; i++, p = shiftPeriod(p, -1)) list.push(p)
+    if (kind === 'Year') list.unshift(currentPeriod('RollingYear', household.today), currentPeriod('YearToDate', household.today))
     return list
   })()
   const [from, setFrom] = useState<string | null>(period.kind === 'Custom' ? period.value.split('..')[0] : null)
@@ -91,7 +100,7 @@ export function PeriodPicker({ allowCompare = true, compact }: { allowCompare?: 
             <div className={s.periodChips}>
               {choices.map((p) => (
                 <PopoverClose asChild key={p.value}>
-                  <button type="button" className={clsx(s.chip, p.value === period.value && p.kind === period.kind && s.chipOn)} onClick={() => setPeriod(p)}>
+                  <button type="button" className={clsx(s.chip, p.value === period.value && p.kind === period.kind && s.chipOn)} title={CHIP_HINTS[p.kind]} onClick={() => setPeriod(p)}>
                     {periodLabel(p)}
                   </button>
                 </PopoverClose>

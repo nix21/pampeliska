@@ -20,13 +20,24 @@ public readonly record struct DateRange(DateOnly From, DateOnly To)
 
     public static DateRange Year(int year) => new(new DateOnly(year, 1, 1), new DateOnly(year, 12, 31));
 
-    /// <summary>Stejně dlouhé předchozí období (měsíc → předchozí měsíc, rok → předchozí rok, jinak posun o délku).</summary>
+    /// <summary>
+    /// Stejně dlouhé předchozí období: měsíc → předchozí měsíc, čtvrtletí → předchozí, rok → předchozí rok,
+    /// celé měsíce od ledna téhož roku („Leden – Září“) → stejné měsíce loni, jiné celé měsíce (plovoucí rok)
+    /// → stejný počet měsíců před nimi, jinak posun o počet dnů.
+    /// </summary>
     public DateRange Previous()
     {
         if (From.Day == 1 && To == From.AddMonths(1).AddDays(-1)) return MonthOf(From.AddMonths(-1));
         if (From.Day == 1 && From.Month % 3 == 1 && To == From.AddMonths(3).AddDays(-1))
             return new(From.AddMonths(-3), From.AddDays(-1));
         if (From is { Day: 1, Month: 1 } && To == From.AddYears(1).AddDays(-1)) return Year(From.Year - 1);
+        if (From.Day == 1 && To.AddDays(1).Day == 1)
+        {
+            var end = To.AddDays(1);
+            if (From.Month == 1 && To.Year == From.Year) return new(From.AddYears(-1), end.AddYears(-1).AddDays(-1));
+            var months = (end.Year - From.Year) * 12 + end.Month - From.Month;
+            return new(From.AddMonths(-months), From.AddDays(-1));
+        }
         return new(From.AddDays(-Days), From.AddDays(-1));
     }
 

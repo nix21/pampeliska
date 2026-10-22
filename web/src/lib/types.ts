@@ -1,7 +1,7 @@
 // Typy DTO z API (psané ručně podle backendu, výčty jako řetězce).
 
 export type ThemeMode = 'Light' | 'Dark' | 'System'
-export type PeriodKind = 'Month' | 'Quarter' | 'Year' | 'Custom'
+export type PeriodKind = 'Month' | 'Quarter' | 'Year' | 'Custom' | 'RollingYear' | 'YearToDate'
 export type NeedType = 'Inherit' | 'Need' | 'Joy' | 'None'
 export type MemberRole = 'Owner' | 'Member'
 export type MemberStatus = 'Invited' | 'Active'

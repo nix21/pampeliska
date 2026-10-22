@@ -14,7 +14,8 @@ public class Household
 }
 
 public enum ThemeMode { Light, Dark, System }
-public enum PeriodKind { Month, Quarter, Year, Custom }
+/// <summary>RollingYear = posledních 12 celých měsíců, YearToDate = od ledna do konce minulého měsíce.</summary>
+public enum PeriodKind { Month, Quarter, Year, Custom, RollingYear, YearToDate }
 public enum MainChartKind { Sunburst, Treemap }
 public enum FxMode { DayOfPayment, MonthlyAverage }
 

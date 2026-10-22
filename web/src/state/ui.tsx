@@ -8,7 +8,10 @@ import type { Household, Me, PeriodKind } from '../lib/types'
 
 export interface Period {
   kind: PeriodKind
-  /** „2026-09“, „2026-Q3“, „2026“ nebo „2026-04-01..2026-09-28“ – stejný formát jako backend (DateRange.Parse). */
+  /**
+   * „2026-09“, „2026-Q3“, „2026“ nebo „2026-04-01..2026-09-28“ – stejný formát jako backend (DateRange.Parse).
+   * Plovoucí rok (RollingYear) a letošek (YearToDate) jsou rozsahy celých měsíců.
+   */
   value: string
 }
 
@@ -18,11 +21,15 @@ export function currentPeriod(kind: PeriodKind, todayIso: string): Period {
   const m = d.getMonth() + 1
   if (kind === 'Quarter') return { kind, value: `${y}-Q${Math.ceil(m / 3)}` }
   if (kind === 'Year') return { kind, value: `${y}` }
+  // Posledních 12 celých měsíců / od ledna do konce minulého měsíce (v lednu zatím jen leden)
+  const end = toIso(new Date(y, m - 1, 0))
+  if (kind === 'RollingYear') return { kind, value: `${toIso(new Date(y, m - 13, 1))}..${end}` }
+  if (kind === 'YearToDate') return { kind, value: `${y}-01-01..${m === 1 ? `${y}-01-31` : end}` }
   return { kind: 'Month', value: `${y}-${String(m).padStart(2, '0')}` }
 }
 
 export function periodRange(p: Period): { from: string; to: string } {
-  if (p.kind === 'Custom') {
+  if (p.value.includes('..')) {
     const [from, to] = p.value.split('..')
     return { from, to }
   }
@@ -50,6 +57,16 @@ export function shiftPeriod(p: Period, delta: number): Period {
     return { ...p, value: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}` }
   }
   const { from, to } = periodRange(p)
+  // Celé měsíce: od ledna téhož roku a plovoucí rok o rok, jiné o svůj počet měsíců (jako DateRange.Previous)
+  const f0 = parseIso(from)
+  const t0 = parseIso(to)
+  const t1 = new Date(t0.getFullYear(), t0.getMonth(), t0.getDate() + 1)
+  if (f0.getDate() === 1 && t1.getDate() === 1) {
+    const span = (t1.getFullYear() - f0.getFullYear()) * 12 + t1.getMonth() - f0.getMonth()
+    const step = (f0.getMonth() === 0 && f0.getFullYear() === t0.getFullYear() ? 12 : span) * delta
+    const value = `${toIso(new Date(f0.getFullYear(), f0.getMonth() + step, 1))}..${toIso(new Date(t0.getFullYear(), t0.getMonth() + step + 1, 0))}`
+    return { ...p, value }
+  }
   const days = Math.round((parseIso(to).getTime() - parseIso(from).getTime()) / 86_400_000) + 1
   const f = parseIso(from)
   f.setDate(f.getDate() + days * delta)
@@ -68,6 +85,10 @@ export function periodLabel(p: Period) {
   const { from, to } = periodRange(p)
   const f = parseIso(from)
   const t = parseIso(to)
+  // „Říjen 25 – Září 26“
+  if (p.kind === 'RollingYear') return `${monthNamesCap[f.getMonth()]} ${String(f.getFullYear()).slice(2)} – ${monthNamesCap[t.getMonth()]} ${String(t.getFullYear()).slice(2)}`
+  // „Leden – Září 2026“
+  if (p.kind === 'YearToDate') return `${monthNamesCap[f.getMonth()]}${t.getMonth() > f.getMonth() ? ` – ${monthNamesCap[t.getMonth()]}` : ''} ${t.getFullYear()}`
   return `${f.getDate()}. ${f.getMonth() + 1}. – ${t.getDate()}. ${t.getMonth() + 1}. ${t.getFullYear()}`
 }
 

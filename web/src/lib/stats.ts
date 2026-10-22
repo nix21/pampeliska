@@ -350,6 +350,8 @@ export function spentHeading(p: Period) {
   if (p.kind === 'Month') return `Výdaje v ${monthLocative[Number(p.value.split('-')[1]) - 1]}`
   if (p.kind === 'Year') return `Výdaje za rok ${p.value}`
   if (p.kind === 'Quarter') return `Výdaje za ${periodLabel(p)}`
+  if (p.kind === 'RollingYear') return 'Výdaje za posledních 12 měsíců'
+  if (p.kind === 'YearToDate') return `Výdaje za ${periodLabel(p).toLowerCase()}`
   return 'Výdaje za období'
 }
 

@@ -2,9 +2,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useMemo } from 'react'
 import { api, notifyError, qs } from '../../lib/api'
 import type { CategoryNode } from '../../lib/categories'
-import { monthNames, monthNamesCap } from '../../lib/format'
+import { monthNames, monthNamesCap, monthShort } from '../../lib/format'
 import type { BudgetPeriod, CategoryKind, NeedType } from '../../lib/types'
-import { periodLabel, shiftPeriod, useUi, type Period } from '../../state/ui'
+import { periodLabel, periodRange, shiftPeriod, useUi, type Period } from '../../state/ui'
 
 /** Řádek GET /api/categories/stats – částky včetně potomků, categoryId chybí = nezařazené. */
 export interface CategoryAmount {
@@ -95,11 +95,18 @@ export function monthlyBudget(c: CategoryNode, children: Map<number | undefined,
   return kidsBudget(c.id, children)
 }
 
-/** Krátký název období do hlavičky sloupce a dlaždic („Září“, „Q3“, „2026“). */
+/** Krátký název období do hlavičky sloupce a dlaždic („Září“, „Q3“, „2026“, „Říj 25–Zář 26“, „Led–Zář 2026“). */
 export function periodShort(p: Period) {
   if (p.kind === 'Month') return monthNamesCap[Number(p.value.split('-')[1]) - 1]
   if (p.kind === 'Quarter') return p.value.split('-')[1]
   if (p.kind === 'Year') return p.value
+  if (p.kind === 'RollingYear' || p.kind === 'YearToDate') {
+    const { from, to } = periodRange(p)
+    const m = (iso: string) => { const s = monthShort[Number(iso.slice(5, 7)) - 1]; return s[0].toUpperCase() + s.slice(1) }
+    return p.kind === 'RollingYear'
+      ? `${m(from)} ${from.slice(2, 4)}–${m(to)} ${to.slice(2, 4)}`
+      : `${m(from)}${to.slice(5, 7) !== '01' ? `–${m(to)}` : ''} ${to.slice(0, 4)}`
+  }
   return periodLabel(p)
 }
 
