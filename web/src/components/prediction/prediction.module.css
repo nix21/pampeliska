@@ -89,7 +89,7 @@ button { font: inherit; }
 .tiles b { font-size: 15px; font-weight: 800; font-variant-numeric: tabular-nums; }
 .netLine { font-size: 12px; color: var(--ink-2); margin-top: -6px; }
 .scopeRow { display: flex; align-items: center; gap: 10px; }
-.scopeRow > span { font-size: 12px; font-weight: 600; color: var(--ink-3); white-space: nowrap; }
+.scopeRow > span { min-width: 68px; font-size: 12px; font-weight: 600; color: var(--ink-3); white-space: nowrap; }
 .scopeRow > div { flex: 1; }
 .treeHead {
   display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 20px; background: var(--surface-2); border-top: 1px solid var(--line);

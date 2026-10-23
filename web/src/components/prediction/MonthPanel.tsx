@@ -22,11 +22,15 @@ export interface Editor {
   reserve: number
   scope: Scope
   setScope: (v: Scope) => void
+  /** Z kolika posledních uzavřených měsíců je průměr */
+  avg: number
+  setAvg: (v: number) => void
   save: (sc: Scenario) => void
   prev?: () => void
   next?: () => void
 }
 
+const AVERAGES = [6, 3, 1]
 const parseNum = (v: string) => parseInt(v.replace(/\D/g, ''), 10) || 0
 const tint = (token: string, depth: number) => (depth === 0 ? colorVar(token) : `color-mix(in oklch, ${colorVar(token)} 50%, transparent)`)
 
@@ -214,6 +218,11 @@ export function FutureMonth({ ed }: { ed: Editor }) {
           <span>Změny platí</span>
           <Segmented<Scope> full size="sm" aria-label="Rozsah změn" value={ed.scope} onChange={ed.setScope}
             options={[{ value: 'from', label: `Od ${M.genShort} dál` }, { value: 'only', label: `Jen ${M.loc}` }]} />
+        </div>
+        <div className={s.scopeRow}>
+          <span>Průměr za</span>
+          <Segmented<number> full size="sm" aria-label="Průměr za" value={ed.avg} onChange={ed.setAvg}
+            options={AVERAGES.map((n) => ({ value: n, label: count(n, 'měsíc', 'měsíce', 'měsíců') }))} />
         </div>
       </div>
       <div className={s.treeHead}>

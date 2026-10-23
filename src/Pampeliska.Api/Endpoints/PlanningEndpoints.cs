@@ -12,7 +12,7 @@ public record CancelMarksInput(Dictionary<int, bool> Marks);
 public record TipStatusInput(SavingTipStatus Status);
 public record ValueInput(DateOnly Date, decimal Value, decimal? Deposits = null);
 public record ReserveInput(decimal? Reserve);
-public record SnapshotInput(string? Name, int Horizon = 12);
+public record SnapshotInput(string? Name, int Horizon = 12, int Avg = PredictionService.AverageMonths);
 
 public static class PlanningEndpoints
 {
@@ -50,15 +50,16 @@ public static class PlanningEndpoints
 
         api.MapGet("/forecast", (ForecastService svc, int? horizon, int? account) => svc.ForecastAsync(horizon ?? 30, account));
         api.MapGet("/forecast/payday", (ForecastService svc, int? member) => svc.UntilPaydayAsync(member));
-        api.MapGet("/prediction", (PredictionService svc, int? horizon, int? member) => svc.GetAsync(horizon ?? 12, member));
-        api.MapPut("/prediction/scenario", async (Scenario i, PredictionService svc, CurrentUser user, int? horizon, int? member) =>
+        api.MapGet("/prediction", (PredictionService svc, int? horizon, int? member, int? avg) =>
+            svc.GetAsync(horizon ?? 12, member, avg ?? PredictionService.AverageMonths));
+        api.MapPut("/prediction/scenario", async (Scenario i, PredictionService svc, CurrentUser user, int? horizon, int? member, int? avg) =>
         {
             await svc.SaveScenarioAsync(i, await user.ActorAsync());
-            return await svc.GetAsync(horizon ?? 12, member);
+            return await svc.GetAsync(horizon ?? 12, member, avg ?? PredictionService.AverageMonths);
         });
         api.MapPut("/prediction/reserve", async (ReserveInput i, PredictionService svc) => { await svc.SetReserveAsync(i.Reserve); return Results.NoContent(); });
         api.MapPost("/prediction/snapshots", async (SnapshotInput i, PredictionService svc, CurrentUser user) =>
-            new { id = await svc.SaveSnapshotAsync(i.Name, i.Horizon, await user.ActorAsync()) });
+            new { id = await svc.SaveSnapshotAsync(i.Name, i.Horizon, await user.ActorAsync(), i.Avg) });
         api.MapDelete("/prediction/snapshots/{id:int}", async (int id, PredictionService svc) => { await svc.DeleteSnapshotAsync(id); return Results.NoContent(); });
         api.MapGet("/conditions", (ConditionService svc, int? account, string? month, int? member, TimeProvider time) =>
             svc.EvaluateAsync(account, Month(month, time), member));

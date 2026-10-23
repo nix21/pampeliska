@@ -58,6 +58,26 @@ public class PredictionTests : IDisposable
     }
 
     [Fact]
+    public async Task Average_can_use_last_three_or_one_closed_month()
+    {
+        await SeedAsync();
+        var extra = await _env.ImportAsync(_env.Bezny, TestEnv.Tx("2026-08-20", -6000, "Albert velký nákup"));
+        await _env.Get<TransactionService>().UpdateAsync(extra.TransactionIds[0], new TxUpdate(CategoryId: _env.Cat("Supermarkety"), SetCategory: true), "V");
+        var svc = _env.Get<PredictionService>();
+        var shop = $"c{_env.Cat("Supermarkety")}";
+
+        // Srpen 9 000, ostatní měsíce 3 000 Kč
+        var six = await svc.GetAsync(12, null);
+        var three = await svc.GetAsync(12, null, 3);
+        var one = await svc.GetAsync(12, null, 1);
+        Assert.Equal((6, -4000m), (six.DataMonths, Leaf(six, shop).Base[1]));
+        Assert.Equal((3, -5000m), (three.DataMonths, Leaf(three, shop).Base[1]));
+        Assert.Equal((1, -9000m), (one.DataMonths, Leaf(one, shop).Base[1]));
+        Assert.Equal("průměr 1 měsíce", Leaf(one, shop).Note);
+        Assert.Equal(6, (await svc.GetAsync(12, null, 5)).DataMonths);
+    }
+
+    [Fact]
     public async Task Scenario_changes_one_offs_and_skips_shift_the_balance()
     {
         await SeedAsync();

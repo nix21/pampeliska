@@ -62,7 +62,7 @@ public record PredictionDto(DateOnly Today, int Horizon, int? MemberId, decimal 
 
 /// <summary>
 /// Predikce disponibilního zůstatku po měsících. Výchozí predikce = dnešní zůstatek disponibilních účtů + po kategoriích pevné
-/// pravidelné platby (měsíční a týdenní podle kalendáře) a průměr ostatních plateb za posledních 6 uzavřených měsíců, převody mimo
+/// pravidelné platby (měsíční a týdenní podle kalendáře) a průměr ostatních plateb za posledních 6 (3, 1) uzavřených měsíců, převody mimo
 /// disponibilní účty a očekávané jednorázové platby (čtvrtletní a roční pravidelné, odhady od AI). V aktuálním měsíci jen zbytek:
 /// průměr minus to, co už proběhlo. Scénář domácnosti mění částky od měsíce, přidává platby a vynechává očekávané. Uložené predikce
 /// se po uzavřených měsících porovnávají se skutečností.
@@ -71,6 +71,7 @@ public partial class PredictionService(AppDbContext db, StatsService stats, Recu
 {
     public const int HistoryMonths = 12;
     public const int AverageMonths = 6;
+    public static readonly int[] AverageOptions = [6, 3, 1];
     public static readonly int[] Horizons = [6, 12, 24, 36];
     public const int MaxSnapshots = 100;
     public const int MaxExpected = 200;
@@ -80,10 +81,12 @@ public partial class PredictionService(AppDbContext db, StatsService stats, Recu
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
     public static int NormalizeHorizon(int horizon) => Horizons.Contains(horizon) ? horizon : 12;
+    public static int NormalizeAverage(int months) => AverageOptions.Contains(months) ? months : AverageMonths;
 
-    public async Task<PredictionDto> GetAsync(int horizon, int? memberId)
+    /// <param name="avgMonths">Z kolika posledních uzavřených měsíců se počítá průměr (6, 3 nebo 1).</param>
+    public async Task<PredictionDto> GetAsync(int horizon, int? memberId, int avgMonths = AverageMonths)
     {
-        var d = await LoadAsync(NormalizeHorizon(horizon));
+        var d = await LoadAsync(NormalizeHorizon(horizon), NormalizeAverage(avgMonths));
         var row = await db.ForecastScenarios.AsNoTracking().FirstOrDefaultAsync();
         var sc = Clean(Read(row), d.M0);
         var hh = await BaselineAsync(d, null);
@@ -220,13 +223,13 @@ public partial class PredictionService(AppDbContext db, StatsService stats, Recu
 
     // ---------- Uložené predikce ----------
 
-    public async Task<int> SaveSnapshotAsync(string? name, int horizon, string actor)
+    public async Task<int> SaveSnapshotAsync(string? name, int horizon, string actor, int avgMonths = AverageMonths)
     {
         var count = await db.ForecastSnapshots.CountAsync();
         if (count >= MaxSnapshots) throw new DomainException($"Uložených predikcí je už {MaxSnapshots}. Nejdřív nějakou smažte.");
         name = string.IsNullOrWhiteSpace(name) ? $"Predikce {count + 1}" : name.Trim();
         if (name.Length > NameMax) throw new DomainException($"Název může mít nejvýš {NameMax} znaků.");
-        var d = await LoadAsync(NormalizeHorizon(horizon));
+        var d = await LoadAsync(NormalizeHorizon(horizon), NormalizeAverage(avgMonths));
         var sc = await GetScenarioAsync();
         var hh = await BaselineAsync(d, null);
         var plans = new Dictionary<string, SnapshotPlan> { ["all"] = Plan(d, hh, Simulate(d, hh, hh, sc, null)) };
@@ -317,7 +320,7 @@ public partial class PredictionService(AppDbContext db, StatsService stats, Recu
         public List<int> MemberIds = [];
     }
 
-    private async Task<Data> LoadAsync(int horizon)
+    private async Task<Data> LoadAsync(int horizon, int avgMonths)
     {
         var today = time.Today();
         var d = new Data { Today = today, M0 = M0(today), H = horizon };
@@ -352,10 +355,10 @@ public partial class PredictionService(AppDbContext db, StatsService stats, Recu
             .Select(r => r.Id).ToHashSet();
         d.Occurrences = await recurring.OccurrencesAsync(d.M0, d.M0.AddMonths(horizon).AddDays(-1));
 
-        // Průměr z uzavřených měsíců, ve kterých už jsou data (nejvýš 6); když žádný celý není, aspoň z neúplného
+        // Průměr z uzavřených měsíců, ve kterých už jsou data (nejvýš avgMonths); když žádný celý není, aspoň z neúplného
         var first = txs.Count > 0 ? txs.Min(t => t.Date) : (DateOnly?)null;
         var start = first is { } f ? (f.Day <= 3 ? M0(f) : M0(f).AddMonths(1)) : d.M0;
-        d.AvgFrom = start > d.M0.AddMonths(-AverageMonths) ? start : d.M0.AddMonths(-AverageMonths);
+        d.AvgFrom = start > d.M0.AddMonths(-avgMonths) ? start : d.M0.AddMonths(-avgMonths);
         d.AvgMonths = Math.Max(0, MonthIndex(d.AvgFrom, d.M0));
         if (d.AvgMonths == 0 && first is { } f2 && f2 < d.M0)
         {

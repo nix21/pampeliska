@@ -27,6 +27,7 @@ export default function PredictionPage() {
   const narrow = useMediaQuery('(max-width: 1100px)')
   const memberId = member === 'all' ? undefined : member
   const [horizon, setHorizon] = useState(12)
+  const [avg, setAvg] = useState(6)
   const [selRaw, setSel] = useState(1)
   const [hist, setHist] = useState(false)
   const [snapId, setSnapId] = useState<number | null>(null)
@@ -35,14 +36,16 @@ export default function PredictionPage() {
   const [resTyping, setResTyping] = useState<string>()
   const [confirmReset, setConfirmReset] = useState(false)
 
-  const key = ['prediction', horizon, memberId ?? 'all']
-  const q = useQuery({ queryKey: key, queryFn: () => api.get<Prediction>(`/api/prediction${qs({ horizon, member: memberId })}`) })
+  const key = ['prediction', horizon, memberId ?? 'all', avg]
+  const q = useQuery({
+    queryKey: key, queryFn: () => api.get<Prediction>(`/api/prediction${qs({ horizon, member: memberId, avg })}`), placeholderData: (prev) => prev,
+  })
   const data = q.data
 
   // Úpravy scénáře: optimisticky do cache, odpověď s přepočtem nahradí data (starší odpovědi se zahodí)
   const seq = useRef(0)
   const saveScenario = useMutation({
-    mutationFn: (sc: Scenario) => api.put<Prediction>(`/api/prediction/scenario${qs({ horizon, member: memberId })}`, sc),
+    mutationFn: (sc: Scenario) => api.put<Prediction>(`/api/prediction/scenario${qs({ horizon, member: memberId, avg })}`, sc),
     onMutate: (sc) => {
       qc.setQueryData<Prediction>(key, (old) => old && { ...old, scenario: sc })
       return ++seq.current
@@ -60,7 +63,7 @@ export default function PredictionPage() {
     onError: notifyError,
   })
   const saveSnap = useMutation({
-    mutationFn: (name: string) => api.post<{ id: number }>('/api/prediction/snapshots', { name, horizon }),
+    mutationFn: (name: string) => api.post<{ id: number }>('/api/prediction/snapshots', { name, horizon, avg }),
     onSuccess: () => (notifyOk('Predikce uložena'), qc.invalidateQueries({ queryKey: ['prediction'] })),
     onError: notifyError,
   })
@@ -108,7 +111,7 @@ export default function PredictionPage() {
     data, P, sel, reserve: R, compare, hidden, onPick: pick,
     plan: snap?.plan ? { start: snap.plan.start, savedMonth: snap.savedOn.slice(0, 7), months: snap.plan.months } : null,
   }
-  const editor: Editor = { data, scenario: sc, sel: Math.max(0, sel), member: memberId, hidden, reserve: R, scope, setScope, save, ...nav }
+  const editor: Editor = { data, scenario: sc, sel: Math.max(0, sel), member: memberId, hidden, reserve: R, scope, setScope, avg, setAvg, save, ...nav }
 
   const reserveInput = (
     <label className={s.reserve} title="Minimální zůstatek, pod který nechcete klesnout">

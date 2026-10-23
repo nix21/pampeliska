@@ -20,13 +20,14 @@ public class PredictionTools(PredictionService prediction, CurrentUser user)
     [McpServerTool(Name = "get_prediction", Title = "Predikce zůstatku", ReadOnly = true, Idempotent = true, OpenWorld = false)]
     [Description("Predikce disponibilního zůstatku po měsících (obrazovka Predikce): dnešní zůstatek, příjmy, výdaje a zůstatek na konci každého " +
                  "měsíce se scénářem domácnosti i bez něj (BaseBalance), rezerva a kdy pod ni zůstatek klesne, položky (pevné pravidelné platby " +
-                 "a průměr za posledních 6 měsíců po kategoriích), očekávané jednorázové platby (čtvrtletní a roční pravidelné, odhady) " +
+                 "a průměr za posledních 6, 3 nebo 1 uzavřený měsíc po kategoriích), očekávané jednorázové platby (čtvrtletní a roční pravidelné, odhady) " +
                  "a uložené predikce. Aktuální měsíc obsahuje jen to, co ještě zbývá.")]
     public Task<PredictionSummary> GetPrediction(
         [Description("Horizont v měsících: 6, 12, 24 nebo 36.")] int horizon = 12,
-        [Description("Id člena (jeho účty a podíl na společných).")] int? memberId = null) => McpSetup.Guard(async () =>
+        [Description("Id člena (jeho účty a podíl na společných).")] int? memberId = null,
+        [Description("Z kolika posledních uzavřených měsíců počítat průměr: 6, 3 nebo 1.")] int avgMonths = PredictionService.AverageMonths) => McpSetup.Guard(async () =>
     {
-        var p = await prediction.GetAsync(horizon, memberId);
+        var p = await prediction.GetAsync(horizon, memberId, avgMonths);
         var col = p.Months.Count > 1 ? 1 : 0;
         var items = new List<PredictionItem>();
         void Walk(PredNode n, string path)
