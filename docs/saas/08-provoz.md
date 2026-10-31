@@ -44,6 +44,7 @@ Spolehlivý provoz pro cizí uživatele: nasazování, zálohy, monitoring, e-ma
 
 ### Q6 – Kapacita
 - Odhad počtu domácností a dat ve fázi 1 a 2, kdy škálovat.
+- Z toho výše stropu registrací v betě (01/Q5) – kolik domácností služba unese bez degradace.
 - Doporučení: —
 - **Rozhodnutí:** —
 

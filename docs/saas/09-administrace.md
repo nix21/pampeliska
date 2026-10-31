@@ -14,6 +14,8 @@ Nástroje pro tebe jako provozovatele a kanál pro uživatele, když něco nefun
 
 ### Q1 – Admin přehled
 - Seznam domácností, stav předplatného, poslední aktivita, objem dat, správa pozvánek.
+- Strop registrací (01/Q5): změna stropu, waitlist a pouštění čekajících (ručně, po dávkách, automaticky
+  při zvýšení stropu).
 - Doporučení: —
 - **Rozhodnutí:** —
 

@@ -46,8 +46,12 @@ Ujasnit, pro koho veřejná Pampeliška je, co nabízí a co do veřejné verze 
 ### Q5 – Velikost a podoba fáze 1
 - Varianty: 5–15 známých · 10–30 přes waitlist · 50+ jako otevřená beta.
 - Doporučení: 5–15 známých na 3–6 měsíců.
-- **Rozhodnutí:** (2026-10-31) **otevřená beta pro 50+ domácností s volnou registrací** (bez pozvánky).
-  Tím se mění původní záměr „fáze 1 jen na pozvánku“.
+- **Rozhodnutí:** (2026-10-31) **otevřená beta s volnou registrací do stropu počtu domácností**, aby
+  nedegradovala služba. Po vyčerpání stropu se registrace přepne na **waitlist** se vzkazem, že kvůli velkému
+  zájmu se další domácnosti zapisují do pořadníku. Cílově 50+ domácností. Tím se mění původní záměr
+  „fáze 1 jen na pozvánku“.
+- Výši stropu určí kapacita provozu ([08](08-provoz.md)) a náklady na AI ([03](03-import-a-ai.md)); strop
+  musí jít měnit bez nasazení. Pouštění lidí z waitlistu řeší [09](09-administrace.md).
 
 ## Otevřené / zjistit venku
 
@@ -61,5 +65,7 @@ Ujasnit, pro koho veřejná Pampeliška je, co nabízí a co do veřejné verze 
 - **Více měn:** základní měna domácnosti už jde nastavit (`BaseCurrency`), ale kurzy jsou jen z ČNB a souhrny
   počítají v Kč – pro EUR/PLN domácnosti je potřeba jiný zdroj kurzů (např. ECB) a měnově neutrální souhrny.
 - **Banky a instituce** jen české → seznam institucí podle země.
+- **Strop registrací a waitlist:** počítadlo domácností, nastavitelný strop, přepnutí registrace na waitlist
+  s lokalizovaným vzkazem, evidence čekajících a jejich pozvání.
 - **Volná registrace hned ve fázi 1** znamená, že před startem bety musí být hotové: registrace a ochrana proti
   zneužití (04, 05), podmínky a GDPR ve všech jazycích (06), provoz s e-maily (08) a kanál podpory (09).

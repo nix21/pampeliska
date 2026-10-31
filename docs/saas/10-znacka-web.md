@@ -25,7 +25,8 @@ Jak se o Pampelišce lidé dozví a kde se zaregistrují.
 - **Rozhodnutí:** —
 
 ### Q3 – Registrace z webu
-- Fáze 1 má volnou registraci (01/Q5), waitlist není potřeba; jen když se beta naplní (strop v 04/Q2).
+- Fáze 1 má volnou registraci do stropu (01/Q5); po naplnění web místo registrace nabídne waitlist se vzkazem
+  o velkém zájmu.
 - Web ve všech jazycích aplikace.
 - Doporučení: —
 - **Rozhodnutí:** —

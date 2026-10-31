@@ -21,8 +21,10 @@ Jak se lidé registrují, přihlašují, zvou do aplikace a do domácnosti, a ja
 - **Rozhodnutí:** —
 
 ### Q2 – Registrace (fáze 1)
-- Podle 01/Q5 je fáze 1 otevřená beta s volnou registrací – pozvánky do aplikace odpadají.
-- Otázky: ověření e-mailu, strop počtu domácností v betě (vypínač registrace), jazyk volený při registraci.
+- Podle 01/Q5 je fáze 1 otevřená beta s volnou registrací do stropu počtu domácností, pak waitlist.
+- Otázky: ověření e-mailu, jazyk volený při registraci.
+- Waitlist: co se od čekajícího sbírá (e-mail, jazyk, země?), jak dostane pozvánku a jak dlouho platí.
+- Počítá se do stropu domácnost, nebo uživatel? Přizvaný člen existující domácnosti strop asi obchází.
 - Doporučení: —
 - **Rozhodnutí:** —
 
