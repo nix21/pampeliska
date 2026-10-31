@@ -22,6 +22,13 @@ Rozhodnout, jak dostane cizí uživatel data do Pampelišky a kdo za to zaplatí
 - Porovnat modely: stačí levný model, nebo je potřeba silnější? Kvalita kategorizace na vzorku vlastních dat.
 - Chat s AI o zpracování výpisů (doptávání, opravy, poznámky) – kolik přidá k nákladům.
 - Výstup: odhad Kč/domácnost/měsíc pro varianty; podle něj se rozhodne 01/Q1 a ceník v 07.
+- **Odhad (2026-10-31):** [research/naklady-ai.md](research/naklady-ai.md). Vlastní domácnost (353 pohybů/měs.):
+  39 % převodů a 32 % pravidel jde bez AI, AI řeší ≈ 100 pohybů/měs. Kategorizace a běžný chat za měsíc:
+  **Haiku 5.5 ≈ 1 Kč, Sonnet 5.5 ≈ 13 Kč, Opus 5.5 ≈ 26 Kč**, jednorázově při připojení ≈ 1 / 20 / 40 Kč.
+  To je méně než napojení na banky (finAPI ≈ 32 Kč na uživatele). Největší neznámá je intenzivní chat,
+  proto je potřeba limit (Q5). Kvalitu levného modelu zatím nikdo neměřil.
+- Doporučení: změřit přesnost Haiku 5.5 a Sonnet 5.5 na potvrzených pohybech vlastní domácnosti
+  (jednotky dolarů) a pak zvolit model.
 - **Rozhodnutí:** —
 
 ### Q1 – Cesta importu pro uživatele bez AI klienta

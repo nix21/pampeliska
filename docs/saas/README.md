@@ -40,6 +40,7 @@ Stavy: **neotevřeno** · **rozpracováno** · **rozhodnuto**
 
 - [Konkurence: rodinné funkce](research/konkurence-rodinne-funkce.md) (2026-10-31)
 - [Agregátoři bankovních dat pro ČR a EU](research/agregatory-cr.md) (2026-10-31)
+- [Odhad nákladů na AI na domácnost](research/naklady-ai.md) (2026-10-31)
 
 ## Poptávky
 

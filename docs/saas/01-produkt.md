@@ -23,6 +23,8 @@ Ujasnit, pro koho veřejná Pampeliška je, co nabízí a co do veřejné verze 
 - **Rozhodnutí:** — odloženo (2026-10-31). Nejdřív spočítat v [03](03-import-a-ai.md): kolik stojí
   rozkategorizovat výpis typické domácnosti, jestli stačí levnější model a jestli uživatel může s AI
   o zpracování výpisů mluvit (chat).
+- Odhad hotový (03/Q0, 2026-10-31): vestavěná AI stojí na domácnost řádově jednotky až desítky Kč měsíčně,
+  tedy méně než napojení na banky. Cena tedy nebrání nabídnout AI všem bez vlastního AI klienta.
 
 ### Q2 – Trh a jazyk
 - Varianty: jen Česko a čeština · Česko + Slovensko · připravit i18n hned.
