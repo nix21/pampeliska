@@ -28,3 +28,4 @@ cd web && npx playwright test          # E2E proti běžícímu API (E2E_BASE_UR
 
 - [docs/mcp.md](docs/mcp.md) – MCP server a OAuth
 - [docs/vps-setup.md](docs/vps-setup.md) – nasazení na VPS vedle Invoiceru
+- [docs/saas/](docs/saas/README.md) – rozmýšlení veřejné verze pro více domácností

@@ -1,0 +1,53 @@
+# Pampeliška pro více domácností – rozmýšlení
+
+Cíl: zpřístupnit Pampelišku jako veřejnou aplikaci pro libovolné domácnosti.
+
+- **Fáze 1** – jen na pozvánku.
+- **Fáze 2** – předplatné, první dva měsíce zdarma.
+
+Tahle složka zatím není implementační plán. Sbírají se tu rozhodnutí po oblastech; plán (`plan.md`) vznikne,
+až budou všechny oblasti rozhodnuté.
+
+## Postup
+
+1. Oblasti se probírají postupně podle pořadí v tabulce (pozdější závisí na dřívějších).
+2. U každé otázky se zapíšou varianty, doporučení a **rozhodnutí s datem a důvodem**.
+3. Co nejde rozhodnout bez vnějšího zdroje (právník, účetní, poskytovatel plateb), jde do „Otevřené / zjistit venku“.
+4. Postřehy pro pozdější implementaci jdou do „Dopad na implementaci“ – zatím bez plánování.
+5. Po změně oblasti aktualizovat stav v tabulce níže.
+
+Stavy: **neotevřeno** · **rozpracováno** · **rozhodnuto**
+
+## Mapa oblastí
+
+| # | Oblast | Stav | Závisí na |
+|---|---|---|---|
+| 01 | [Produkt a rozsah](01-produkt.md) | neotevřeno | – |
+| 02 | [Model tenantů](02-tenanti.md) | neotevřeno | 01 |
+| 03 | [Import dat a AI](03-import-a-ai.md) | neotevřeno | 01 |
+| 04 | [Identita a přístup](04-identita.md) | neotevřeno | 02 |
+| 05 | [Bezpečnost](05-bezpecnost.md) | neotevřeno | 02, 04 |
+| 06 | [Právo a GDPR](06-pravo-gdpr.md) | neotevřeno | 03, 05 |
+| 07 | [Předplatné a platby](07-predplatne.md) | neotevřeno | 01, 03 |
+| 08 | [Provoz](08-provoz.md) | neotevřeno | 02 |
+| 09 | [Administrace a podpora](09-administrace.md) | neotevřeno | 04, 07 |
+| 10 | [Značka a veřejný web](10-znacka-web.md) | neotevřeno | 01 |
+| 11 | [Onboarding](11-onboarding.md) | neotevřeno | 03 |
+
+## Šablona oblasti
+
+```markdown
+# NN – Název
+
+Stav: neotevřeno · Závisí na: …
+
+## Cíl
+## Dnešní stav
+## Otázky
+### Qn – otázka
+- Varianty: …
+- Doporučení: …
+- **Rozhodnutí:** — (datum, důvod)
+## Otevřené / zjistit venku
+## Dopad na implementaci
+```
