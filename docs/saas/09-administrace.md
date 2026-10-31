@@ -24,6 +24,7 @@ Nástroje pro tebe jako provozovatele a kanál pro uživatele, když něco nefun
 
 ### Q3 – Kanál podpory a zpětné vazby
 - Varianty: e-mail · formulář v aplikaci · komunita (Discord apod.).
+- V jakých jazycích podporu poskytovat (aplikace jich má šest, 01/Q2).
 - Doporučení: —
 - **Rozhodnutí:** —
 

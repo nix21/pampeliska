@@ -15,6 +15,8 @@ Fáze 2: placené předplatné s prvními dvěma měsíci zdarma.
 ### Q1 – Ceník
 - Varianty: jeden tarif · tarify podle funkcí (AI, MCP, investice) · podle počtu členů/účtů.
 - Měsíčně / ročně se slevou.
+- Měna ceníku: evropský trh (01/Q2) → EUR, nebo ceny v místních měnách (CZK, PLN…)?
+- Hodnota pro zákazníka podle 01/Q3: rodinný pohled, AI třídění, plánování dopředu.
 - Doporučení: —
 - **Rozhodnutí:** —
 
@@ -40,6 +42,7 @@ Fáze 2: placené předplatné s prvními dvěma měsíci zdarma.
 
 ### Q6 – Uživatelé z fáze 1
 - Zdarma navždy · sleva · stejné podmínky jako noví.
+- Fáze 1 je otevřená beta pro 50+ domácností (01/Q5) – jak ohlásit konec bety a přechod na placení.
 - Doporučení: —
 - **Rozhodnutí:** —
 

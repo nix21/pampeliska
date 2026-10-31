@@ -31,6 +31,7 @@ Stav: neotevřeno · Závisí na: 02, 04
 
 ### Q4 – Ochrana proti zneužití
 - Rate limiting (API, MCP, přihlášení, import), limity velikosti, ochrana registrace.
+- Volná registrace už ve fázi 1 (01/Q5) – boti a zneužití AI na tvoje náklady jsou reálné hned od startu.
 - Doporučení: —
 - **Rozhodnutí:** —
 

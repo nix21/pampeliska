@@ -15,6 +15,7 @@ Jak se o Pampelišce lidé dozví a kde se zaregistrují.
 
 ### Q1 – Název a doména
 - Zůstává „Pampeliška“? Volnost názvu (ochranné známky), doména.
+- Evropský trh (01/Q2): funguje název s „š“ v cizích jazycích? Jedna mezinárodní značka, nebo místní názvy?
 - Doporučení: —
 - **Rozhodnutí:** —
 
@@ -23,8 +24,9 @@ Jak se o Pampelišce lidé dozví a kde se zaregistrují.
 - Doporučení: —
 - **Rozhodnutí:** —
 
-### Q3 – Waitlist pro fázi 1
-- Sběr zájemců (souvisí s 04/Q2 a GDPR).
+### Q3 – Registrace z webu
+- Fáze 1 má volnou registraci (01/Q5), waitlist není potřeba; jen když se beta naplní (strop v 04/Q2).
+- Web ve všech jazycích aplikace.
 - Doporučení: —
 - **Rozhodnutí:** —
 

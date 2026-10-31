@@ -20,8 +20,9 @@ Jak se lidé registrují, přihlašují, zvou do aplikace a do domácnosti, a ja
 - Doporučení: —
 - **Rozhodnutí:** —
 
-### Q2 – Pozvánky do aplikace (fáze 1)
-- Varianty: pozvánkový kód · waitlist se schvalováním · každý uživatel může pozvat N dalších.
+### Q2 – Registrace (fáze 1)
+- Podle 01/Q5 je fáze 1 otevřená beta s volnou registrací – pozvánky do aplikace odpadají.
+- Otázky: ověření e-mailu, strop počtu domácností v betě (vypínač registrace), jazyk volený při registraci.
 - Doporučení: —
 - **Rozhodnutí:** —
 

@@ -2,8 +2,9 @@
 
 Cíl: zpřístupnit Pampelišku jako veřejnou aplikaci pro libovolné domácnosti.
 
-- **Fáze 1** – jen na pozvánku.
+- **Fáze 1** – otevřená beta pro 50+ domácností s volnou registrací (původně „jen na pozvánku“, změněno v 01/Q5).
 - **Fáze 2** – předplatné, první dva měsíce zdarma.
+- Evropský trh, aplikace v šesti jazycích (cs, en, de, pl, es, fr) – viz 01/Q2.
 
 Tahle složka zatím není implementační plán. Sbírají se tu rozhodnutí po oblastech; plán (`plan.md`) vznikne,
 až budou všechny oblasti rozhodnuté.
@@ -22,7 +23,7 @@ Stavy: **neotevřeno** · **rozpracováno** · **rozhodnuto**
 
 | # | Oblast | Stav | Závisí na |
 |---|---|---|---|
-| 01 | [Produkt a rozsah](01-produkt.md) | neotevřeno | – |
+| 01 | [Produkt a rozsah](01-produkt.md) | rozpracováno (Q1 čeká na 03/Q0) | – |
 | 02 | [Model tenantů](02-tenanti.md) | neotevřeno | 01 |
 | 03 | [Import dat a AI](03-import-a-ai.md) | neotevřeno | 01 |
 | 04 | [Identita a přístup](04-identita.md) | neotevřeno | 02 |

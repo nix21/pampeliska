@@ -16,6 +16,14 @@ Rozhodnout, jak dostane cizí uživatel data do Pampelišky a kdo za to zaplatí
 
 ## Otázky
 
+### Q0 – Kolik stojí AI na domácnost (vstup pro 01/Q1)
+- Spočítat: rozkategorizování výpisu typické domácnosti (počet pohybů za měsíc, tokeny na pohyb, s pravidly
+  a bez nich), parsování výpisu z PDF/CSV.
+- Porovnat modely: stačí levný model, nebo je potřeba silnější? Kvalita kategorizace na vzorku vlastních dat.
+- Chat s AI o zpracování výpisů (doptávání, opravy, poznámky) – kolik přidá k nákladům.
+- Výstup: odhad Kč/domácnost/měsíc pro varianty; podle něj se rozhodne 01/Q1 a ceník v 07.
+- **Rozhodnutí:** —
+
 ### Q1 – Cesta importu pro uživatele bez AI klienta
 - Varianty: CSV/PDF parsery jednotlivých bank na serveru · vestavěná AI, která parsuje · jen MCP („přines si AI“).
 - Doporučení: —
@@ -44,7 +52,8 @@ Rozhodnout, jak dostane cizí uživatel data do Pampelišky a kdo za to zaplatí
 
 ## Otevřené / zjistit venku
 
-- Aktuální agregátoři bankovních dat pro CZ a jejich ceny.
+- Aktuální agregátoři bankovních dat pro cílové země a jejich ceny (trh je evropský, viz 01/Q2).
+- Formáty výpisů bank v cílových zemích (CSV, CAMT.053, PDF) – parsery pro každou banku zvlášť se neškálují.
 - Odhad nákladů AI na jednu domácnost za měsíc.
 
 ## Dopad na implementaci
