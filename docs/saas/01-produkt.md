@@ -53,9 +53,22 @@ Ujasnit, pro koho veřejná Pampeliška je, co nabízí a co do veřejné verze 
 - Výši stropu určí kapacita provozu ([08](08-provoz.md)) a náklady na AI ([03](03-import-a-ai.md)); strop
   musí jít měnit bez nasazení. Pouštění lidí z waitlistu řeší [09](09-administrace.md).
 
+### Q6 – Pozicování a cílový trh (USA vs. Evropa)
+- Otevřeno 2026-10-31: USA platí víc (~100 USD/rok za Monarch, YNAB, Copilot; Finanzguru Plus 2,99 €/měs.),
+  ale vyžadují napojení na banky a mobil a je tam silný Monarch.
+- Rešerše konkurence: [research/konkurence-rodinne-funkce.md](research/konkurence-rodinne-funkce.md).
+  Kombinaci podílů na společných účtech, rozpočítání podle držitele karty, pohledu a predikce za člena
+  a párování převodů mezi členy nemá nikdo. Monarch je nejdál, ale bez skrytí účtů a bez podílů; má
+  MCP (10/2026). V Evropě je rodinný pohled slabý, nejblíž je Wallet (BudgetBakers).
+- Pracovní pozicování: **rodinné finance pro páry a rodiny s více bankami – moje / tvoje / naše, s férovým
+  dělením a AI asistentem**, napojení na banky jako základ.
+- Varianty trhu: Evropa (mezera v rodinném pohledu, agregátor pro EU pokryje i ČR) · USA (vyšší ceny,
+  Plaid, přímý souboj s Monarchem).
+- **Rozhodnutí:** — (souvisí s Q2: šest jazyků od startu je k revizi podle zvoleného trhu)
+
 ## Otevřené / zjistit venku
 
-- Konkurence v cílových zemích a její ceny (pro 07).
+- Konkurence v cílových zemích a její ceny (pro 07) – první rešerše hotová, viz Q6.
 - Jak dlouho beta poběží a co je podmínka přechodu do fáze 2.
 
 ## Dopad na implementaci

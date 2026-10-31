@@ -36,6 +36,11 @@ Stavy: **neotevřeno** · **rozpracováno** · **rozhodnuto**
 | 10 | [Značka a veřejný web](10-znacka-web.md) | neotevřeno | 01 |
 | 11 | [Onboarding](11-onboarding.md) | neotevřeno | 03 |
 
+## Rešerše
+
+- [Konkurence: rodinné funkce](research/konkurence-rodinne-funkce.md) (2026-10-31)
+- [Agregátoři bankovních dat pro ČR a EU](research/agregatory-cr.md) (2026-10-31)
+
 ## Šablona oblasti
 
 ```markdown

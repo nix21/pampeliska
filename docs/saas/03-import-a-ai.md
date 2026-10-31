@@ -31,7 +31,15 @@ Rozhodnout, jak dostane cizí uživatel data do Pampelišky a kdo za to zaplatí
 
 ### Q2 – Napojení na banky (PSD2)
 - Varianty: ne · přes agregátora (licencovaný poskytovatel) · vlastní licence AISP (nereálné).
-- Doporučení: —
+- Zjištění (2026-10-31): ruční stahování výpisů je hlavní bariéra (vlastník: 9 účtů u 4 bank každý měsíc),
+  konkurence napojení na banky má → **napojení je základ produktu, ne fáze 2**. Rešerše:
+  [research/agregatory-cr.md](research/agregatory-cr.md).
+  - Enable Banking českým uživatelům službu neposkytuje (jen TPP s vlastní licencí) – bez licence nepoužitelný.
+  - Plaid ČR nepokrývá; GoCardless nové zákazníky nebere.
+  - Užší výběr k poptávce: Finbricks (KB, AISP je banka), finAPI (veřejný ceník vč. licence, ≈ 260 €/měs.
+    do 200 uživatelů – ověřeno), Tink (9 CZ bank), Salt Edge Partner Program.
+  - PSD2: obnova SCA nejpozději po 180 dnech, bez uživatele max. 4× denně, delší historie jen hned po SCA.
+- Doporučení: poptat užší výběr (otázky v rešerši, kap. 6), rozhodnout podle pokrytí bank a ceny.
 - **Rozhodnutí:** —
 
 ### Q3 – Vestavěná AI na serveru
