@@ -41,6 +41,11 @@ Stavy: **neotevřeno** · **rozpracováno** · **rozhodnuto**
 - [Konkurence: rodinné funkce](research/konkurence-rodinne-funkce.md) (2026-10-31)
 - [Agregátoři bankovních dat pro ČR a EU](research/agregatory-cr.md) (2026-10-31)
 
+## Poptávky
+
+- [Agregátoři bankovních dat](poptavka-agregatori.md): Finbricks, finAPI, Tink, Salt Edge, doplněk pro Enable
+  Banking (2026-10-31)
+
 ## Šablona oblasti
 
 ```markdown

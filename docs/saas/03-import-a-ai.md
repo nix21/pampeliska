@@ -39,7 +39,8 @@ Rozhodnout, jak dostane cizí uživatel data do Pampelišky a kdo za to zaplatí
   - Užší výběr k poptávce: Finbricks (KB, AISP je banka), finAPI (veřejný ceník vč. licence, ≈ 260 €/měs.
     do 200 uživatelů – ověřeno), Tink (9 CZ bank), Salt Edge Partner Program.
   - PSD2: obnova SCA nejpozději po 180 dnech, bez uživatele max. 4× denně, delší historie jen hned po SCA.
-- Doporučení: poptat užší výběr (otázky v rešerši, kap. 6), rozhodnout podle pokrytí bank a ceny.
+- Doporučení: poptat užší výběr, rozhodnout podle pokrytí bank a ceny. Texty poptávky a tabulka na odpovědi:
+  [poptavka-agregatori.md](poptavka-agregatori.md).
 - **Rozhodnutí:** —
 
 ### Q3 – Vestavěná AI na serveru
