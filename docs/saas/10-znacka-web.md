@@ -36,6 +36,12 @@ Jak se o Pampelišce lidé dozví a kde se zaregistrují.
 - Doporučení: —
 - **Rozhodnutí:** —
 
+### Q5 – Marketing ve více zemích
+- Beta startuje rovnou v EU v šesti jazycích (01/Q6). Kde a jak oslovit první domácnosti v jednotlivých zemích
+  (komunity, obsah, výkonnostní reklama), v jakém pořadí, s jakým rozpočtem.
+- Doporučení: —
+- **Rozhodnutí:** —
+
 ## Otevřené / zjistit venku
 
 - Rešerše ochranných známek a dostupnosti domén.

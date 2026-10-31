@@ -28,7 +28,8 @@ Ujasnit, pro koho veřejná Pampeliška je, co nabízí a co do veřejné verze 
 - Varianty: jen Česko a čeština · Česko + Slovensko · připravit i18n hned.
 - Doporučení: jen Česko a čeština.
 - **Rozhodnutí:** i18n hned (2026-10-31). Jazyky od začátku: čeština, angličtina, němčina, polština,
-  španělština, francouzština. Z toho plyne evropský trh, ne jen český (dopady níže).
+  španělština, francouzština. Z toho plyne evropský trh, ne jen český (dopady níže). Potvrzeno v Q6
+  (2026-10-31): všech šest jazyků už v betě.
 
 ### Q3 – Co je hlavní hodnota (proč platit)
 - Varianty: AI kategorizace a import · rodinný pohled s podíly členů · predikce a rozpočty · investice a čisté jmění.
@@ -64,11 +65,21 @@ Ujasnit, pro koho veřejná Pampeliška je, co nabízí a co do veřejné verze 
   dělením a AI asistentem**, napojení na banky jako základ.
 - Varianty trhu: Evropa (mezera v rodinném pohledu, agregátor pro EU pokryje i ČR) · USA (vyšší ceny,
   Plaid, přímý souboj s Monarchem).
-- **Rozhodnutí:** — (souvisí s Q2: šest jazyků od startu je k revizi podle zvoleného trhu)
+- Doporučení bylo: beta jen pro ČR (+SK) v češtině a angličtině, druhý trh vybrat po betě. Důvody: české banky
+  a vlastní síť, levnější start, marketing jen v jedné zemi.
+- **Rozhodnutí:** (2026-10-31) **rovnou EU, všech šest jazyků už v betě** (Q2 tím platí beze změny). USA ne:
+  chybí možnost vyzkoušet napojení na banky na vlastních účtech a je tam přímo Monarch.
+  Důsledky:
+  - Agregátor musí pokrýt ČR i cílové země EU. Finbricks (jen CEE) sám nestačí, přednost má poskytovatel
+    s pokrytím EU (finAPI, Tink, Salt Edge), případně Finbricks pro ČR a druhý pro zbytek EU ([03/Q2](03-import-a-ai.md)).
+  - Které země přesně otevřít (podle jazyků: CZ, SK, DE, AT, PL, ES, FR, BE…), rozhodne pokrytí bank
+    u vybraného agregátora.
+  - Marketing a podpora ve více zemích najednou ([09](09-administrace.md), [10](10-znacka-web.md)).
 
 ## Otevřené / zjistit venku
 
 - Konkurence v cílových zemích a její ceny (pro 07) – první rešerše hotová, viz Q6.
+- Seznam zemí bety podle pokrytí u vybraného agregátora (03/Q2).
 - Jak dlouho beta poběží a co je podmínka přechodu do fáze 2.
 
 ## Dopad na implementaci
@@ -77,7 +88,8 @@ Ujasnit, pro koho veřejná Pampeliška je, co nabízí a co do veřejné verze 
   (dnes `lib/format.ts` – „28. 9.“, ` Kč`, české plurály v `count()`) podle jazyka. Volba jazyka u uživatele.
 - **Více měn:** základní měna domácnosti už jde nastavit (`BaseCurrency`), ale kurzy jsou jen z ČNB a souhrny
   počítají v Kč – pro EUR/PLN domácnosti je potřeba jiný zdroj kurzů (např. ECB) a měnově neutrální souhrny.
-- **Banky a instituce** jen české → seznam institucí podle země.
+- **Banky a instituce** jen české → seznam institucí podle země (u napojených bank ho dodá agregátor).
+- **Země domácnosti** při registraci: určuje nabídku bank, výchozí měnu a jazyk.
 - **Strop registrací a waitlist:** počítadlo domácností, nastavitelný strop, přepnutí registrace na waitlist
   s lokalizovaným vzkazem, evidence čekajících a jejich pozvání.
 - **Volná registrace hned ve fázi 1** znamená, že před startem bety musí být hotové: registrace a ochrana proti
