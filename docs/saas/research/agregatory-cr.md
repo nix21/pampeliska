@@ -2,7 +2,7 @@
 
 Stav k 31. 10. 2026 · Podklad pro [03 – Import dat a AI](../03-import-a-ai.md), otázka Q2 (napojení na banky).
 
-Kontext: provozovatel je OSVČ v ČR (později možná s.r.o.), vlastní licenci AISP mít nebude. Beta ≈ 50 domácností
+Kontext: provozovatel bude česká s.r.o. (06/Q1), vlastní licenci AISP mít nebude. Beta ≈ 50 domácností
 × ~5 účtů ≈ **250 připojených účtů**, denní nebo průběžná synchronizace.
 
 Značení zdrojů: **[P]** = primární zdroj (dokumentace, ceník, podmínky, status page poskytovatele, EUR-Lex, EBA),

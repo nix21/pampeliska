@@ -15,7 +15,8 @@ Provozovat aplikaci legálně: ochrana osobních údajů, podmínky, odpovědnos
 ### Q1 – Kdo je provozovatel a správce údajů
 - Varianty: ty jako OSVČ · nová s.r.o. (omezení odpovědnosti).
 - Doporučení: —
-- **Rozhodnutí:** —
+- **Rozhodnutí:** s.r.o. (2026-10-31): poskytovatele bankovních dat oslovujeme rovnou jako s.r.o., ne jako OSVČ.
+  S.r.o. je potřeba založit nejpozději před podpisem smlouvy s agregátorem.
 
 ### Q2 – Zpracovatelé
 - Seznam: hosting VPS, Google (přihlášení), poskytovatel AI (pokud server-side), e-maily, platební brána.
