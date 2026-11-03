@@ -39,7 +39,12 @@ Jak se o Pampelišce lidé dozví a kde se zaregistrují.
 ### Q5 – Marketing ve více zemích
 - Beta startuje rovnou v EU v šesti jazycích (01/Q6). Kde a jak oslovit první domácnosti v jednotlivých zemích
   (komunity, obsah, výkonnostní reklama), v jakém pořadí, s jakým rozpočtem.
-- Doporučení: —
+- Odhad (2026-11-03, [research/marketing-200.md](research/marketing-200.md)): placenou reklamou stojí platící
+  domácnost ≈ 140–500 € (i víc), 200 platících tedy 30–100 tis. €. Při ceně 6–8 €/měs. se to vrací roky.
+  Zákazníci musí přijít hlavně zadarmo: vlastní síť, komunity, Show HN nebo Product Hunt, adresáře MCP, obsah,
+  affiliate.
+- Doporučení: před rozpočtem ověřit poptávku landing page ve 2 variantách (s napojením na banky a bez něj)
+  a 300–500 € za reklamu na variantu.
 - **Rozhodnutí:** —
 
 ## Otevřené / zjistit venku
