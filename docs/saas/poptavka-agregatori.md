@@ -78,10 +78,12 @@ Best regards,
 
 | | Finbricks | finAPI | Tink | Salt Edge | Enable Banking |
 |---|---|---|---|---|---|
-| Odesláno | | | | | |
-| Odpověď | | | | | |
-| Bez licence? | | | | | |
-| Banky ČR / EU | | | | | |
-| Cenový model | | | | | |
-| Minimální poplatek | | | | | |
-| Poznámky | | | | | |
+| Odesláno | ano | ano | ano | ano | ano |
+| Odpověď | 11/2026 | – | – | 11/2026 | 11/2026 |
+| Bez licence? | | | | ano (Partner Program) | ? (pro uživatele z ČR ověřit) |
+| Banky ČR / EU | | | | | „full EU access“ |
+| Cenový model | podle počtu napojení | | | licence + setup + údržba + za připojení | licence + 0,5 € za účet a měsíc |
+| Minimální poplatek | ? | | | od 1 000 €/měs. | 900 €/měs. |
+| Poznámky | cenu neuvedli | | | samoobslužný program s nižším závazkem „v příštích měsících“ | 3letá zvýhodněná cena pro startupy, neomezené stahování |
+
+Výpočet bodu zvratu: [research/ekonomika-napojeni.md](research/ekonomika-napojeni.md).

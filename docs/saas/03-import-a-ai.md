@@ -48,7 +48,12 @@ Rozhodnout, jak dostane cizí uživatel data do Pampelišky a kdo za to zaplatí
   - PSD2: obnova SCA nejpozději po 180 dnech, bez uživatele max. 4× denně, delší historie jen hned po SCA.
 - Trh je rovnou EU (01/Q6): agregátor musí pokrýt ČR i další země EU. Finbricks (CEE) by šel jen v kombinaci
   s druhým agregátorem pro zbytek EU.
-- Doporučení: poptat užší výběr, rozhodnout podle pokrytí bank a ceny. Texty poptávky a tabulka na odpovědi:
+- Odpovědi (11/2026): Enable Banking 900 €/měs. + 0,5 € za účet, Salt Edge od 1 000 €/měs., Finbricks
+  bez ceny. Výpočet: [research/ekonomika-napojeni.md](research/ekonomika-napojeni.md). Enable Banking a Salt
+  Edge se zaplatí až při ≈ 200–600 platících domácnostech a s cenou 6–8 €/měs. Beta zdarma by s nimi stála
+  ≈ 12 tis. €/rok. finAPI podle veřejného ceníku ≈ 3,4 tis. €/rok, bod zvratu ≈ 70–150 domácností.
+- Doporučení: poptat užší výběr, rozhodnout podle pokrytí bank a ceny. Napojení stavět přes vlastní rozhraní
+  nezávislé na agregátorovi, aby šlo začít levným a přejít později. Texty poptávky a tabulka na odpovědi:
   [poptavka-agregatori.md](poptavka-agregatori.md).
 - **Rozhodnutí:** —
 
