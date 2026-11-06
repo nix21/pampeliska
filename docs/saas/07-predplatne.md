@@ -42,7 +42,11 @@ Fáze 2: placené předplatné s prvními dvěma měsíci zdarma.
 - **Rozhodnutí:** —
 
 ### Q5 – Fakturace a DPH
-- Doklady za předplatné (Invoicer? brána?), DPH u zákazníků z EU (OSS), stornování a vracení peněz.
+- Doklady za předplatné (Invoicer? brána?), stornování a vracení peněz.
+- Stav 2026-11-06: s.r.o. není plátce DPH. Předplatné je tedy bez DPH. U zahraničních služeb (Meta, Google,
+  Anthropic, Stripe) je identifikovanou osobou a DPH 21 % si odvádí sama, bez nároku na odpočet. Limit
+  2 mil. Kč obratu je zhruba 900 platících domácností. Pak se stane plátcem a z ceny odvede 21 %. OSS řešit
+  až s dalším trhem.
 - Doporučení: —
 - **Rozhodnutí:** —
 

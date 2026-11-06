@@ -53,7 +53,7 @@ Rozhodnout, jak dostane cizí uživatel data do Pampelišky a kdo za to zaplatí
   ≈ 12 tis. €/rok. finAPI podle veřejného ceníku ≈ 3,4 tis. €/rok, bod zvratu ≈ 70–150 domácností.
 - Druhé kolo (11/2026): ostatní ≈ 500 €/měs. Finbricks nabídl startovací balíček 10 000 Kč/měs. do
   100 tis. volání (≈ 333 domácností při 2 voláních denně na účet), nad tím 30 000 Kč, vstup 25 000 Kč.
-  Bod zvratu ≈ 115 platících (ceník 199 / 149 Kč), viz
+  Bod zvratu ≈ 95 platících (ceník 199 / 149 Kč, s.r.o. neplátce DPH), viz
   [research/navratnost-finbricks.md](research/navratnost-finbricks.md). Finbricks pokrývá jen CEE, proto se
   start zúžil na ČR (01/Q6).
 - Doporučení: poptat užší výběr, rozhodnout podle pokrytí bank a ceny. Napojení stavět přes vlastní rozhraní

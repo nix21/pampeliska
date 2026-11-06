@@ -16,7 +16,8 @@ Provozovat aplikaci legálně: ochrana osobních údajů, podmínky, odpovědnos
 - Varianty: ty jako OSVČ · nová s.r.o. (omezení odpovědnosti).
 - Doporučení: —
 - **Rozhodnutí:** s.r.o. (2026-10-31): poskytovatele bankovních dat oslovujeme rovnou jako s.r.o., ne jako OSVČ.
-  S.r.o. je potřeba založit nejpozději před podpisem smlouvy s agregátorem.
+  S.r.o. je už založená (2026-11-06) a není plátce DPH (limit 2 mil. Kč obratu za rok). U služeb ze
+  zahraničí (reklama, AI, platební brána) je identifikovanou osobou, viz 07/Q5.
 
 ### Q2 – Zpracovatelé
 - Seznam: hosting VPS, Google (přihlášení), poskytovatel AI (pokud server-side), e-maily, platební brána.
