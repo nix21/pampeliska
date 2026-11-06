@@ -17,6 +17,7 @@ jak rychle lidé odchází a co Finbricks počítá jako jedno volání API.
 **Pozor na trh:** Finbricks pokrývá střední a východní Evropu (hlavně ČR a SK) a podle ABRA mu chybí ČSOB
 a UniCredit. Rozhodnutí „rovnou EU“ ([01/Q6](../01-produkt.md)) s ním nejde splnit. Buď se start zúží na
 ČR (+SK) a EU přijde s druhým agregátorem, až to objem unese, nebo je potřeba jiný agregátor.
+**Rozhodnuto 2026-11-06: start v ČR** (01/Q6).
 
 ## Předpoklady
 

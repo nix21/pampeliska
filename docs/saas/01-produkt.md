@@ -32,6 +32,8 @@ Ujasnit, pro koho veřejná Pampeliška je, co nabízí a co do veřejné verze 
 - **Rozhodnutí:** i18n hned (2026-10-31). Jazyky od začátku: čeština, angličtina, němčina, polština,
   španělština, francouzština. Z toho plyne evropský trh, ne jen český (dopady níže). Potvrzeno v Q6
   (2026-10-31): všech šest jazyků už v betě.
+- **K revizi (2026-11-06):** Q6 změnilo start na ČR, takže šest jazyků v betě ztrácí důvod. i18n se dál
+  staví hned. Otevřené zůstává, které jazyky pustit do bety.
 
 ### Q3 – Co je hlavní hodnota (proč platit)
 - Varianty: AI kategorizace a import · rodinný pohled s podíly členů · predikce a rozpočty · investice a čisté jmění.
@@ -69,19 +71,24 @@ Ujasnit, pro koho veřejná Pampeliška je, co nabízí a co do veřejné verze 
   Plaid, přímý souboj s Monarchem).
 - Doporučení bylo: beta jen pro ČR (+SK) v češtině a angličtině, druhý trh vybrat po betě. Důvody: české banky
   a vlastní síť, levnější start, marketing jen v jedné zemi.
-- **Rozhodnutí:** (2026-10-31) **rovnou EU, všech šest jazyků už v betě** (Q2 tím platí beze změny). USA ne:
-  chybí možnost vyzkoušet napojení na banky na vlastních účtech a je tam přímo Monarch.
+- Původní rozhodnutí (2026-10-31): rovnou EU, všech šest jazyků v betě. USA ne: napojení na banky nejde
+  vyzkoušet na vlastních účtech a je tam přímo Monarch.
+- **Rozhodnutí (změna 2026-11-06): start v ČR**, další země EU až s objemem. USA dál ne.
+  Důvod: nabídky agregátorů ([research/navratnost-finbricks.md](research/navratnost-finbricks.md)).
+  Pro celou EU stojí agregátor ≈ 500–1 000 €/měs., Finbricks pro ČR 10 000 Kč/měs. a bod zvratu je
+  ≈ 115 platících. Finbricks ale pokrývá jen střední a východní Evropu (CEE).
   Důsledky:
-  - Agregátor musí pokrýt ČR i cílové země EU. Finbricks (jen CEE) sám nestačí, přednost má poskytovatel
-    s pokrytím EU (finAPI, Tink, Salt Edge), případně Finbricks pro ČR a druhý pro zbytek EU ([03/Q2](03-import-a-ai.md)).
-  - Které země přesně otevřít (podle jazyků: CZ, SK, DE, AT, PL, ES, FR, BE…), rozhodne pokrytí bank
-    u vybraného agregátora.
-  - Marketing a podpora ve více zemích najednou ([09](09-administrace.md), [10](10-znacka-web.md)).
+  - Agregátor pro start: Finbricks ([03/Q2](03-import-a-ai.md)). Napojení stavět přes vlastní rozhraní
+    nezávislé na agregátorovi. Pro další země přibude druhý agregátor.
+  - Slovensko jen tehdy, když ho Finbricks pokryje. Ověřit.
+  - Marketing a podpora nejdřív jen v ČR a česky ([09](09-administrace.md), [10](10-znacka-web.md)).
+  - Ceník v Kč ([07](07-predplatne.md)), kurzy ČNB stačí.
+  - Které jazyky pustit do bety, je otevřené (Q2).
 
 ## Otevřené / zjistit venku
 
 - Konkurence v cílových zemích a její ceny (pro 07) – první rešerše hotová, viz Q6.
-- Seznam zemí bety podle pokrytí u vybraného agregátora (03/Q2).
+- Pokrytí Slovenska u Finbricks (03/Q2).
 - Jak dlouho beta poběží a co je podmínka přechodu do fáze 2.
 
 ## Dopad na implementaci
@@ -90,8 +97,11 @@ Ujasnit, pro koho veřejná Pampeliška je, co nabízí a co do veřejné verze 
   (dnes `lib/format.ts` – „28. 9.“, ` Kč`, české plurály v `count()`) podle jazyka. Volba jazyka u uživatele.
 - **Více měn:** základní měna domácnosti už jde nastavit (`BaseCurrency`), ale kurzy jsou jen z ČNB a souhrny
   počítají v Kč – pro EUR/PLN domácnosti je potřeba jiný zdroj kurzů (např. ECB) a měnově neutrální souhrny.
+  Při startu v ČR to počká na další trh.
 - **Banky a instituce** jen české → seznam institucí podle země (u napojených bank ho dodá agregátor).
-- **Země domácnosti** při registraci: určuje nabídku bank, výchozí měnu a jazyk.
+  Při startu v ČR to počká na další trh.
+- **Země domácnosti** při registraci: určuje nabídku bank, výchozí měnu a jazyk. Model připravit, volbu
+  ukázat až s druhou zemí.
 - **Strop registrací a waitlist:** počítadlo domácností, nastavitelný strop, přepnutí registrace na waitlist
   s lokalizovaným vzkazem, evidence čekajících a jejich pozvání.
 - **Volná registrace hned ve fázi 1** znamená, že před startem bety musí být hotové: registrace a ochrana proti

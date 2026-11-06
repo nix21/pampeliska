@@ -46,8 +46,7 @@ Rozhodnout, jak dostane cizí uživatel data do Pampelišky a kdo za to zaplatí
   - Užší výběr k poptávce: Finbricks (KB, AISP je banka), finAPI (veřejný ceník vč. licence, ≈ 260 €/měs.
     do 200 uživatelů – ověřeno), Tink (9 CZ bank), Salt Edge Partner Program.
   - PSD2: obnova SCA nejpozději po 180 dnech, bez uživatele max. 4× denně, delší historie jen hned po SCA.
-- Trh je rovnou EU (01/Q6): agregátor musí pokrýt ČR i další země EU. Finbricks (CEE) by šel jen v kombinaci
-  s druhým agregátorem pro zbytek EU.
+- Trh: původně rovnou EU, od 2026-11-06 start v ČR (01/Q6). Další země přibudou s druhým agregátorem.
 - Odpovědi (11/2026): Enable Banking 900 €/měs. + 0,5 € za účet, Salt Edge od 1 000 €/měs., Finbricks
   bez ceny. Výpočet: [research/ekonomika-napojeni.md](research/ekonomika-napojeni.md). Enable Banking a Salt
   Edge se zaplatí až při ≈ 200–600 platících domácnostech a s cenou 6–8 €/měs. Beta zdarma by s nimi stála
@@ -55,12 +54,15 @@ Rozhodnout, jak dostane cizí uživatel data do Pampelišky a kdo za to zaplatí
 - Druhé kolo (11/2026): ostatní ≈ 500 €/měs. Finbricks nabídl startovací balíček 10 000 Kč/měs. do
   100 tis. volání (≈ 333 domácností při 2 voláních denně na účet), nad tím 30 000 Kč, vstup 25 000 Kč.
   Bod zvratu ≈ 115 platících (ceník 199 / 149 Kč), viz
-  [research/navratnost-finbricks.md](research/navratnost-finbricks.md). Finbricks pokrývá jen CEE, to je
-  v rozporu s 01/Q6.
+  [research/navratnost-finbricks.md](research/navratnost-finbricks.md). Finbricks pokrývá jen CEE, proto se
+  start zúžil na ČR (01/Q6).
 - Doporučení: poptat užší výběr, rozhodnout podle pokrytí bank a ceny. Napojení stavět přes vlastní rozhraní
   nezávislé na agregátorovi, aby šlo začít levným a přejít později. Texty poptávky a tabulka na odpovědi:
   [poptavka-agregatori.md](poptavka-agregatori.md).
-- **Rozhodnutí:** —
+- **Rozhodnutí:** (2026-11-06) **Finbricks pro start v ČR**, podmíněně. Před podpisem si od nich nechat
+  potvrdit: co je jedno volání, kolik volání pokryje 30 000 Kč, jak dlouho platí startovací cena a s jakou
+  výpovědní lhůtou, jak to je s ČSOB, UniCredit a Slovenskem, a jestli jde vstupní poplatek zaplatit až před
+  ostrým spuštěním. Napojení stavět přes vlastní rozhraní nezávislé na agregátorovi.
 
 ### Q3 – Vestavěná AI na serveru
 - Varianty: žádná · jen kategorizace · parsování i kategorizace · chat nad daty.
@@ -80,9 +82,9 @@ Rozhodnout, jak dostane cizí uživatel data do Pampelišky a kdo za to zaplatí
 
 ## Otevřené / zjistit venku
 
-- Aktuální agregátoři bankovních dat pro cílové země a jejich ceny (trh je evropský, viz 01/Q2).
-- Formáty výpisů bank v cílových zemích (CSV, CAMT.053, PDF) – parsery pro každou banku zvlášť se neškálují.
-- Odhad nákladů AI na jednu domácnost za měsíc.
+- Odpovědi Finbricks na otázky před podpisem (viz Q2).
+- Formáty výpisů českých bank, které Finbricks nepokryje (ČSOB, UniCredit?): import souborů jako záloha.
+- Odhad nákladů AI na domácnost: hotový, viz Q0.
 
 ## Dopad na implementaci
 

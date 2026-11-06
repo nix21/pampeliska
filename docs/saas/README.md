@@ -5,7 +5,8 @@ Cíl: zpřístupnit Pampelišku jako veřejnou aplikaci pro libovolné domácnos
 - **Fáze 1** – otevřená beta (cílově 50+ domácností) s volnou registrací do stropu, pak waitlist
   (původně „jen na pozvánku“, změněno v 01/Q5).
 - **Fáze 2** – předplatné, první dva měsíce zdarma.
-- Evropský trh, aplikace v šesti jazycích (cs, en, de, pl, es, fr) – viz 01/Q2.
+- Start v ČR (napojení na banky přes Finbricks), další země EU až s objemem – viz 01/Q6. i18n se staví
+  hned, jazyky bety k revizi (01/Q2).
 
 Tahle složka zatím není implementační plán. Sbírají se tu rozhodnutí po oblastech; plán (`plan.md`) vznikne,
 až budou všechny oblasti rozhodnuté.

@@ -15,7 +15,8 @@ Jak se o Pampelišce lidé dozví a kde se zaregistrují.
 
 ### Q1 – Název a doména
 - Zůstává „Pampeliška“? Volnost názvu (ochranné známky), doména.
-- Evropský trh (01/Q2): funguje název s „š“ v cizích jazycích? Jedna mezinárodní značka, nebo místní názvy?
+- Start v ČR (01/Q6), další země později: funguje název s „š“ i v cizích jazycích? Jedna mezinárodní
+  značka, nebo místní názvy?
 - Doporučení: —
 - **Rozhodnutí:** —
 
@@ -37,8 +38,10 @@ Jak se o Pampelišce lidé dozví a kde se zaregistrují.
 - **Rozhodnutí:** —
 
 ### Q5 – Marketing ve více zemích
-- Beta startuje rovnou v EU v šesti jazycích (01/Q6). Kde a jak oslovit první domácnosti v jednotlivých zemích
-  (komunity, obsah, výkonnostní reklama), v jakém pořadí, s jakým rozpočtem.
+- Beta startuje v ČR (01/Q6, změna 2026-11-06). Kde a jak oslovit první české domácnosti (komunity, obsah,
+  výkonnostní reklama), s jakým rozpočtem. Další země až s dalším agregátorem.
+- Rozpočet z modelu návratnosti ([research/navratnost-finbricks.md](research/navratnost-finbricks.md)):
+  reklama ≈ 5 000 Kč/měs. jako test, horní hranice ≈ 1 000–1 500 Kč za platící domácnost.
 - Odhad (2026-11-03, [research/marketing-200.md](research/marketing-200.md)): placenou reklamou stojí platící
   domácnost ≈ 140–500 € (i víc), 200 platících tedy 30–100 tis. €. Při ceně 6–8 €/měs. se to vrací roky.
   Zákazníci musí přijít hlavně zadarmo: vlastní síť, komunity, Show HN nebo Product Hunt, adresáře MCP, obsah,

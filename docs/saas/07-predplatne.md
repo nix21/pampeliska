@@ -15,7 +15,7 @@ Fáze 2: placené předplatné s prvními dvěma měsíci zdarma.
 ### Q1 – Ceník
 - Varianty: jeden tarif · tarify podle funkcí (AI, MCP, investice) · podle počtu členů/účtů.
 - Měsíčně / ročně se slevou.
-- Měna ceníku: evropský trh (01/Q2) → EUR, nebo ceny v místních měnách (CZK, PLN…)?
+- Měna ceníku: start v ČR (01/Q6) → Kč. Ceny v dalších měnách až s dalším trhem.
 - Hodnota pro zákazníka podle 01/Q3: rodinný pohled, AI třídění, plánování dopředu.
 - Napojení na banky se zaplatí jen s cenou ≈ 6–8 € měsíčně s DPH (150–200 Kč). Agregátor může účtovat za
   připojený účet, proto zvážit počet účtů v ceně a příplatek za další
