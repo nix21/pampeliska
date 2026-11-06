@@ -16,7 +16,7 @@ Aby nová domácnost bez pomoci došla k prvním užitečným přehledům.
 
 ### Q1 – Výchozí kategorie a pravidla
 - Jaká sada kategorií pro nové domácnosti, předpřipravená pravidla pro běžné obchodníky?
-- Výchozí kategorie přeložené podle jazyka (01/Q2), obchodníci a pravidla podle země.
+- Výchozí kategorie přeložené podle jazyka (v betě cs a en, 01/Q2), obchodníci a pravidla podle země.
 - Doporučení: —
 - **Rozhodnutí:** —
 

@@ -28,7 +28,7 @@ Provozovat aplikaci legálně: ochrana osobních údajů, podmínky, odpovědnos
 ### Q3 – Dokumenty
 - Obchodní podmínky, zásady ochrany osobních údajů, cookies (jen nezbytné?).
 - Musí být hotové před betou (volná registrace, 01/Q5). Start je v ČR (01/Q6), takže závazné je české
-  znění. Překlady jen pro jazyky, které půjdou do bety (01/Q2), a jen informativně?
+  znění. Anglický překlad informativně (beta je česky a anglicky, 01/Q2)?
 - Doporučení: —
 - **Rozhodnutí:** —
 

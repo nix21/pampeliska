@@ -26,7 +26,8 @@ Nástroje pro tebe jako provozovatele a kanál pro uživatele, když něco nefun
 
 ### Q3 – Kanál podpory a zpětné vazby
 - Varianty: e-mail · formulář v aplikaci · komunita (Discord apod.).
-- V jakých jazycích podporu poskytovat: start v ČR (01/Q6), tedy hlavně česky. Jazyky bety jsou k revizi (01/Q2).
+- V jakých jazycích podporu poskytovat: start v ČR (01/Q6), beta česky a anglicky (01/Q2). Podpora česky
+  a anglicky.
 - Doporučení: —
 - **Rozhodnutí:** —
 

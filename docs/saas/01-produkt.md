@@ -32,8 +32,9 @@ Ujasnit, pro koho veřejná Pampeliška je, co nabízí a co do veřejné verze 
 - **Rozhodnutí:** i18n hned (2026-10-31). Jazyky od začátku: čeština, angličtina, němčina, polština,
   španělština, francouzština. Z toho plyne evropský trh, ne jen český (dopady níže). Potvrzeno v Q6
   (2026-10-31): všech šest jazyků už v betě.
-- **K revizi (2026-11-06):** Q6 změnilo start na ČR, takže šest jazyků v betě ztrácí důvod. i18n se dál
-  staví hned. Otevřené zůstává, které jazyky pustit do bety.
+- **Revize (2026-11-06):** start v ČR (Q6), proto **do bety čeština a angličtina**. Angličtina je pro
+  cizince žijící v ČR a jako základ pro další trh. i18n se dál staví hned, takže další jazyky (de, pl, es,
+  fr) půjde přidat s novým trhem bez zásahu do kódu.
 
 ### Q3 – Co je hlavní hodnota (proč platit)
 - Varianty: AI kategorizace a import · rodinný pohled s podíly členů · predikce a rozpočty · investice a čisté jmění.
@@ -83,7 +84,7 @@ Ujasnit, pro koho veřejná Pampeliška je, co nabízí a co do veřejné verze 
   - Slovensko jen tehdy, když ho Finbricks pokryje. Ověřit.
   - Marketing a podpora nejdřív jen v ČR a česky ([09](09-administrace.md), [10](10-znacka-web.md)).
   - Ceník v Kč ([07](07-predplatne.md)), kurzy ČNB stačí.
-  - Které jazyky pustit do bety, je otevřené (Q2).
+  - Jazyky bety: čeština a angličtina (Q2).
 
 ## Otevřené / zjistit venku
 
