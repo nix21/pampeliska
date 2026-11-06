@@ -82,9 +82,12 @@ Best regards,
 | Odpověď | 11/2026 | – | – | 11/2026 | 11/2026 |
 | Bez licence? | | | | ano (Partner Program) | ? (pro uživatele z ČR ověřit) |
 | Banky ČR / EU | | | | | „full EU access“ |
-| Cenový model | podle počtu napojení | | | licence + setup + údržba + za připojení | licence + 0,5 € za účet a měsíc |
-| Minimální poplatek | ? | | | od 1 000 €/měs. | 900 €/měs. |
+| Cenový model | balíček podle počtu volání API | | | licence + setup + údržba + za připojení | licence + 0,5 € za účet a měsíc |
+| Minimální poplatek | 10 000 Kč/měs. do 100 tis. volání, pak 30 000 Kč. Vstup 25 000 Kč | | | od 1 000 €/měs. | 900 €/měs. |
 | Poznámky | cenu neuvedli | | | samoobslužný program s nižším závazkem „v příštích měsících“ | 3letá zvýhodněná cena pro startupy, neomezené stahování |
-| Reakce (11/2026) | dotaz na model bez pevného poplatku | | | odmítnuto, zájem o samoobslužný program | odmítnuto, zájem o model bez pevné licence |
+| Reakce (11/2026) | dotaz na model bez pevného poplatku → nabídnut startovací balíček | | | odmítnuto, zájem o samoobslužný program | odmítnuto, zájem o model bez pevné licence |
 
-Výpočet bodu zvratu: [research/ekonomika-napojeni.md](research/ekonomika-napojeni.md).
+Po odmítnutí nabídli ostatní agregátoři zhruba 500 €/měs. (11/2026).
+
+Výpočet bodu zvratu: [research/ekonomika-napojeni.md](research/ekonomika-napojeni.md). Návratnost
+s nabídkou Finbricks: [research/navratnost-finbricks.md](research/navratnost-finbricks.md).

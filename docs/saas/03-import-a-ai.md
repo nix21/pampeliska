@@ -52,6 +52,11 @@ Rozhodnout, jak dostane cizí uživatel data do Pampelišky a kdo za to zaplatí
   bez ceny. Výpočet: [research/ekonomika-napojeni.md](research/ekonomika-napojeni.md). Enable Banking a Salt
   Edge se zaplatí až při ≈ 200–600 platících domácnostech a s cenou 6–8 €/měs. Beta zdarma by s nimi stála
   ≈ 12 tis. €/rok. finAPI podle veřejného ceníku ≈ 3,4 tis. €/rok, bod zvratu ≈ 70–150 domácností.
+- Druhé kolo (11/2026): ostatní ≈ 500 €/měs. Finbricks nabídl startovací balíček 10 000 Kč/měs. do
+  100 tis. volání (≈ 333 domácností při 2 voláních denně na účet), nad tím 30 000 Kč, vstup 25 000 Kč.
+  Bod zvratu ≈ 115 platících (ceník 199 / 149 Kč), viz
+  [research/navratnost-finbricks.md](research/navratnost-finbricks.md). Finbricks pokrývá jen CEE, to je
+  v rozporu s 01/Q6.
 - Doporučení: poptat užší výběr, rozhodnout podle pokrytí bank a ceny. Napojení stavět přes vlastní rozhraní
   nezávislé na agregátorovi, aby šlo začít levným a přejít později. Texty poptávky a tabulka na odpovědi:
   [poptavka-agregatori.md](poptavka-agregatori.md).

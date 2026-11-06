@@ -43,6 +43,7 @@ Stavy: **neotevřeno** · **rozpracováno** · **rozhodnuto**
 - [Odhad nákladů na AI na domácnost](research/naklady-ai.md) (2026-10-31)
 - [Ekonomika napojení na banky](research/ekonomika-napojeni.md) (2026-11-03)
 - [Kolik stojí 200 platících domácností](research/marketing-200.md) (2026-11-03)
+- [Návratnost s nabídkou Finbricks](research/navratnost-finbricks.md) (2026-11-06)
 
 ## Poptávky
 

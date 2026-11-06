@@ -20,7 +20,10 @@ Fáze 2: placené předplatné s prvními dvěma měsíci zdarma.
 - Napojení na banky se zaplatí jen s cenou ≈ 6–8 € měsíčně s DPH (150–200 Kč). Agregátor může účtovat za
   připojený účet, proto zvážit počet účtů v ceně a příplatek za další
   ([research/ekonomika-napojeni.md](research/ekonomika-napojeni.md)).
-- Doporučení: —
+- Doporučení (2026-11-06, [research/navratnost-finbricks.md](research/navratnost-finbricks.md)): dva tarify
+  s napojením na banky, **149 Kč/měs. s vlastní AI (MCP)** a **199 Kč/měs. s vestavěnou AI** (chat
+  s limitem). Ročně 1 490 / 1 990 Kč. Do 8 bankovních účtů v ceně. Případně tarif bez napojení zdarma nebo za
+  49 Kč jako vstupní. Předplatné prodávat na webu, ne v obchodech s aplikacemi (provize 15 %).
 - **Rozhodnutí:** —
 
 ### Q2 – Zkušební období
