@@ -63,6 +63,10 @@ Rozhodnout, jak dostane cizí uživatel data do Pampelišky a kdo za to zaplatí
   potvrdit: co je jedno volání, kolik volání pokryje 30 000 Kč, jak dlouho platí startovací cena a s jakou
   výpovědní lhůtou, jak to je s ČSOB, UniCredit a Slovenskem, a jestli jde vstupní poplatek zaplatit až před
   ostrým spuštěním. Napojení stavět přes vlastní rozhraní nezávislé na agregátorovi.
+- **Doplněno 2026-11-07:** smlouvu s Finbricks podepsat (a zaplatit vstupní poplatek 25 000 Kč) až po testu
+  landing page s reklamou na Metě, viz 10/Q5. Po kategorii se v ČR skoro nehledá
+  ([research/klicova-slova.md](research/klicova-slova.md)), zákazníci musí přijít z reklamy a její cena není
+  známá. Když test ukáže drahý zápis, přehodnotit cenu nebo napojení dřív, než začnou běžet fixní náklady.
 
 ### Q3 – Vestavěná AI na serveru
 - Varianty: žádná · jen kategorizace · parsování i kategorizace · chat nad daty.

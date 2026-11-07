@@ -46,7 +46,12 @@ Jak se o Pampelišce lidé dozví a kde se zaregistrují.
   21 % sama, takže reklama za 10 000 Kč stojí 12 100 Kč.
 - Návrh postupu:
   1. **Před betou:** test landing page a waitlistu ve 2 variantách, 2× 5 000 Kč (viz níže). Získá se
-     cena prokliku a zápisu a vlastní publikum pro cílení.
+     cena prokliku a zápisu a vlastní publikum pro cílení. **Test proběhne před podpisem smlouvy
+     s Finbricks** (2026-11-07, 03/Q2). Prahy pro ceny bez DPH:
+     - zápis na waitlist **pod ≈ 100 Kč:** trh ČR stačí, pokračovat s Finbricks;
+     - **100–500 Kč:** opakovat test s jiným sdělením nebo publikem, cenu znovu přepočítat;
+     - **nad ≈ 500 Kč:** ČR a SR uživí nanejvýš hobby projekt, přehodnotit cenu, napojení na banky (varianta
+       bez agregátora s importem souborů) nebo trh.
   2. **Beta (strop 50 domácností):** bez reklamy, stačí waitlist.
   3. **Spuštění placení:** ≈ 10 000 Kč měsíčně bez DPH:
      - **Google Search ≈ 15 % (1 000–1 500 Kč):** lidé, kteří řešení sami hledají – „rodinný rozpočet“,
@@ -59,6 +64,19 @@ Jak se o Pampelišce lidé dozví a kde se zaregistrují.
        výdajů“) a články na „jak ušetřit“ a „rodinný rozpočet“ s nízkou konkurencí.
   4. **Po 6–8 týdnech** vyhodnotit každý kanál zvlášť. Pod 1 500 Kč za platící domácnost navyšovat zhruba
      o polovinu měsíčně, nad 2 500 Kč kanál zastavit.
+- Potenciál ČR a SR (2026-11-07): k zisku stačí ≈ 95 platících, na slušný příjem 300–500, z ≈ 4,5 mil.
+  domácností v ČR (+ 2 mil. SR). Velikost trhu nebrzdí, rozhoduje cena zákazníka z Mety. Hrubě při prokliku
+  ≈ 8 Kč:
+
+  | | Návštěva → registrace | Registrace → platící | Cena platící domácnosti |
+  |---|---|---|---|
+  | Pesimisticky | 3 % | 15 % | ≈ 1 800 Kč |
+  | Střed | 5 % | 25 % | ≈ 640 Kč |
+  | Optimisticky | 10 % | 30 % | ≈ 270 Kč |
+
+  Limit 1 500 Kč leží uvnitř rozpětí, rozhodne test. Hlavní konkurence je zdarma: přehledy výdajů
+  v bankovnictví (George, KB, Air Bank). Pampeliška se musí odlišit tím, co banky neumí: celá domácnost
+  a všechny banky na jednom místě, společné výdaje páru, AI hledající úspory.
 - Měření: konverze z registrace na zaplacení až za 2 měsíce trialu, proto průběžně měřit i cenu registrace
   a aktivace (připojená banka).
 - Odhad (2026-11-03, [research/marketing-200.md](research/marketing-200.md)): placenou reklamou stojí platící
