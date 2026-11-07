@@ -49,10 +49,14 @@ Jak se o Pampelišce lidé dozví a kde se zaregistrují.
      cena prokliku a zápisu a vlastní publikum pro cílení.
   2. **Beta (strop 50 domácností):** bez reklamy, stačí waitlist.
   3. **Spuštění placení:** ≈ 10 000 Kč měsíčně bez DPH:
-     - **Google Search ≈ 40 %:** lidé, kteří řešení sami hledají, např. „aplikace na rodinné finance“, „rozpočet
-       domácnosti“, „společný účet partneři“. Objemy ověřit v Plánovači klíčových slov.
-     - **Instagram a Facebook ≈ 60 %:** zájmy (páry, mladé rodiny, hypotéka, osobní finance), publikum podobné
-       lidem z waitlistu a znovu oslovení návštěvníků webu.
+     - **Google Search ≈ 15 % (1 000–1 500 Kč):** lidé, kteří řešení sami hledají – „rodinný rozpočet“,
+       „rozpočet domácnosti“, „aplikace na výdaje“ apod. Po kategorii se hledá jen ≈ 840× měsíčně, víc peněz
+       Google neunese (2026-11-07, [research/klicova-slova.md](research/klicova-slova.md)).
+     - **Instagram a Facebook ≈ 85 %:** zájmy (páry, mladé rodiny, hypotéka, osobní finance), publikum podobné
+       lidem z waitlistu a znovu oslovení návštěvníků webu. Aplikaci tohoto typu skoro nikdo nehledá, proto
+       poptávku musí vytvořit tahle reklama.
+     - **Bez placení:** šablona rozpočtu v Excelu ke stažení (hledá se „rozpočet domácnosti excel“, „tabulka
+       výdajů“) a články na „jak ušetřit“ a „rodinný rozpočet“ s nízkou konkurencí.
   4. **Po 6–8 týdnech** vyhodnotit každý kanál zvlášť. Pod 1 500 Kč za platící domácnost navyšovat zhruba
      o polovinu měsíčně, nad 2 500 Kč kanál zastavit.
 - Měření: konverze z registrace na zaplacení až za 2 měsíce trialu, proto průběžně měřit i cenu registrace
@@ -68,6 +72,7 @@ Jak se o Pampelišce lidé dozví a kde se zaregistrují.
 ## Otevřené / zjistit venku
 
 - Rešerše ochranných známek a dostupnosti domén.
+- Hledanost stejných slov na Seznamu (Návrh klíčových slov Sklik).
 
 ## Dopad na implementaci
 
