@@ -5,8 +5,9 @@ Cíl: zpřístupnit Pampelišku jako veřejnou aplikaci pro libovolné domácnos
 - **Fáze 1** – otevřená beta (cílově 50+ domácností) s volnou registrací do stropu, pak waitlist
   (původně „jen na pozvánku“, změněno v 01/Q5).
 - **Fáze 2** – předplatné, první dva měsíce zdarma.
-- Start v ČR (napojení na banky přes Finbricks), další země EU až s objemem – viz 01/Q6. i18n se staví
-  hned, beta česky a anglicky (01/Q2).
+- **Celosvětově, zatím bez napojení na banky** (změna 2026-11-11, 01/Q6): výpisy přeposlané e-mailem nebo
+  nahrané, čte je AI na serveru (03/Q1, Q2). ≈ 15 jazyků od startu, překládá AI (01/Q2). Prodej přes
+  merchant of record kvůli DPH ve všech zemích (07/Q4). Napojení na banky „připravujeme“.
 
 Tahle složka zatím není implementační plán. Sbírají se tu rozhodnutí po oblastech; plán (`plan.md`) vznikne,
 až budou všechny oblasti rozhodnuté.
@@ -27,7 +28,7 @@ Stavy: **neotevřeno** · **rozpracováno** · **rozhodnuto**
 |---|---|---|---|
 | 01 | [Produkt a rozsah](01-produkt.md) | rozpracováno (Q1 čeká na 03/Q0) | – |
 | 02 | [Model tenantů](02-tenanti.md) | neotevřeno | 01 |
-| 03 | [Import dat a AI](03-import-a-ai.md) | neotevřeno | 01 |
+| 03 | [Import dat a AI](03-import-a-ai.md) | rozpracováno (Q1, Q2 rozhodnuto) | 01 |
 | 04 | [Identita a přístup](04-identita.md) | neotevřeno | 02 |
 | 05 | [Bezpečnost](05-bezpecnost.md) | neotevřeno | 02, 04 |
 | 06 | [Právo a GDPR](06-pravo-gdpr.md) | neotevřeno | 03, 05 |
@@ -46,6 +47,7 @@ Stavy: **neotevřeno** · **rozpracováno** · **rozhodnuto**
 - [Kolik stojí 200 platících domácností](research/marketing-200.md) (2026-11-03)
 - [Návratnost s nabídkou Finbricks](research/navratnost-finbricks.md) (2026-11-06)
 - [Klíčová slova pro reklamu ve vyhledávání](research/klicova-slova.md) (2026-11-07)
+- [Návratnost bez napojení na banky, celosvětově](research/navratnost-bez-agregatora.md) (2026-11-11)
 
 ## Poptávky
 

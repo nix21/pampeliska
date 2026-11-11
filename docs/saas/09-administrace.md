@@ -26,10 +26,10 @@ Nástroje pro tebe jako provozovatele a kanál pro uživatele, když něco nefun
 
 ### Q3 – Kanál podpory a zpětné vazby
 - Varianty: e-mail · formulář v aplikaci · komunita (Discord apod.).
-- V jakých jazycích podporu poskytovat: start v ČR (01/Q6), beta česky a anglicky (01/Q2). Podpora česky
-  a anglicky.
-- Doporučení: —
-- **Rozhodnutí:** —
+- **Rozhodnutí (2026-11-11): jen kontaktní formulář** (v aplikaci i na webu), žádný telefon ani chat
+  v reálném čase. Podpora ve všech jazycích aplikace: AI dotaz přeloží a připraví návrh odpovědi v jazyce
+  uživatele, provozovatel ji schválí nebo upraví. Časová pásma nehrají roli. Formulář slouží i k hlášení
+  chyb v překladech (01/Q2).
 
 ### Q4 – Komunikace změn
 - Changelog v aplikaci, oznámení o údržbě.

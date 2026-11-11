@@ -1,6 +1,6 @@
 # 03 – Import dat a AI
 
-Stav: neotevřeno · Závisí na: 01
+Stav: rozpracováno · Závisí na: 01
 
 ## Cíl
 
@@ -33,8 +33,21 @@ Rozhodnout, jak dostane cizí uživatel data do Pampelišky a kdo za to zaplatí
 
 ### Q1 – Cesta importu pro uživatele bez AI klienta
 - Varianty: CSV/PDF parsery jednotlivých bank na serveru · vestavěná AI, která parsuje · jen MCP („přines si AI“).
-- Doporučení: —
-- **Rozhodnutí:** —
+- **Rozhodnutí (2026-11-11): výpisy e-mailem a nahráním, čte je AI na serveru.** Hlavní cesta dat, protože
+  napojení na banky zatím nebude (Q2).
+  - **E-mail:** každá domácnost má vlastní nehádatelnou adresu (např. `vypisy-k7f3q9@…`). Uživatel si v bance
+    zapne výpisy e-mailem a přeposílání. Přijímat jen od členů domácnosti a z domén bank, ostatní do
+    karantény. Gmail ověřuje přeposílání kódem poslaným na cílovou adresu: Pampeliška ho musí ukázat
+    v aplikaci.
+  - **Nahrání souboru** v aplikaci (web i mobil) jako záloha a pro banky bez výpisů e-mailem.
+  - **Formáty:** strukturované (CSV, OFX, CAMT.053, MT940, GPC/ABO) přednostně, PDF přečte AI. Výpisy
+    zamčené heslem jen s heslem, které uživatel zadá vědomě, nebo raději ruční nahrání odemčeného.
+  - **Doptávání:** co AI nepozná (neznámá protistrana, převod mezi členy, kategorie), jde do fronty Ke
+    kategorizaci s otázkou pro uživatele. Pravidla a deduplikace na serveru zůstávají.
+  - **Fio:** bezplatné API na token od uživatele jde napojit přímo bez agregátora (ČR, volitelné).
+  - Slabina: výpisy bývají měsíční, data jsou tedy až měsíc stará. Pro přehledy a úspory stačí, pro předpověď
+    zůstatku méně. Banky s denními výpisy (Fio) nebo e-mailovými upozorněními na platby to zmírní.
+  - Příjem e-mailů přes poskytovatele v EU (Postmark, Mailgun apod.) = další zpracovatel (06/Q2).
 
 ### Q2 – Napojení na banky (PSD2)
 - Varianty: ne · přes agregátora (licencovaný poskytovatel) · vlastní licence AISP (nereálné).
@@ -67,6 +80,16 @@ Rozhodnout, jak dostane cizí uživatel data do Pampelišky a kdo za to zaplatí
   landing page s reklamou na Metě, viz 10/Q5. Po kategorii se v ČR skoro nehledá
   ([research/klicova-slova.md](research/klicova-slova.md)), zákazníci musí přijít z reklamy a její cena není
   známá. Když test ukáže drahý zápis, přehodnotit cenu nebo napojení dřív, než začnou běžet fixní náklady.
+- **Změna rozhodnutí (2026-11-11): zatím bez napojení na banky.** Bezpečnější cesta: žádné fixní poplatky
+  agregátoru (12 100 Kč/měs. a vstup 30 250 Kč s DPH), všechny banky a země od prvního dne, bod zvratu
+  ≈ 30–40 platících ([research/navratnost-bez-agregatora.md](research/navratnost-bez-agregatora.md)).
+  Data přichází výpisy (Q1), trh je celosvětový (01/Q6).
+  - Napojení na banky na webu jako „připravujeme“, bez data a slibu. Tlačítko „chci napojení“ sbírá zájem
+    podle země.
+  - Návrat k agregátorovi, až bude v jednom regionu dost platících, aby fixní poplatek pokryli. Pro ČR
+    s Finbricks ≈ 100–150 platících z ČR. Nabídka Finbricks a odpovědi ostatních zůstávají jako podklad.
+  - Import stavět přes vlastní rozhraní pro zdroj pohybů (výpis, Fio API, později agregátor), aby šel
+    agregátor jen přidat.
 
 ### Q3 – Vestavěná AI na serveru
 - Varianty: žádná · jen kategorizace · parsování i kategorizace · chat nad daty.
@@ -86,10 +109,17 @@ Rozhodnout, jak dostane cizí uživatel data do Pampelišky a kdo za to zaplatí
 
 ## Otevřené / zjistit venku
 
-- Odpovědi Finbricks na otázky před podpisem (viz Q2).
-- Formáty výpisů českých bank, které Finbricks nepokryje (ČSOB, UniCredit?): import souborů jako záloha.
+- Které banky posílají výpisy e-mailem, v jakém formátu, jak často a jestli zamčené heslem. Nejdřív české
+  banky a velké banky v hlavních trzích (rešerše).
+- Přesnost čtení PDF výpisů a kategorizace levným a silnějším modelem (změřit na vlastních výpisech).
 - Odhad nákladů AI na domácnost: hotový, viz Q0.
+- Odpovědi Finbricks: odloženo s napojením na banky (Q2).
 
 ## Dopad na implementaci
 
-—
+- **Příjem e-mailů:** adresa na domácnost, webhook od poskytovatele, ověření odesílatele, karanténa, zobrazení
+  ověřovacích e-mailů (Gmail) v aplikaci, uložení příloh jen po dobu zpracování.
+- **AI na serveru čte výpisy** (dnes to dělá AI klient přes MCP) a výsledek jde stejnou cestou jako
+  `import_transactions`: deduplikace, pravidla, fronta Ke kategorizaci s otázkami.
+- **Nahrání souboru** ve webu (dnes web import nemá).
+- **Rozhraní pro zdroj pohybů,** aby šlo přidat Fio API a později agregátora.

@@ -38,7 +38,9 @@ Spolehlivý provoz pro cizí uživatele: nasazování, zálohy, monitoring, e-ma
 
 ### Q5 – Transakční e-maily
 - Pozvánky, upozornění, platby; poskytovatel e-mailů, doména a SPF/DKIM.
-- Šablony ve všech jazycích aplikace, v betě česky a anglicky (01/Q2).
+- Šablony ve všech jazycích aplikace (≈ 15, překládá AI, 01/Q2).
+- **Příchozí e-maily** s výpisy (03/Q1): poskytovatel s příjmem do webhooku, nejlépe se stejným dodavatelem
+  jako odchozí. Doména pro příjem (MX), ověření odesílatele, ochrana proti spamu.
 - Doporučení: —
 - **Rozhodnutí:** —
 

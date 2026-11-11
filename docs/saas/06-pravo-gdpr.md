@@ -20,17 +20,19 @@ Provozovat aplikaci legálně: ochrana osobních údajů, podmínky, odpovědnos
   zahraničí (reklama, AI, platební brána) je identifikovanou osobou, viz 07/Q5.
 
 ### Q2 – Zpracovatelé
-- Seznam: hosting VPS, Google (přihlášení), poskytovatel AI (pokud server-side), e-maily, platební brána.
+- Seznam: hosting VPS, Google (přihlášení), poskytovatel AI (server-side, 03/Q1), e-maily odchozí i příchozí
+  (výpisy přeposílané e-mailem), merchant of record (07/Q4).
 - Smlouvy o zpracování (DPA), přenos mimo EU.
 - Doporučení: —
 - **Rozhodnutí:** —
 
 ### Q3 – Dokumenty
 - Obchodní podmínky, zásady ochrany osobních údajů, cookies (jen nezbytné?).
-- Musí být hotové před betou (volná registrace, 01/Q5). Start je v ČR (01/Q6), takže závazné je české
-  znění. Anglický překlad informativně (beta je česky a anglicky, 01/Q2)?
-- Doporučení: —
-- **Rozhodnutí:** —
+- Musí být hotové před betou (volná registrace, 01/Q5).
+- **Rozhodnutí (2026-11-11): závazné je anglické znění**, ostatní jazyky jsou informativní překlad od AI
+  (trh je celosvětový, 01/Q6, ≈ 15 jazyků, 01/Q2). Podmínky nákupu a vracení peněz drží merchant of record
+  (07/Q4), naše podmínky na ně odkazují. Platí, dokud je provozovatel s.r.o. v ČR: právo ČR, s ohledem na
+  povinná spotřebitelská práva země zákazníka (ověřit u právníka).
 
 ### Q4 – Práva subjektů údajů
 - Export všech dat domácnosti, smazání účtu a domácnosti, lhůty, mazání ze záloh.
@@ -51,7 +53,9 @@ Provozovat aplikaci legálně: ochrana osobních údajů, podmínky, odpovědnos
 
 - Konzultace s právníkem (podmínky, GDPR, s.r.o. vs. OSVČ).
 - Je potřeba posouzení vlivu na ochranu údajů (DPIA)?
-- Zvláštní požadavky cílových zemí (spotřebitelské právo, odstoupení od předplatného).
+- Zvláštní požadavky cílových zemí (spotřebitelské právo, odstoupení od předplatného). Kolik z toho pokryje
+  merchant of record.
+- Zákazníci mimo EU (USA, UK): stačí GDPR a podmínky v angličtině, nebo něco navíc (např. CCPA)?
 
 ## Dopad na implementaci
 

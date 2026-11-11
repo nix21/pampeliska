@@ -16,7 +16,8 @@ Aby nová domácnost bez pomoci došla k prvním užitečným přehledům.
 
 ### Q1 – Výchozí kategorie a pravidla
 - Jaká sada kategorií pro nové domácnosti, předpřipravená pravidla pro běžné obchodníky?
-- Výchozí kategorie přeložené podle jazyka (v betě cs a en, 01/Q2), obchodníci a pravidla podle země.
+- Výchozí kategorie přeložené podle jazyka (≈ 15 jazyků, 01/Q2), obchodníci a pravidla podle země
+  (celosvětový trh, 01/Q6).
 - Doporučení: —
 - **Rozhodnutí:** —
 
@@ -26,7 +27,9 @@ Aby nová domácnost bez pomoci došla k prvním užitečným přehledům.
 - **Rozhodnutí:** —
 
 ### Q3 – První import
-- Jak vypadá krok „nahraj první výpis“ podle rozhodnutí v 03.
+- Jak vypadá krok „nahraj první výpis“ podle rozhodnutí v 03 (2026-11-11: výpisy e-mailem a nahráním).
+  Návod podle banky, jak zapnout výpisy e-mailem a přeposílání, zobrazení ověřovacího e-mailu Gmailu.
+  První výpis nejlíp nahrát hned ručně, ať uživatel vidí výsledek, než přijde další.
 - Doporučení: —
 - **Rozhodnutí:** —
 

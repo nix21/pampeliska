@@ -35,6 +35,16 @@ Ujasnit, pro koho veřejná Pampeliška je, co nabízí a co do veřejné verze 
 - **Revize (2026-11-06):** start v ČR (Q6), proto **do bety čeština a angličtina**. Angličtina je pro
   cizince žijící v ČR a jako základ pro další trh. i18n se dál staví hned, takže další jazyky (de, pl, es,
   fr) půjde přidat s novým trhem bez zásahu do kódu.
+- **Revize (2026-11-11): celosvětový trh (Q6), od startu ≈ 15 jazyků** psaných zleva doprava latinkou
+  a cyrilicí: angličtina (hlavní), čeština, slovenština, němčina, francouzština, španělština, italština,
+  portugalština, polština, nizozemština, švédština, dánština, norština, finština, ukrajinština. Japonština,
+  korejština, čínština a jazyky psané zprava doleva (arabština, hebrejština) později podle zájmu: font Manrope
+  je nepokrývá a RTL vyžaduje úpravu rozvržení.
+  - Překládá AI podle **slovníku pojmů** (domácnost, kategorie, převod, pravidlo…), aby byly výrazy
+    v každém jazyce stejné. Rodilé mluvčí nemáme, kvalitě se věří. Chyby hlásí uživatelé formulářem (09).
+  - Závazné jsou jen anglické právní texty, ostatní jsou informativní překlad (06/Q3).
+  - Důvod: s AI stojí další jazyk skoro nic, podpora jde jen přes formulář (09/Q3) a v menších jazycích je
+    levnější reklama a menší konkurence ve vyhledávání (10/Q5).
 
 ### Q3 – Co je hlavní hodnota (proč platit)
 - Varianty: AI kategorizace a import · rodinný pohled s podíly členů · predikce a rozpočty · investice a čisté jmění.
@@ -85,11 +95,22 @@ Ujasnit, pro koho veřejná Pampeliška je, co nabízí a co do veřejné verze 
   - Marketing a podpora nejdřív jen v ČR a česky ([09](09-administrace.md), [10](10-znacka-web.md)).
   - Ceník v Kč ([07](07-predplatne.md)), kurzy ČNB stačí.
   - Jazyky bety: čeština a angličtina (Q2).
+- **Rozhodnutí (změna 2026-11-11): celosvětově, bez napojení na banky.** Start bez agregátora (03/Q2):
+  výpisy přeposlané e-mailem nebo nahrané v aplikaci, přečte je AI na serveru (03/Q1). Import přes AI
+  nezávisí na bance ani zemi, takže důvod omezit se na ČR odpadl. Trh ČR je na tak specifickou aplikaci
+  malý (po kategorii se hledá ≈ 840× měsíčně, [research/klicova-slova.md](research/klicova-slova.md)).
+  USA už nejsou vyloučené: bez napojení na banky se nesoutěží s Monarchem na jeho hřišti.
+  - **Pozicování:** rodinné finance pro páry a rodiny (moje / tvoje / naše, férové dělení), AI, která výpis
+    sama zpracuje a doptá se, vlastní AI přes MCP a **bez přihlášení do banky** (data od uživatele, ne
+    přístup k účtu). Napojení na banky „připravujeme“, bez data a slibu.
+  - Bod zvratu ≈ 30–40 platících, riziko zhruba třetinové proti Finbricks
+    ([research/navratnost-bez-agregatora.md](research/navratnost-bez-agregatora.md)).
+  - Důsledky: jazyky (Q2), ceny v EUR, USD a Kč a prodej přes merchant of record kvůli DPH ve všech zemích
+    (07), závazné anglické podmínky (06), podpora jen formulářem (09), marketing po jazycích (10).
 
 ## Otevřené / zjistit venku
 
 - Konkurence v cílových zemích a její ceny (pro 07) – první rešerše hotová, viz Q6.
-- Pokrytí Slovenska u Finbricks (03/Q2).
 - Jak dlouho beta poběží a co je podmínka přechodu do fáze 2.
 
 ## Dopad na implementaci
@@ -98,11 +119,13 @@ Ujasnit, pro koho veřejná Pampeliška je, co nabízí a co do veřejné verze 
   (dnes `lib/format.ts` – „28. 9.“, ` Kč`, české plurály v `count()`) podle jazyka. Volba jazyka u uživatele.
 - **Více měn:** základní měna domácnosti už jde nastavit (`BaseCurrency`), ale kurzy jsou jen z ČNB a souhrny
   počítají v Kč – pro EUR/PLN domácnosti je potřeba jiný zdroj kurzů (např. ECB) a měnově neutrální souhrny.
-  Při startu v ČR to počká na další trh.
-- **Banky a instituce** jen české → seznam institucí podle země (u napojených bank ho dodá agregátor).
-  Při startu v ČR to počká na další trh.
-- **Země domácnosti** při registraci: určuje nabídku bank, výchozí měnu a jazyk. Model připravit, volbu
-  ukázat až s druhou zemí.
+  Celosvětový start (2026-11-11) to potřebuje hned.
+- **Banky a instituce** jen české → bez agregátora stačí volný název banky a výchozí seznam podle země
+  (ikona, barva), případně doplněný z výpisů.
+- **Země domácnosti** při registraci: určuje výchozí měnu, jazyk, formáty a výchozí kategorie a pravidla
+  (11/Q1). Volba hned při registraci.
+- **Slovník pojmů pro překlady** a kontrola chybějících klíčů v buildu; AI doplní překlady při každé změně
+  textů.
 - **Strop registrací a waitlist:** počítadlo domácností, nastavitelný strop, přepnutí registrace na waitlist
   s lokalizovaným vzkazem, evidence čekajících a jejich pozvání.
 - **Volná registrace hned ve fázi 1** znamená, že před startem bety musí být hotové: registrace a ochrana proti

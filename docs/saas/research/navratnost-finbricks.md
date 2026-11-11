@@ -4,6 +4,10 @@ Stav k 6. 11. 2026 · Podklad pro [03/Q2](../03-import-a-ai.md), [07/Q1](../07-p
 [10/Q5](../10-znacka-web.md). Navazuje na [ekonomiku napojení](ekonomika-napojeni.md),
 [náklady na AI](naklady-ai.md) a [marketing](marketing-200.md).
 
+> **Odloženo 2026-11-11:** start je celosvětový a bez napojení na banky (01/Q6, 03/Q2). Aktuální model je
+> [návratnost bez agregátora](navratnost-bez-agregatora.md). Tenhle zůstává jako podklad pro pozdější
+> návrat k Finbricks v ČR.
+
 Jde o model, ne o předpověď. Největší neznámé jsou: kolik lidí přijde samo, kolik stojí zákazník z reklamy,
 jak rychle lidé odchází a co Finbricks počítá jako jedno volání API.
 

@@ -15,8 +15,8 @@ Jak se o Pampelišce lidé dozví a kde se zaregistrují.
 
 ### Q1 – Název a doména
 - Zůstává „Pampeliška“? Volnost názvu (ochranné známky), doména.
-- Start v ČR (01/Q6), další země později: funguje název s „š“ i v cizích jazycích? Jedna mezinárodní
-  značka, nebo místní názvy?
+- Trh je od 2026-11-11 celosvětový (01/Q6): funguje název s „š“ v ≈ 15 jazycích a v doméně? Jedna
+  mezinárodní značka (anglický název, `.app` / `.com`), nebo Pampeliška jen pro ČR?
 - Doporučení: —
 - **Rozhodnutí:** —
 
@@ -38,8 +38,10 @@ Jak se o Pampelišce lidé dozví a kde se zaregistrují.
 - **Rozhodnutí:** —
 
 ### Q5 – Marketing
-- Beta startuje v ČR (01/Q6, změna 2026-11-06). Kde a jak oslovit první české domácnosti (komunity, obsah,
-  výkonnostní reklama), s jakým rozpočtem. Další země až s dalším agregátorem.
+- **Změna 2026-11-11: trh je celosvětový** (01/Q6), bez napojení na banky, ≈ 15 jazyků (01/Q2). Plán
+  pro ČR níže zůstává jako podklad pro český trh, nový postup je v bloku „Celosvětově“ na konci otázky.
+- Původně (2026-11-06): beta startuje v ČR. Kde a jak oslovit první české domácnosti (komunity, obsah,
+  výkonnostní reklama), s jakým rozpočtem.
 - Přání (2026-11-06): dobře cílená reklama na Instagramu, Facebooku a Googlu.
 - Rozpočet z modelu návratnosti ([research/navratnost-finbricks.md](research/navratnost-finbricks.md)):
   platící domácnost z reklamy smí stát ≈ 1 500 Kč vč. DPH. S.r.o. jako neplátce si u Mety a Googlu odvádí
@@ -47,7 +49,7 @@ Jak se o Pampelišce lidé dozví a kde se zaregistrují.
 - Návrh postupu:
   1. **Před betou:** test landing page a waitlistu ve 2 variantách, 2× 5 000 Kč (viz níže). Získá se
      cena prokliku a zápisu a vlastní publikum pro cílení. **Test proběhne před podpisem smlouvy
-     s Finbricks** (2026-11-07, 03/Q2). Prahy pro ceny bez DPH:
+     s Finbricks** (2026-11-07, 03/Q2; Finbricks je od 2026-11-11 odložený). Prahy pro ceny bez DPH:
      - zápis na waitlist **pod ≈ 100 Kč:** trh ČR stačí, pokračovat s Finbricks;
      - **100–500 Kč:** opakovat test s jiným sdělením nebo publikem, cenu znovu přepočítat;
      - **nad ≈ 500 Kč:** ČR a SR uživí nanejvýš hobby projekt, přehodnotit cenu, napojení na banky (varianta
@@ -85,12 +87,27 @@ Jak se o Pampelišce lidé dozví a kde se zaregistrují.
   affiliate.
 - Doporučení: před rozpočtem ověřit poptávku landing page ve 2 variantách (s napojením na banky a bez něj)
   a 300–500 € za reklamu na variantu.
+- **Celosvětově (2026-11-11):**
+  - **Kanály zdarma první:** Show HN, Product Hunt, Reddit (osobní finance, rozpočty, páry), adresáře MCP
+    a komunity kolem Claude a ChatGPT („tvoje rodinné finance ve vlastní AI“), vlastní síť.
+  - **Web v každém jazyce zvlášť** se šablonou rozpočtu ke stažení a články „jak ušetřit“ / „rodinný
+    rozpočet“. V menších jazycích (polština, nizozemština, severské jazyky, čeština…) je ve vyhledávání menší
+    konkurence a levnější reklama než v angličtině, kde proklik na „budget app“ stojí jednotky dolarů.
+  - **Test landing page anglicky a česky,** obě s reklamou na Metě, 2× ≈ 5 000 Kč. Měří cenu zápisu na
+    waitlist a zájem o napojení na banky (tlačítko „chci napojení“). Prahy jako výše: pod ≈ 100 Kč za zápis
+    pokračovat a přidat rozpočet, nad ≈ 500 Kč změnit sdělení nebo cílení.
+  - **Placená reklama** až po testu a řízená cenou za platící domácnost: limit ≈ 1 300 Kč včetně DPH
+    ([research/navratnost-bez-agregatora.md](research/navratnost-bez-agregatora.md)). Přednostně země
+    a jazyky, kde test vyjde nejlevněji.
+  - **Pozicování:** rodinné finance pro páry a rodiny, AI zpracuje výpis sama, bez přihlášení do banky,
+    vlastní AI přes MCP. Napojení na banky „připravujeme“ bez data.
 - **Rozhodnutí:** —
 
 ## Otevřené / zjistit venku
 
 - Rešerše ochranných známek a dostupnosti domén.
 - Hledanost stejných slov na Seznamu (Návrh klíčových slov Sklik).
+- Hledanost a cena prokliku v dalších jazycích (Plánovač klíčových slov, stejný postup jako pro ČR).
 
 ## Dopad na implementaci
 
