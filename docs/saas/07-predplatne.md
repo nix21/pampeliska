@@ -29,12 +29,30 @@ Fáze 2: placené předplatné s prvními dvěma měsíci zdarma.
 
   | Tarif | Měsíčně | Ročně | Obsah |
   |---|---|---|---|
-  | **Pampeliška** (vlastní AI) | 6 € · 7 $ · 149 Kč | 60 € · 70 $ · 1 490 Kč | celá aplikace, import výpisů bez AI čtení PDF, MCP pro vlastního AI klienta |
-  | **Pampeliška + AI** | 9 € · 10 $ · 219 Kč | 90 € · 100 $ · 2 190 Kč | navíc AI čte výpisy, kategorizuje, doptává se, chat s limitem |
+  | **Pampeliška** (vlastní AI) | 6 € · 7 $ | 60 € · 70 $ | celá aplikace, import výpisů bez AI čtení PDF, MCP pro vlastního AI klienta |
+  | **Pampeliška + AI** | 9 € · 10 $ | 90 € · 100 $ | navíc AI čte výpisy, kategorizuje, doptává se, chat s limitem |
+
+  Ceny pro pásmo A; ČR a další země viz regionální ceny níže (2026-11-13).
 
   Ceny jsou konečné včetně DPH (tu odvádí merchant of record). Čistě zbyde ≈ 127 Kč na domácnost, bod
   zvratu ≈ 30 platících. Pořád levnější než Lunch Money (≈ 10 $), YNAB a Monarch (14,99 $). Roční platbu
   zvýraznit: pevná část poplatku (0,50 $) se rozpustí.
+- **Regionální ceny (rozhodnuto 2026-11-13):** tři cenová pásma podle země, každá země vidí jen svou cenu ve
+  své měně, nikde srovnání zemí ani „levněji pro …“.
+
+  | Pásmo | Země (příklady) | Vlastní AI / s AI měsíčně | Čistě na domácnost |
+  |---|---|---|---|
+  | A | USA, UK, DACH, severské země, Benelux, Francie | 6 € / 9 € (USA 7 $ / 10 $) | 102 / 138 Kč |
+  | B | ČR, SK, Polsko, Pobaltí, Slovinsko, Portugalsko, Španělsko, Itálie | ≈ −35 %: **99 / 149 Kč**, ≈ 4 € / 6 € | 62 / 78 Kč |
+  | C | Ukrajina, Balkán, Latinská Amerika… | ≈ −50 %, až podle zájmu | – |
+
+  - Roční cena = 10 měsíců. V pásmu B roční předplatné jako výchozí volba (pevná část poplatku 0,50 $ je
+    u 99 Kč ≈ 12 %).
+  - Bod zvratu ≈ 30–52 platících podle podílu pásma A
+    ([research/navratnost-bez-agregatora.md](research/navratnost-bez-agregatora.md)).
+  - EU pravidla proti geoblokování: zákazník z jiné země EU smí koupit nabídku jiné země za stejných podmínek
+    jako místní (Němec si může koupit českou cenu v Kč). Nebránit tomu, únik je u malé aplikace zanedbatelný.
+    Ověřit s právníkem. Mimo EU omezení není.
 - Otevřené: v tarifu bez AI dává smysl jen import strukturovaných souborů (CSV, OFX…) nebo přes vlastní AI
   klienta. Ověřit, jestli to pro běžné uživatele nebude moc složité.
 - **Rozhodnutí:** —
@@ -58,6 +76,21 @@ Fáze 2: placené předplatné s prvními dvěma měsíci zdarma.
   zákazníkovi je prodejcem on, odvádí daně ve všech zemích, vystavuje doklady a řeší vracení peněz.
   S.r.o. prodává jen jemu a může zůstat neplátcem DPH. Konkrétního poskytovatele vybrat podle ceny,
   podpory měn (EUR, USD, Kč) a jestli přijímá českou s.r.o.
+- **Poskytovatel (2026-11-13): Paddle jako první volba**, záloha Lemon Squeezy nebo Stripe Managed Payments.
+  - **Paddle:** 5 % + 0,50 $ za platbu včetně všeho (brána, karty, PayPal, Apple a Google Pay, daně,
+    doklady, upomínky, reklamace, podvody), bez příplatku za zahraniční karty. Pro produkty pod 10 $ ale
+    odkazuje na individuální ceník – naše ceny pod 10 $ jsou, zeptat se při žádosti.
+  - **Lemon Squeezy:** 5 % + 0,50 $ plus příplatky (zahraniční platby +1,5 %, PayPal +1,5 %, předplatné
+    +0,5 %), celkem ≈ 7–8 %. Patří Stripu, který spouští vlastní Stripe Managed Payments; budoucnost nejistá.
+  - Levnější novější (Polar, Creem ≈ 4 % + 0,40 $) – menší firmy, větší riziko.
+  - **Samostatná platební brána není potřeba,** je součástí merchant of record. Aplikace dostává jen
+    webhooky o stavu předplatného (aktivní, zrušené, nezaplacené).
+  - Stripe napřímo (≈ 1,5 % + 0,25 € v EU, + předplatné a daně ≈ 1 %) by ušetřil 2–3 % z tržeb, ale
+    znamenal registrace k DPH (OSS nad 10 000 € v EU, UK a Norsko od prvního prodeje, sales tax v USA)
+    a vlastní doklady. Pro jednoho člověka se nevyplatí.
+  - **Schválení trvá dny až týdny** a vyžaduje hotový web s popisem, ceníkem, podmínkami, zásadami ochrany
+    údajů a pravidly vracení peněz. Požádat dřív, než bude beta hotová.
+  - Ceny ověřeny jen ze srovnávacích článků (11/2026), před podpisem zkontrolovat přímo u poskytovatele.
 
 ### Q5 – Fakturace a DPH
 - Doklady za předplatné (Invoicer? brána?), stornování a vracení peněz.
@@ -80,7 +113,8 @@ Fáze 2: placené předplatné s prvními dvěma měsíci zdarma.
 ## Otevřené / zjistit venku
 
 - Konzultace s účetní (DPH, výplaty od merchant of record, evidence plateb).
-- Srovnání merchant of record: poplatky, měny, výplaty do ČR, přijetí české s.r.o.
+- Paddle: cena pro produkty pod 10 $, regionální ceny po zemích, výplaty do ČR, přijetí české s.r.o.,
+  jestli projde aplikace na osobní finance.
 
 ## Dopad na implementaci
 

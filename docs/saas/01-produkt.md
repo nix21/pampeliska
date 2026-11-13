@@ -68,6 +68,11 @@ Ujasnit, pro koho veřejná Pampeliška je, co nabízí a co do veřejné verze 
   „fáze 1 jen na pozvánku“.
 - Výši stropu určí kapacita provozu ([08](08-provoz.md)) a náklady na AI ([03](03-import-a-ai.md)); strop
   musí jít měnit bez nasazení. Pouštění lidí z waitlistu řeší [09](09-administrace.md).
+- **Změna (2026-11-13): žádný waitlist.** Ani před spuštěním (test poptávky přes waitlist se ruší, 10/Q5),
+  ani po naplnění stropu. Aplikace s AI vznikne rychle a „plánujeme alternativu k tomu, co už je na trhu“
+  nikoho nezaujme, waitlist by lidi spíš odradil. Beta je rovnou otevřená registrace.
+  - **Strop zůstává jen jako interní pojistka:** nastavený vysoko, nepropagovaný. Při zneužití AI nebo
+    nečekané zátěži jde registrace zavřít bez nasazení, se vzkazem „zkuste to za pár dní“, bez pořadníku.
 
 ### Q6 – Pozicování a cílový trh (USA vs. Evropa)
 - Otevřeno 2026-10-31: USA platí víc (~100 USD/rok za Monarch, YNAB, Copilot; Finanzguru Plus 2,99 €/měs.),
@@ -126,7 +131,7 @@ Ujasnit, pro koho veřejná Pampeliška je, co nabízí a co do veřejné verze 
   (11/Q1). Volba hned při registraci.
 - **Slovník pojmů pro překlady** a kontrola chybějících klíčů v buildu; AI doplní překlady při každé změně
   textů.
-- **Strop registrací a waitlist:** počítadlo domácností, nastavitelný strop, přepnutí registrace na waitlist
-  s lokalizovaným vzkazem, evidence čekajících a jejich pozvání.
+- **Strop registrací** (interní pojistka, 2026-11-13 bez waitlistu): počítadlo domácností, nastavitelný
+  strop a vypínač registrace s lokalizovaným vzkazem.
 - **Volná registrace hned ve fázi 1** znamená, že před startem bety musí být hotové: registrace a ochrana proti
   zneužití (04, 05), podmínky a GDPR ve všech jazycích (06), provoz s e-maily (08) a kanál podpory (09).

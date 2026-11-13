@@ -88,6 +88,8 @@ Rozhodnout, jak dostane cizí uživatel data do Pampelišky a kdo za to zaplatí
     podle země.
   - Návrat k agregátorovi, až bude v jednom regionu dost platících, aby fixní poplatek pokryli. Pro ČR
     s Finbricks ≈ 100–150 platících z ČR. Nabídka Finbricks a odpovědi ostatních zůstávají jako podklad.
+  - Podmínka „test landing page před podpisem Finbricks“ (2026-11-07) tím padá: test s waitlistem se ruší
+    (2026-11-13, 10/Q5), reklama se ověří na hotové betě.
   - Import stavět přes vlastní rozhraní pro zdroj pohybů (výpis, Fio API, později agregátor), aby šel
     agregátor jen přidat.
 

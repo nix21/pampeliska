@@ -26,8 +26,8 @@ Jak se o Pampelišce lidé dozví a kde se zaregistrují.
 - **Rozhodnutí:** —
 
 ### Q3 – Registrace z webu
-- Fáze 1 má volnou registraci do stropu (01/Q5); po naplnění web místo registrace nabídne waitlist se vzkazem
-  o velkém zájmu.
+- Fáze 1 má volnou registraci bez waitlistu (01/Q5, změna 2026-11-13). Při zavřené registraci (interní
+  pojistka) jen vzkaz „zkuste to za pár dní“.
 - Web ve všech jazycích aplikace.
 - Doporučení: —
 - **Rozhodnutí:** —
@@ -60,7 +60,7 @@ Jak se o Pampelišce lidé dozví a kde se zaregistrují.
        „rozpočet domácnosti“, „aplikace na výdaje“ apod. Po kategorii se hledá jen ≈ 840× měsíčně, víc peněz
        Google neunese (2026-11-07, [research/klicova-slova.md](research/klicova-slova.md)).
      - **Instagram a Facebook ≈ 85 %:** zájmy (páry, mladé rodiny, hypotéka, osobní finance), publikum podobné
-       lidem z waitlistu a znovu oslovení návštěvníků webu. Aplikaci tohoto typu skoro nikdo nehledá, proto
+       registrovaným uživatelům a znovu oslovení návštěvníků webu. Aplikaci tohoto typu skoro nikdo nehledá, proto
        poptávku musí vytvořit tahle reklama.
      - **Bez placení:** šablona rozpočtu v Excelu ke stažení (hledá se „rozpočet domácnosti excel“, „tabulka
        výdajů“) a články na „jak ušetřit“ a „rodinný rozpočet“ s nízkou konkurencí.
@@ -93,9 +93,15 @@ Jak se o Pampelišce lidé dozví a kde se zaregistrují.
   - **Web v každém jazyce zvlášť** se šablonou rozpočtu ke stažení a články „jak ušetřit“ / „rodinný
     rozpočet“. V menších jazycích (polština, nizozemština, severské jazyky, čeština…) je ve vyhledávání menší
     konkurence a levnější reklama než v angličtině, kde proklik na „budget app“ stojí jednotky dolarů.
-  - **Test landing page anglicky a česky,** obě s reklamou na Metě, 2× ≈ 5 000 Kč. Měří cenu zápisu na
-    waitlist a zájem o napojení na banky (tlačítko „chci napojení“). Prahy jako výše: pod ≈ 100 Kč za zápis
-    pokračovat a přidat rozpočet, nad ≈ 500 Kč změnit sdělení nebo cílení.
+  - **Změna 2026-11-13: žádný test s waitlistem.** Aplikace s AI vznikne rychle, takže se rovnou spustí
+    beta a reklama (2× ≈ 5 000 Kč, anglicky a česky, Meta) se testuje na hotovém produktu. Měří se:
+    - **cena registrace:** pod ≈ 250 Kč pokračovat, nad ≈ 400 Kč změnit sdělení nebo cílení;
+    - **cena aktivované domácnosti** (nahrála nebo přeposlala první výpis): cíl pod ≈ 500 Kč – nejdůležitější
+      číslo, ukazuje skutečné používání;
+    - **placení** až po trialu: aby se vešlo do ≈ 1 300 Kč za platící domácnost, musí zaplatit aspoň ≈ čtvrtina
+      registrovaných;
+    - zájem o napojení na banky (tlačítko „chci napojení“), jen jako vedlejší údaj.
+    Původní kroky 1 a 2 výše (test landing page a waitlistu, prahy pro zápis) tím padají.
   - **Placená reklama** až po testu a řízená cenou za platící domácnost: limit ≈ 1 300 Kč včetně DPH
     ([research/navratnost-bez-agregatora.md](research/navratnost-bez-agregatora.md)). Přednostně země
     a jazyky, kde test vyjde nejlevněji.

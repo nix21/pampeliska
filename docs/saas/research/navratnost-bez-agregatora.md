@@ -44,6 +44,27 @@ Na domácnost zbude méně než v ČR bez DPH (162 Kč). Ve světě se DPH záka
 merchant of record a pevná složka poplatku (0,50 $) je u měsíčních plateb citelná. Roční předplatné ji
 rozpustí.
 
+## Regionální ceny (doplněno 2026-11-13)
+
+Pásmo A (USA, UK, DACH, sever, Benelux, Francie) 6 € / 9 €, pásmo B (ČR, SK, PL, Pobaltí, jih Evropy)
+≈ o 35 % levněji, v ČR 99 / 149 Kč (viz [07/Q1](../07-predplatne.md)).
+
+| Pásmo | Čistě na domácnost (vlastní AI / s AI) | Průměr |
+|---|---|---|
+| A | 102 / 138 Kč | 127 Kč |
+| B (ČR 99 / 149 Kč) | 62 / 78 Kč | 73 Kč |
+
+| Podíl platících z pásma A | Průměr na domácnost | Bod zvratu |
+|---|---|---|
+| 100 % | 127 Kč | 30 |
+| 70 % | 111 Kč | 34 |
+| 50 % | 100 Kč | 38 |
+| 30 % | 90 Kč | 43 |
+| 0 % (jen pásmo B) | 73 Kč | 52 |
+
+Pevná část poplatku (0,50 $) je u ceny 99 Kč ≈ 12 %. Roční předplatné za 10 měsíců vyjde čistě stejně
+jako měsíční, ale peníze přijdou dopředu a zákazník zůstane déle. V pásmu B ho proto nabízet jako výchozí.
+
 ## Simulace na 36 měsíců (ceník 6 € / 9 €)
 
 Stejné scénáře jako u Finbricks: pesimistický 5 nových platících měsíčně bez reklamy, z reklamy za
@@ -73,6 +94,6 @@ U ceníku 5 € / 7 € vychází střední scénář bez reklamy na +203 tis. a
    Lunch Money (≈ 10 $), YNAB a Monarch (14,99 $), které ale mají napojení na banky.
 4. **Reklama smí stát ≈ 1 300 Kč na platící domácnost včetně DPH**, aby se vrátila do roka. Ve středním
    scénáři se reklama do 3 let nevyplatí, v optimistickém přidá zákazníky bez ztráty hotovosti. Rozhoduje
-   test landing page ([10/Q5](../10-znacka-web.md)).
+   test reklamy na hotové betě ([10/Q5](../10-znacka-web.md)).
 5. **Napojení na banky se vrátí na stůl,** až bude dost platících v jednom regionu, aby agregátor pokryl
    z jejich plateb fixní poplatek. Pro ČR s Finbricks je to ≈ 100–150 platících z ČR.

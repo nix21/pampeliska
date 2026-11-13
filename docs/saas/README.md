@@ -2,8 +2,8 @@
 
 Cíl: zpřístupnit Pampelišku jako veřejnou aplikaci pro libovolné domácnosti.
 
-- **Fáze 1** – otevřená beta (cílově 50+ domácností) s volnou registrací do stropu, pak waitlist
-  (původně „jen na pozvánku“, změněno v 01/Q5).
+- **Fáze 1** – otevřená beta (cílově 50+ domácností) s volnou registrací, bez waitlistu; strop jen jako
+  interní pojistka (01/Q5, změna 2026-11-13).
 - **Fáze 2** – předplatné, první dva měsíce zdarma.
 - **Celosvětově, zatím bez napojení na banky** (změna 2026-11-11, 01/Q6): výpisy přeposlané e-mailem nebo
   nahrané, čte je AI na serveru (03/Q1, Q2). ≈ 15 jazyků od startu, překládá AI (01/Q2). Prodej přes
