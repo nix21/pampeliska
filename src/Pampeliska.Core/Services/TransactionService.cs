@@ -227,7 +227,7 @@ public class TransactionService(AppDbContext db, BatchService batches, RuleServi
             t.AiReason, ParseAlternatives(t.AiAlternatives), rule,
             t.Events.OrderBy(e => e.At).Select(e => new TxEventDto(e.At, e.Actor, e.Text)).ToList(),
             pair, await Ref(t.RefundOfId), await Ref(t.SuspectedDuplicateOfId), cnb, t.CardHolderMemberId,
-            t.Batch is null ? null : $"{(t.Batch.Source == BatchSource.Mcp ? "MCP" : t.Batch.Source == BatchSource.Manual ? "ručně" : "banka")} · {t.Batch.CreatedAt:d. M. yyyy}",
+            t.Batch is null ? null : $"{(t.Batch.Source == BatchSource.Mcp ? "MCP" : t.Batch.Source == BatchSource.Manual ? "ručně" : t.Batch.Source == BatchSource.Email ? "e-mail" : "banka")} · {t.Batch.CreatedAt:d. M. yyyy}",
             t.Kind == TransactionKind.Correction || t.Batch?.Source == BatchSource.Manual);
     }
 

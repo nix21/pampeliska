@@ -1,6 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query'
 import clsx from 'clsx'
-import { Check, Copy, FileText, Landmark, Plug, Sparkles, Trash2, Upload, type LucideIcon } from 'lucide-react'
+import { Check, Copy, FileText, Landmark, Mail, Plug, Sparkles, Trash2, Upload, type LucideIcon } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { PageHeader } from '../components/AppShell'
@@ -24,7 +24,7 @@ const STATE_LABEL: Record<BatchState, string> = {
   Confirmed: 'Potvrzeno',
 }
 const STATE_COLOR: Record<BatchState, string> = { Uploaded: 'var(--warn)', Categorized: 'var(--ink)', Confirmed: 'var(--pos)' }
-const SRC_ICON: Record<BatchSummary['source'], LucideIcon> = { Mcp: Plug, Manual: FileText, EnableBanking: Landmark }
+const SRC_ICON: Record<BatchSummary['source'], LucideIcon> = { Mcp: Plug, Manual: FileText, EnableBanking: Landmark, Email: Mail }
 
 const ITEMS_PREVIEW = 8
 

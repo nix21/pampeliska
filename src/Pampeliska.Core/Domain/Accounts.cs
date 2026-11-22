@@ -13,6 +13,8 @@ public class Account
     public Institution? Institution { get; set; }
     public required string Name { get; set; }
     public string? Iban { get; set; }
+    /// <summary>Poslední 4 číslice karet k účtu – podle nich se přiřadí platby kartou z e-mailových notifikací.</summary>
+    public List<string> CardSuffixes { get; set; } = [];
     public string Currency { get; set; } = "CZK";
     /// <summary>Vlastník; null = společný účet (podíly v <see cref="Shares"/>).</summary>
     public int? OwnerMemberId { get; set; }

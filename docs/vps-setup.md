@@ -99,6 +99,9 @@ SMTP poslouchá v kontejneru na 2525, compose ho vystaví na portu 25 hostitele.
 4. Po nasazení: `docker compose logs app | grep -i "e-mail"` má ukázat „Příjem e-mailů běží … (STARTTLS)“.
    Adresu domácnosti ukáže aplikace v **Přijaté e-maily → Nastavení příjmu**.
 
+5. Vytahování pohybů z e-mailů (Claude Haiku): v GitHub environment **production** přidat secret `ANTHROPIC_API_KEY`
+   (klíč z console.anthropic.com). Bez něj se e-maily jen ukládají a v aplikaci je u nich upozornění.
+
 Vypnout příjem jde proměnnou `EMAIL_ENABLED=false` v `.env` (port 25 pak zůstane zavřený jen na úrovni aplikace).
 
 ## Zálohy a obnova

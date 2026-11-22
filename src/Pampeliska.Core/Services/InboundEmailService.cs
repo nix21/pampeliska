@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -6,6 +7,7 @@ using MimeKit;
 using MimeKit.Text;
 using Pampeliska.Core.Data;
 using Pampeliska.Core.Domain;
+using Pampeliska.Core.Integrations;
 
 namespace Pampeliska.Core.Services;
 
@@ -25,6 +27,9 @@ public class InboundEmailOptions
     /// <summary>Certifikát pro STARTTLS (PEM). Bez něj server přijímá jen nešifrovaně.</summary>
     public string? CertificatePath { get; set; }
     public string? CertificateKeyPath { get; set; }
+    /// <summary>Klíč Claude API pro vytažení pohybů. Bez něj e-maily zůstanou ve stavu Přijato.</summary>
+    public string? AnthropicApiKey { get; set; }
+    public string Model { get; set; } = "claude-haiku-5-5";
 }
 
 public record InboundEmailRow(int Id, DateTimeOffset ReceivedAt, InboundEmailSource Source, string? FromName, string? FromAddress, string? Subject,
@@ -33,17 +38,23 @@ public record InboundEmailRow(int Id, DateTimeOffset ReceivedAt, InboundEmailSou
 public record InboundAttachment(string Name, string ContentType, long SizeBytes);
 
 public record InboundEmailDetail(InboundEmailRow Email, string? EnvelopeFrom, string? EnvelopeTo, string? RemoteIp, DateTimeOffset? SentAt,
-    string? MessageId, string? TextBody, string? Error, bool HasRaw, DateTimeOffset? RawPurgedAt, IReadOnlyList<InboundAttachment> Attachments);
+    string? MessageId, string? TextBody, string? Error, bool HasRaw, DateTimeOffset? RawPurgedAt, IReadOnlyList<InboundAttachment> Attachments,
+    string? DkimDomain, bool SenderAllowed, string? Note, ExtractedNotification? Extracted, IReadOnlyList<InboundTx> Transactions, bool ExtractionAvailable);
 
-public record InboundAddress(string Address, bool ReceivingEnabled, DateTimeOffset? LastReceivedAt, int Last30Days, int RetentionDays);
+/// <summary>Pohyb zapsaný z e-mailu.</summary>
+public record InboundTx(int Id, DateOnly Date, string Counterparty, decimal Amount, string Currency, string Account, bool Provisional, TransactionStatus Status);
+
+public record InboundAddress(string Address, bool ReceivingEnabled, DateTimeOffset? LastReceivedAt, int Last30Days, int RetentionDays,
+    bool ExtractionAvailable);
 
 public record InboundStoreResult(int Id, bool Duplicate);
 
 /// <summary>
 /// Příjem e-mailů z bank: adresa domácnosti, uložení přijatého e-mailu (SMTP i nahraný .eml), seznam a mazání surových dat.
-/// Vytěžení pohybů přijde v další fázi (docs/email-notifikace.md).
+/// Vytažení pohybů dělá <see cref="InboundEmailProcessor"/> (docs/email-notifikace.md).
 /// </summary>
-public partial class InboundEmailService(AppDbContext db, IOptions<InboundEmailOptions> options, TimeProvider time) : IDailyCheck
+public partial class InboundEmailService(AppDbContext db, IOptions<InboundEmailOptions> options, InboundEmailQueue queue,
+    INotificationExtractor extractor, TimeProvider time) : IDailyCheck
 {
     private const string TokenChars = "abcdefghijkmnpqrstuvwxyz23456789";
     private const int TextLimit = 200_000;
@@ -61,7 +72,7 @@ public partial class InboundEmailService(AppDbContext db, IOptions<InboundEmailO
         var since = time.GetUtcNow().AddDays(-30);
         var last = await db.InboundEmails.AsNoTracking().OrderByDescending(m => m.ReceivedAt).Select(m => (DateTimeOffset?)m.ReceivedAt).FirstOrDefaultAsync();
         var recent = await db.InboundEmails.CountAsync(m => m.ReceivedAt >= since);
-        return new InboundAddress(FormatAddress(token), Opt.Enabled, last, recent, Opt.RetentionDays);
+        return new InboundAddress(FormatAddress(token), Opt.Enabled, last, recent, Opt.RetentionDays, extractor.Available);
     }
 
     /// <summary>Nová adresa – stará přestane přijímat.</summary>
@@ -141,6 +152,7 @@ public partial class InboundEmailService(AppDbContext db, IOptions<InboundEmailO
 
         db.InboundEmails.Add(email);
         await db.SaveChangesAsync(ct);
+        if (email.State == InboundEmailState.Received) queue.Enqueue(email.Id);
         return new InboundStoreResult(email.Id, false);
     }
 
@@ -153,9 +165,15 @@ public partial class InboundEmailService(AppDbContext db, IOptions<InboundEmailO
     {
         var m = await db.InboundEmails.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id) ?? throw new DomainException($"E-mail {id} neexistuje.");
         var attachments = m.RawMime is { } raw ? Attachments(raw) : [];
+        var txs = await db.Transactions.AsNoTracking().Where(t => t.InboundEmailId == id).OrderBy(t => t.Date).ThenBy(t => t.Id)
+            .Select(t => new InboundTx(t.Id, t.Date, t.Counterparty, t.Amount, t.Currency, t.Account!.Name, t.Provisional, t.Status)).ToListAsync();
+        var extracted = m.ExtractedJson is { } json ? JsonSerializer.Deserialize<ExtractedNotification>(json, ClaudeNotificationExtractor.Json) : null;
+        var allowed = m.DkimDomain is { } dom && (await db.InboundSenders.AsNoTracking().Where(s => s.Enabled).Select(s => s.Domain).ToListAsync())
+            .Concat(KnownBanks.All.Select(b => b.Domain)).Any(d => KnownBanks.DomainMatches(dom, d));
         return new InboundEmailDetail(
             new InboundEmailRow(m.Id, m.ReceivedAt, m.Source, m.FromName, m.FromAddress, m.Subject, m.State, m.SizeBytes, m.AttachmentCount, m.Preview),
-            m.EnvelopeFrom, m.EnvelopeTo, m.RemoteIp, m.SentAt, m.MessageId, m.TextBody, m.Error, m.RawMime is not null, m.RawPurgedAt, attachments);
+            m.EnvelopeFrom, m.EnvelopeTo, m.RemoteIp, m.SentAt, m.MessageId, m.TextBody, m.Error, m.RawMime is not null, m.RawPurgedAt, attachments,
+            m.DkimDomain, allowed, m.Note, extracted, txs, extractor.Available);
     }
 
     /// <summary>Surový e-mail ke stažení (.eml).</summary>

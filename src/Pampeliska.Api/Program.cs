@@ -46,6 +46,7 @@ if (config.GetValue("BackgroundJobs:Enabled", true))
 {
     builder.Services.AddHostedService<FxRateSyncService>();
     builder.Services.AddHostedService<DailyChecksService>();
+    builder.Services.AddHostedService<InboundEmailWorker>();
 }
 
 builder.AddPampeliskaAuth();

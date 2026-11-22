@@ -39,6 +39,8 @@ services:
       Email__Port: 2525
       Email__CertificatePath: /certs/cert.pem
       Email__CertificateKeyPath: /certs/key.pem
+      # Vytažení pohybů z e-mailů (Claude Haiku). Bez klíče zůstanou e-maily ve stavu Přijato.
+      Email__AnthropicApiKey: ${ANTHROPIC_API_KEY:-}
       TZ: Europe/Prague
     ports:
       # Kontejner běží jako neprivilegovaný uživatel, port 25 neotevře – SMTP poslouchá na 2525

@@ -138,6 +138,7 @@ public class ImportService(AppDbContext db, FxService fx, TransferMatcher transf
             {
                 BatchSource.Mcp => $"Importováno přes MCP{(opt.ClientName is { } cn ? $" ({cn})" : "")}",
                 BatchSource.EnableBanking => "Staženo z banky (Enable Banking)",
+                BatchSource.Email => "Z e-mailové notifikace banky",
                 _ => "Přidáno ručně",
             } });
 

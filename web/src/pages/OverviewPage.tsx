@@ -15,7 +15,7 @@ import { relative } from '../lib/format'
 import { useBatches, useOverviewStats } from '../lib/stats'
 import { useMembers, useUi } from '../state/ui'
 
-const SOURCE = { Mcp: 'MCP', Manual: 'ruční zadání', EnableBanking: 'banku' } as const
+const SOURCE = { Mcp: 'MCP', Manual: 'ruční zadání', EnableBanking: 'banku', Email: 'e-mail z banky' } as const
 
 /** Přehled (dashboard): zůstatek, jmění, KPI, kam peníze odlétají, rozpočty, hlídání účtů, poslední pohyby. */
 export default function OverviewPage() {

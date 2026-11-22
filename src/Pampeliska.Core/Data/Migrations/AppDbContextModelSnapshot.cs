@@ -36,6 +36,11 @@ namespace Pampeliska.Core.Data.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("archived");
 
+                    b.PrimitiveCollection<List<string>>("CardSuffixes")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("card_suffixes");
+
                     b.Property<bool>("CardToHolder")
                         .HasColumnType("boolean")
                         .HasColumnName("card_to_holder");
@@ -642,6 +647,14 @@ namespace Pampeliska.Core.Data.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("attachment_count");
 
+                    b.Property<int>("Attempts")
+                        .HasColumnType("integer")
+                        .HasColumnName("attempts");
+
+                    b.Property<string>("DkimDomain")
+                        .HasColumnType("text")
+                        .HasColumnName("dkim_domain");
+
                     b.Property<string>("EnvelopeFrom")
                         .HasMaxLength(320)
                         .HasColumnType("character varying(320)")
@@ -655,6 +668,10 @@ namespace Pampeliska.Core.Data.Migrations
                     b.Property<string>("Error")
                         .HasColumnType("text")
                         .HasColumnName("error");
+
+                    b.Property<string>("ExtractedJson")
+                        .HasColumnType("text")
+                        .HasColumnName("extracted_json");
 
                     b.Property<string>("FromAddress")
                         .HasMaxLength(320)
@@ -670,9 +687,17 @@ namespace Pampeliska.Core.Data.Migrations
                         .HasColumnType("character varying(998)")
                         .HasColumnName("message_id");
 
+                    b.Property<string>("Note")
+                        .HasColumnType("text")
+                        .HasColumnName("note");
+
                     b.Property<string>("Preview")
                         .HasColumnType("text")
                         .HasColumnName("preview");
+
+                    b.Property<DateTimeOffset?>("ProcessedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("processed_at");
 
                     b.Property<byte[]>("RawMime")
                         .HasColumnType("bytea")
@@ -728,6 +753,43 @@ namespace Pampeliska.Core.Data.Migrations
                         .HasDatabaseName("ix_inbound_emails_state");
 
                     b.ToTable("inbound_emails", (string)null);
+                });
+
+            modelBuilder.Entity("Pampeliska.Core.Domain.InboundSender", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Domain")
+                        .IsRequired()
+                        .HasMaxLength(253)
+                        .HasColumnType("character varying(253)")
+                        .HasColumnName("domain");
+
+                    b.Property<bool>("Enabled")
+                        .HasColumnType("boolean")
+                        .HasColumnName("enabled");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("text")
+                        .HasColumnName("name");
+
+                    b.HasKey("Id")
+                        .HasName("pk_inbound_senders");
+
+                    b.HasIndex("Domain")
+                        .IsUnique()
+                        .HasDatabaseName("ix_inbound_senders_domain");
+
+                    b.ToTable("inbound_senders", (string)null);
                 });
 
             modelBuilder.Entity("Pampeliska.Core.Domain.Institution", b =>
@@ -1746,6 +1808,10 @@ namespace Pampeliska.Core.Data.Migrations
                         .HasColumnType("numeric(18,4)")
                         .HasColumnName("fx_rate");
 
+                    b.Property<int?>("InboundEmailId")
+                        .HasColumnType("integer")
+                        .HasColumnName("inbound_email_id");
+
                     b.Property<bool>("IsRecurring")
                         .HasColumnType("boolean")
                         .HasColumnName("is_recurring");
@@ -1773,6 +1839,10 @@ namespace Pampeliska.Core.Data.Migrations
                     b.Property<int>("PaymentType")
                         .HasColumnType("integer")
                         .HasColumnName("payment_type");
+
+                    b.Property<bool>("Provisional")
+                        .HasColumnType("boolean")
+                        .HasColumnName("provisional");
 
                     b.Property<string>("RawText")
                         .HasColumnType("text")
@@ -1827,6 +1897,9 @@ namespace Pampeliska.Core.Data.Migrations
 
                     b.HasIndex("ExternalId")
                         .HasDatabaseName("ix_transactions_external_id");
+
+                    b.HasIndex("InboundEmailId")
+                        .HasDatabaseName("ix_transactions_inbound_email_id");
 
                     b.HasIndex("Status")
                         .HasDatabaseName("ix_transactions_status");

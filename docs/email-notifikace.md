@@ -39,6 +39,15 @@ soubor při změně načte znovu. Bez certifikátu by banky doručovaly nešifro
 `/api/inbound-emails` a obrazovka Přijaté e-maily (seznam, detail, stažení .eml, nahrání .eml, nastavení adresy).
 E-maily zůstávají ve stavu Přijato, vytěžení přijde ve fázi 2.
 
+**Stav fáze 2 (2026-11-22):** `InboundEmailProcessor` + `InboundEmailWorker` (fronta hned po příjmu, opakování po 10 min,
+max. 5 pokusů). Ověření DKIM (`Integrations/Dkim.cs`, MimeKit + DnsClient), povolení odesílatelé = známé banky
+(`KnownBanks`) + vlastní domény (`InboundSender`). Vytažení přes Haiku 5.5 se strukturovaným výstupem
+(`Integrations/NotificationExtractor.cs`, klíč `Email:AnthropicApiKey` ← secret `ANTHROPIC_API_KEY`). Účet podle čísla
+účtu (i maskovaného), karty (`Account.CardSuffixes`) nebo jediného běžného účtu banky odesílatele. Zápis přes
+`ImportService` (`BatchSource.Email`, dávka „Notifikace d. M.“), pohyb `Provisional` + `InboundEmailId`.
+Výpisy v příloze se zatím jen poznají (stav Není pohyb), cizí měna skončí chybou a počká na výpis.
+Chybí: značka „Předběžný“ v seznamu Pohyby a párování s výpisem (fáze 3).
+
 ## 2. Příjem (Pampeliska.Api)
 
 - `SmtpListener : BackgroundService` – knihovna **SmtpServer** (cosullivan), jen příjem, žádné předávání dál

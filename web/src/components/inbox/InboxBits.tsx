@@ -76,7 +76,7 @@ export function DupPill() {
   return <span className={s.dupPill}><Copy size={11} /> Možná duplicita</span>
 }
 
-const batchSrc = (src?: string) => (src === 'Mcp' ? 'MCP' : src === 'Manual' ? 'ruční' : src === 'EnableBanking' ? 'banka' : 'import')
+const batchSrc = (src?: string) => (src === 'Mcp' ? 'MCP' : src === 'Manual' ? 'ruční' : src === 'EnableBanking' ? 'banka' : src === 'Email' ? 'e-mail' : 'import')
 
 /** Podezřelá duplicita: obě platby vedle sebe + Zahodit / Ponechat obě. */
 export function DuplicateBlock({ item, onResolve, busy }: { item: InboxItem; onResolve: (keep: boolean) => void; busy?: boolean }) {

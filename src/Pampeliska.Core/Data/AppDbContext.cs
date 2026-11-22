@@ -37,6 +37,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<BackupRun> BackupRuns => Set<BackupRun>();
     public DbSet<InboundEmail> InboundEmails => Set<InboundEmail>();
+    public DbSet<InboundSender> InboundSenders => Set<InboundSender>();
 
     public DbSet<OAuthClient> OAuthClients => Set<OAuthClient>();
     public DbSet<OAuthAuthorizationCode> OAuthAuthorizationCodes => Set<OAuthAuthorizationCode>();
@@ -161,6 +162,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.Property(m => m.RemoteIp).HasMaxLength(64);
         });
         b.Entity<Household>().Property(h => h.InboundEmailToken).HasMaxLength(32);
+        b.Entity<InboundSender>(e =>
+        {
+            e.HasIndex(x => x.Domain).IsUnique();
+            e.Property(x => x.Domain).HasMaxLength(253);
+        });
+        b.Entity<Transaction>().HasIndex(t => t.InboundEmailId);
 
         // OAuth pro MCP – explicitní názvy tabulek (snake_case by z "OAuth" udělal "o_auth")
         b.Entity<OAuthClient>(e =>

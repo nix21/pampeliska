@@ -3,6 +3,11 @@ using Pampeliska.Core.Services;
 
 namespace Pampeliska.Api.Endpoints;
 
+public record ProcessInput(bool Force);
+public record AssignInput(int AccountId, bool RememberCard);
+public record SenderInput(string Domain, bool Enabled, string? Name);
+public record CardsInput(List<string> CardSuffixes);
+
 /// <summary>Přijaté e-maily z bank (notifikace a výpisy) a adresa, na kterou chodí.</summary>
 public static class InboundEmailEndpoints
 {
@@ -28,6 +33,31 @@ public static class InboundEmailEndpoints
             await req.Body.CopyToAsync(ms, ct);
             var r = await svc.StoreAsync(ms.ToArray(), InboundEmailSource.Upload, ct: ct);
             return Results.Ok(r);
+        });
+
+        // Zpracování (vytažení pohybů): znovu, „přesto“ od nepovoleného odesílatele, výběr účtu
+        api.MapPost("/inbound-emails/{id:int}/process", async (int id, ProcessInput? input, InboundEmailProcessor p, CancellationToken ct) =>
+            new { State = await p.ProcessAsync(id, input?.Force ?? false, ct) });
+        api.MapPost("/inbound-emails/{id:int}/assign", async (int id, AssignInput input, InboundEmailProcessor p, CancellationToken ct) =>
+            new { State = await p.AssignAccountAsync(id, input.AccountId, input.RememberCard, ct) });
+
+        api.MapGet("/inbound-emails/senders", (InboundEmailProcessor p) => p.SendersAsync());
+        api.MapPut("/inbound-emails/senders", async (SenderInput input, InboundEmailProcessor p) =>
+        {
+            await p.SetSenderAsync(input.Domain, input.Enabled, input.Name);
+            return Results.NoContent();
+        });
+        api.MapDelete("/inbound-emails/senders/{domain}", async (string domain, InboundEmailProcessor p) =>
+        {
+            await p.RemoveSenderAsync(domain);
+            return Results.NoContent();
+        });
+
+        api.MapGet("/inbound-emails/accounts", (InboundEmailProcessor p) => p.AccountsAsync());
+        api.MapPut("/inbound-emails/accounts/{id:int}/cards", async (int id, CardsInput input, InboundEmailProcessor p) =>
+        {
+            await p.SetCardsAsync(id, input.CardSuffixes);
+            return Results.NoContent();
         });
 
         api.MapGet("/inbound-emails/address", (InboundEmailService svc) => svc.AddressAsync());

@@ -1,6 +1,6 @@
 namespace Pampeliska.Core.Domain;
 
-public enum BatchSource { Mcp, Manual, EnableBanking }
+public enum BatchSource { Mcp, Manual, EnableBanking, Email }
 public enum BatchState { Uploaded, Categorized, Confirmed }
 
 /// <summary>Dávka importu: nahráno → kategorizováno → potvrzeno.</summary>
@@ -92,6 +92,10 @@ public class Transaction
     public int? RecurringPaymentId { get; set; }
     public int? SuspectedDuplicateOfId { get; set; }
     public string? ExternalId { get; set; }
+    /// <summary>Pohyb z e-mailové notifikace, který ještě nepotvrdil výpis (docs/email-notifikace.md kap. 4).</summary>
+    public bool Provisional { get; set; }
+    /// <summary>E-mail, ze kterého pohyb vznikl.</summary>
+    public int? InboundEmailId { get; set; }
     public string DedupKey { get; set; } = "";
     public string? Note { get; set; }
     public DateTimeOffset CreatedAt { get; set; }

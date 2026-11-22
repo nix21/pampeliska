@@ -36,6 +36,13 @@ export interface InboundEmailDetail {
   hasRaw: boolean
   rawPurgedAt?: string
   attachments: InboundAttachment[]
+  /** Doména z platného podpisu DKIM. */
+  dkimDomain?: string
+  senderAllowed: boolean
+  note?: string
+  extracted?: ExtractedNotification
+  transactions: InboundTx[]
+  extractionAvailable: boolean
 }
 
 export interface InboundAddress {
@@ -44,6 +51,7 @@ export interface InboundAddress {
   lastReceivedAt?: string
   last30Days: number
   retentionDays: number
+  extractionAvailable: boolean
 }
 
 export type EmailFilter = 'all' | 'todo' | 'done' | 'not'
@@ -83,9 +91,71 @@ export function useInboundAddress() {
 }
 
 export function invalidateInboundEmails(qc: QueryClient) {
-  return Promise.all(['inbound-emails', 'inbound-email', 'inbound-address', 'badges'].map((k) => qc.invalidateQueries({ queryKey: [k] })))
+  return Promise.all(['inbound-emails', 'inbound-email', 'inbound-address', 'inbound-senders', 'inbound-accounts', 'badges', 'transactions', 'inbox', 'batches'].map((k) => qc.invalidateQueries({ queryKey: [k] })))
 }
 
 export function senderLabel(e: Pick<InboundEmailRow, 'fromName' | 'fromAddress'>) {
   return e.fromName || e.fromAddress || 'Neznámý odesílatel'
+}
+
+// ---------- Zpracování (fáze 2) ----------
+
+export interface ExtractedMovement {
+  date: string
+  time?: string
+  amount: number
+  currency: string
+  accountNumber?: string
+  cardSuffix?: string
+  counterparty?: string
+  counterpartyAccount?: string
+  message?: string
+  variableSymbol?: string
+  paymentType: string
+  authorization: boolean
+  balanceAfter?: number
+}
+
+export interface ExtractedNotification {
+  kind: 'movements' | 'statement' | 'other'
+  movements: ExtractedMovement[]
+  reason?: string
+}
+
+/** Pohyb zapsaný z e-mailu. */
+export interface InboundTx {
+  id: number
+  date: string
+  counterparty: string
+  amount: number
+  currency: string
+  account: string
+  provisional: boolean
+  status: 'Suggested' | 'Confirmed'
+}
+
+export interface InboundSender {
+  domain: string
+  name: string
+  enabled: boolean
+  /** Známá banka – povolená bez ručního přidání. */
+  known: boolean
+}
+
+export interface InboundAccount {
+  id: number
+  name: string
+  institution: string
+  iban?: string
+  currency: string
+  cardSuffixes: string[]
+  lastNotificationAt?: string
+}
+
+export function useInboundSenders() {
+  return useQuery({ queryKey: ['inbound-senders'], queryFn: () => api.get<InboundSender[]>('/api/inbound-emails/senders') })
+}
+
+export function useInboundAccounts() {
+  return useQuery({ queryKey: ['inbound-accounts'], queryFn: () => api.get<InboundAccount[]>('/api/inbound-emails/accounts') })
 }

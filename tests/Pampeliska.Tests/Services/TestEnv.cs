@@ -28,7 +28,8 @@ public sealed class TestEnv : IDisposable
     public Account Sporici { get; private set; } = null!;
     public Account Eurovy { get; private set; } = null!;
 
-    public TestEnv()
+    /// <param name="configure">Úprava služeb po registraci jádra (např. náhrada AI nebo DNS za testovací).</param>
+    public TestEnv(Action<IServiceCollection>? configure = null)
     {
         var name = Guid.NewGuid().ToString();
         var services = new ServiceCollection();
@@ -36,6 +37,7 @@ public sealed class TestEnv : IDisposable
         services.AddDbContext<AppDbContext>(o => o.UseInMemoryDatabase(name));
         services.AddSingleton<TimeProvider>(Clock);
         services.AddPampeliskaCore();
+        configure?.Invoke(services);
         _root = services.BuildServiceProvider();
         _scope = _root.CreateScope();
         SeedAsync().GetAwaiter().GetResult();

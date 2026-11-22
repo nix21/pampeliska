@@ -1,7 +1,9 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Pampeliska.Core.Data;
+using Pampeliska.Core.Domain;
 using Pampeliska.Core.Integrations;
 using Pampeliska.Core.Services;
 
@@ -38,6 +40,11 @@ public static class CoreServices
         services.AddScoped<IDailyCheck>(sp => sp.GetRequiredService<NotificationService>());
         services.AddScoped<ExportService>();
         services.AddOptions<InboundEmailOptions>();
+        services.AddSingleton<InboundEmailQueue>();
+        services.AddSingleton<MimeKit.Cryptography.IDnsResolver, DnsClientResolver>();
+        services.AddSingleton<INotificationExtractor, ClaudeNotificationExtractor>();
+        services.AddScoped<DkimChecker>();
+        services.AddScoped<InboundEmailProcessor>();
         services.AddScoped<InboundEmailService>();
         services.AddScoped<IDailyCheck>(sp => sp.GetRequiredService<InboundEmailService>());
         return services;
@@ -94,6 +101,57 @@ public class DailyChecksService(IServiceScopeFactory scopes, ILogger<DailyChecks
                 log.LogError(e, "Denní kontroly selhaly");
             }
         } while (await timer.WaitForNextTickAsync(stoppingToken));
+    }
+}
+
+/// <summary>
+/// Zpracovává přijaté e-maily z fronty (hned po příjmu) a jednou za 10 minut zkusí znovu ty, které zůstaly ve stavu Přijato
+/// (dočasná chyba modelu, výpadek aplikace během zpracování).
+/// </summary>
+public class InboundEmailWorker(IServiceScopeFactory scopes, InboundEmailQueue queue, ILogger<InboundEmailWorker> log) : BackgroundService
+{
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        _ = SweepAsync(stoppingToken);
+        await foreach (var id in queue.ReadAllAsync(stoppingToken))
+        {
+            try
+            {
+                using var scope = scopes.CreateScope();
+                await scope.ServiceProvider.GetRequiredService<InboundEmailProcessor>().ProcessAsync(id, ct: stoppingToken);
+            }
+            catch (DomainException) { /* mezitím smazaný nebo už zpracovaný e-mail */ }
+            catch (Exception e) when (e is not OperationCanceledException)
+            {
+                log.LogError(e, "Zpracování e-mailu {Id} selhalo", id);
+            }
+        }
+    }
+
+    private async Task SweepAsync(CancellationToken ct)
+    {
+        try
+        {
+            await Task.Delay(TimeSpan.FromSeconds(15), ct);
+            using var timer = new PeriodicTimer(TimeSpan.FromMinutes(10));
+            do
+            {
+                try
+                {
+                    using var scope = scopes.CreateScope();
+                    if (!scope.ServiceProvider.GetRequiredService<InboundEmailProcessor>().ExtractionAvailable) continue;
+                    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                    var ids = await db.InboundEmails.Where(m => m.State == InboundEmailState.Received && m.Attempts < InboundEmailProcessor.MaxAttempts)
+                        .OrderBy(m => m.Id).Select(m => m.Id).ToListAsync(ct);
+                    ids.ForEach(queue.Enqueue);
+                }
+                catch (Exception e) when (e is not OperationCanceledException)
+                {
+                    log.LogWarning("Kontrola nezpracovaných e-mailů selhala: {Error}", e.Message);
+                }
+            } while (await timer.WaitForNextTickAsync(ct));
+        }
+        catch (OperationCanceledException) { }
     }
 }
 

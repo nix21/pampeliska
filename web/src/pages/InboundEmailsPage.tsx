@@ -4,6 +4,8 @@ import { Check, Copy, Download, FileText, Mail, RefreshCw, ShieldCheck, Trash2, 
 import { useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { PageHeader } from '../components/AppShell'
+import { EmailProcessing, SenderAuth } from '../components/inboundEmails/EmailProcessing'
+import { AccountsCard, SendersCard } from '../components/inboundEmails/SenderSettings'
 import { Button, Callout, Card, Dialog, Empty, Segmented, Spinner } from '../components/ui'
 import { api, notifyError, notifyOk } from '../lib/api'
 import { count, num } from '../lib/format'
@@ -129,15 +131,11 @@ function Detail({ row, detail, loading, onDeleted, onBack }: {
         <StatePill e={row} />
       </div>
 
-      {row.state === 'Received' && (
-        <Callout tone="neutral" icon={<ShieldCheck size={16} />}>
-          E-mail je uložený. Vytahování pohybů z e-mailů připravujeme, zatím tu najdete text a přílohy.
-        </Callout>
-      )}
-      {d?.error && <Callout tone="danger">{d.error}</Callout>}
-
       {loading && !d ? <Spinner center /> : d && (
         <>
+          <SenderAuth d={d} />
+          <EmailProcessing d={d} />
+          {d.error && d.error !== d.note && <Callout tone="danger">{d.error}</Callout>}
           {d.attachments.length > 0 && (
             <div className={s.attachments}>
               {d.attachments.map((a, i) => (
@@ -305,11 +303,16 @@ function SettingsTab() {
         <Card>
           <div className={s.cardHead}><ShieldCheck size={18} /><h2>Co se s e-mailem stane</h2></div>
           <p className={s.note}>
-            Pampeliška přijímá jen poštu na tuto adresu, nic dál nepřeposílá. E-mail se uloží a uvidíte ho v Přijatých e-mailech.
-            Původní e-mail se po {a.retentionDays} dnech smaže, zůstane jen jeho text. Vytahování pohybů z e-mailů připravujeme.
+            Pampeliška přijímá jen poštu na tuto adresu, nic dál nepřeposílá. Text e-mailu od povoleného odesílatele přečte AI a vytáhne
+            z něj pohyb. Ten se zapíše jako <b>předběžný</b> a nepotvrzený – zařadíte ho jako ostatní v Ke kategorizaci a potvrdí ho až výpis.
+            Původní e-mail se po {a.retentionDays} dnech smaže, zůstane jen jeho text.
           </p>
+          {!a.extractionAvailable && <Callout tone="warn">Vytahování pohybů není na serveru zapnuté (chybí klíč Claude API). E-maily se zatím jen ukládají.</Callout>}
         </Card>
+        <SendersCard />
       </div>
+      <div className="col" style={{ gap: 'var(--gap)', minWidth: 0 }}>
+      <AccountsCard />
       <Card>
         <div className={s.cardHead}><Check size={18} /><h2>Jak to zapnout</h2></div>
         <ol className={s.steps}>
@@ -324,6 +327,7 @@ function SettingsTab() {
           Gmail → Nastavení → Filtry<br />Od: @fio.cz OR @csas.cz OR @rb.cz<br />Přeposlat na: {a.address}
         </div>
       </Card>
+      </div>
     </div>
   )
 }

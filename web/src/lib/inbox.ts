@@ -271,7 +271,7 @@ export function whenLabel(ts?: string | null) {
 }
 
 export const batchSourceLabel = (b: Pick<BatchSummary, 'source' | 'clientName'>) =>
-  b.source === 'Mcp' ? `MCP${b.clientName ? ` · ${b.clientName}` : ''}` : b.source === 'Manual' ? 'Ručně' : 'Banka · Enable Banking'
+  b.source === 'Mcp' ? `MCP${b.clientName ? ` · ${b.clientName}` : ''}` : b.source === 'Manual' ? 'Ručně' : b.source === 'Email' ? 'E-mail z banky' : 'Banka · Enable Banking'
 
 // ---------- Mobil ----------
 
