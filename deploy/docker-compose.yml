@@ -33,12 +33,47 @@ services:
       Auth__Google__ClientId: ${GOOGLE_CLIENT_ID:?chybí GOOGLE_CLIENT_ID}
       Auth__Google__ClientSecret: ${GOOGLE_CLIENT_SECRET:?chybí GOOGLE_CLIENT_SECRET}
       Backup__Token: ${BACKUP_TOKEN:?chybí BACKUP_TOKEN}
+      # Příjem e-mailů z bank (MX záznam domény míří na VPS) – viz docs/email-notifikace.md
+      Email__Enabled: ${EMAIL_ENABLED:-true}
+      Email__Domain: ${DOMAIN:-pampeliska.nadrasky.cz}
+      Email__Port: 2525
+      Email__CertificatePath: /certs/cert.pem
+      Email__CertificateKeyPath: /certs/key.pem
       TZ: Europe/Prague
+    ports:
+      # Kontejner běží jako neprivilegovaný uživatel, port 25 neotevře – SMTP poslouchá na 2525
+      - "25:2525"
     volumes:
       - appdata:/data
+      - mailcerts:/certs:ro
     networks:
       - default
       - edge
+
+  # Kopíruje certifikát, který pro doménu spravuje sdílený Caddy, pro STARTTLS příjmu e-mailů.
+  # Caddy klíče ukládá jen pro roota, aplikace běží jako "app" – proto kopie s právem čtení do svazku mailcerts.
+  certsync:
+    image: alpine:3.20
+    restart: unless-stopped
+    environment:
+      DOMAIN: ${DOMAIN:-pampeliska.nadrasky.cz}
+    volumes:
+      - caddy_data:/caddy:ro
+      - mailcerts:/certs
+    command:
+      - sh
+      - -c
+      - |
+        while true; do
+          src=$$(ls -d /caddy/caddy/certificates/*/"$$DOMAIN" 2>/dev/null | head -1)
+          if [ -n "$$src" ]; then
+            cmp -s "$$src/$$DOMAIN.crt" /certs/cert.pem || { cp "$$src/$$DOMAIN.key" /certs/key.pem; cp "$$src/$$DOMAIN.crt" /certs/cert.pem; echo "certifikát zkopírován"; }
+            chmod 644 /certs/cert.pem /certs/key.pem
+          else
+            echo "certifikát pro $$DOMAIN v datech Caddy zatím není"
+          fi
+          sleep 21600
+        done
 
   backup:
     build: ./backup
@@ -64,6 +99,11 @@ services:
 volumes:
   pgdata:
   appdata:
+  mailcerts:
+  # Data sdíleného Caddy z compose Invoiceru (certifikáty) – jen pro čtení v certsync
+  caddy_data:
+    external: true
+    name: ${CADDY_DATA_VOLUME:-invoicer_caddy_data}
 
 networks:
   edge:

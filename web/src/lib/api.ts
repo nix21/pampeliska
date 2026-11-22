@@ -10,7 +10,10 @@ export class ApiError extends Error {
 
 async function request<T>(method: string, url: string, body?: unknown): Promise<T> {
   const init: RequestInit = { method, credentials: 'include', headers: {} }
-  if (body !== undefined) {
+  if (body instanceof Blob) {
+    init.body = body
+    ;(init.headers as Record<string, string>)['Content-Type'] = body.type || 'application/octet-stream'
+  } else if (body !== undefined) {
     init.body = JSON.stringify(body)
     ;(init.headers as Record<string, string>)['Content-Type'] = 'application/json'
   }

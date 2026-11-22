@@ -16,6 +16,7 @@ const SettingsPage = lazy(() => import('./pages/SettingsPage'))
 const TransactionsPage = lazy(() => import('./pages/TransactionsPage'))
 const InboxPage = lazy(() => import('./pages/InboxPage'))
 const BatchesPage = lazy(() => import('./pages/BatchesPage'))
+const InboundEmailsPage = lazy(() => import('./pages/InboundEmailsPage'))
 const CategoriesPage = lazy(() => import('./pages/CategoriesPage'))
 const RulesPage = lazy(() => import('./pages/RulesPage'))
 const RecurringPage = lazy(() => import('./pages/RecurringPage'))
@@ -72,6 +73,8 @@ function MainRoutes() {
           <Route path="/trideni" element={<InboxPage />} />
           <Route path="/davky" element={<BatchesPage />} />
           <Route path="/davky/:id" element={<BatchesPage />} />
+          <Route path="/emaily" element={<InboundEmailsPage />} />
+          <Route path="/emaily/:id" element={<InboundEmailsPage />} />
           <Route path="/kategorie" element={<CategoriesPage />} />
           <Route path="/pravidla" element={<RulesPage />} />
           <Route path="/pravidelne" element={<RecurringPage />} />

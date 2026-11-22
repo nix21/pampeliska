@@ -40,6 +40,8 @@ jobs:
           BACKUP_TOKEN=${{ secrets.BACKUP_TOKEN }}
           RCLONE_CONFIG_DIR=${{ vars.RCLONE_CONFIG_DIR || '/opt/invoicer/rclone' }}
           RCLONE_REMOTE=${{ vars.RCLONE_REMOTE || 'onedrive-crypt:pampeliska/' }}
+          EMAIL_ENABLED=${{ vars.EMAIL_ENABLED || 'true' }}
+          CADDY_DATA_VOLUME=${{ vars.CADDY_DATA_VOLUME || 'invoicer_caddy_data' }}
           ENV
       - name: Build a nasazení
         working-directory: deploy

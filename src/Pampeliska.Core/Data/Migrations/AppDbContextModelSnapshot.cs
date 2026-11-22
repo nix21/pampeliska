@@ -547,6 +547,11 @@ namespace Pampeliska.Core.Data.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
+                    b.Property<string>("InboundEmailToken")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("inbound_email_token");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text")
@@ -622,6 +627,107 @@ namespace Pampeliska.Core.Data.Migrations
                         .HasDatabaseName("ix_import_batches_created_at");
 
                     b.ToTable("import_batches", (string)null);
+                });
+
+            modelBuilder.Entity("Pampeliska.Core.Domain.InboundEmail", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AttachmentCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("attachment_count");
+
+                    b.Property<string>("EnvelopeFrom")
+                        .HasMaxLength(320)
+                        .HasColumnType("character varying(320)")
+                        .HasColumnName("envelope_from");
+
+                    b.Property<string>("EnvelopeTo")
+                        .HasMaxLength(320)
+                        .HasColumnType("character varying(320)")
+                        .HasColumnName("envelope_to");
+
+                    b.Property<string>("Error")
+                        .HasColumnType("text")
+                        .HasColumnName("error");
+
+                    b.Property<string>("FromAddress")
+                        .HasMaxLength(320)
+                        .HasColumnType("character varying(320)")
+                        .HasColumnName("from_address");
+
+                    b.Property<string>("FromName")
+                        .HasColumnType("text")
+                        .HasColumnName("from_name");
+
+                    b.Property<string>("MessageId")
+                        .HasMaxLength(998)
+                        .HasColumnType("character varying(998)")
+                        .HasColumnName("message_id");
+
+                    b.Property<string>("Preview")
+                        .HasColumnType("text")
+                        .HasColumnName("preview");
+
+                    b.Property<byte[]>("RawMime")
+                        .HasColumnType("bytea")
+                        .HasColumnName("raw_mime");
+
+                    b.Property<DateTimeOffset?>("RawPurgedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("raw_purged_at");
+
+                    b.Property<DateTimeOffset>("ReceivedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("received_at");
+
+                    b.Property<string>("RemoteIp")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("remote_ip");
+
+                    b.Property<DateTimeOffset?>("SentAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("sent_at");
+
+                    b.Property<int>("SizeBytes")
+                        .HasColumnType("integer")
+                        .HasColumnName("size_bytes");
+
+                    b.Property<int>("Source")
+                        .HasColumnType("integer")
+                        .HasColumnName("source");
+
+                    b.Property<int>("State")
+                        .HasColumnType("integer")
+                        .HasColumnName("state");
+
+                    b.Property<string>("Subject")
+                        .HasColumnType("text")
+                        .HasColumnName("subject");
+
+                    b.Property<string>("TextBody")
+                        .HasColumnType("text")
+                        .HasColumnName("text_body");
+
+                    b.HasKey("Id")
+                        .HasName("pk_inbound_emails");
+
+                    b.HasIndex("MessageId")
+                        .HasDatabaseName("ix_inbound_emails_message_id");
+
+                    b.HasIndex("ReceivedAt")
+                        .HasDatabaseName("ix_inbound_emails_received_at");
+
+                    b.HasIndex("State")
+                        .HasDatabaseName("ix_inbound_emails_state");
+
+                    b.ToTable("inbound_emails", (string)null);
                 });
 
             modelBuilder.Entity("Pampeliska.Core.Domain.Institution", b =>

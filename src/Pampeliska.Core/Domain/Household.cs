@@ -11,6 +11,8 @@ public class Household
     public string BaseCurrency { get; set; } = "CZK";
     public DateTimeOffset CreatedAt { get; set; }
     public HouseholdSettings Settings { get; set; } = new();
+    /// <summary>Náhodná část adresy pro e-maily z bank (banky-&lt;token&gt;@doména). Vzniká při prvním zobrazení adresy.</summary>
+    public string? InboundEmailToken { get; set; }
 }
 
 public enum ThemeMode { Light, Dark, System }

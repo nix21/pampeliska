@@ -36,6 +36,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<ExchangeRate> ExchangeRates => Set<ExchangeRate>();
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<BackupRun> BackupRuns => Set<BackupRun>();
+    public DbSet<InboundEmail> InboundEmails => Set<InboundEmail>();
 
     public DbSet<OAuthClient> OAuthClients => Set<OAuthClient>();
     public DbSet<OAuthAuthorizationCode> OAuthAuthorizationCodes => Set<OAuthAuthorizationCode>();
@@ -148,6 +149,18 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         b.Entity<InvestmentTrade>().HasIndex(v => new { v.AccountId, v.Date });
         b.Entity<ExchangeRate>().HasIndex(r => new { r.Date, r.Currency }).IsUnique();
         b.Entity<Notification>().HasIndex(n => n.Key);
+        b.Entity<InboundEmail>(e =>
+        {
+            e.HasIndex(m => m.ReceivedAt);
+            e.HasIndex(m => m.MessageId);
+            e.HasIndex(m => m.State);
+            e.Property(m => m.MessageId).HasMaxLength(998);
+            e.Property(m => m.FromAddress).HasMaxLength(320);
+            e.Property(m => m.EnvelopeFrom).HasMaxLength(320);
+            e.Property(m => m.EnvelopeTo).HasMaxLength(320);
+            e.Property(m => m.RemoteIp).HasMaxLength(64);
+        });
+        b.Entity<Household>().Property(h => h.InboundEmailToken).HasMaxLength(32);
 
         // OAuth pro MCP – explicitní názvy tabulek (snake_case by z "OAuth" udělal "o_auth")
         b.Entity<OAuthClient>(e =>

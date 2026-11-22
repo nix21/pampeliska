@@ -15,6 +15,7 @@ public static class Endpoints
         api.MapTransactionEndpoints();
         api.MapCategoryEndpoints();
         api.MapPlanningEndpoints();
+        api.MapInboundEmailEndpoints();
     }
 
     /// <summary>Zálohovací kontejner hlásí výsledek (chráněno sdíleným tokenem Backup:Token).</summary>

@@ -9,11 +9,11 @@ namespace Pampeliska.Core.Services;
 public record NotificationDto(int Id, NotificationType Type, NotificationSeverity Severity, string Title, string Text, int? AccountId, int? RecurringPaymentId,
     DateTimeOffset CreatedAt);
 
-public record Badges(int Inbox, int Batches, int RecurringAlerts, int Notifications);
+public record Badges(int Inbox, int Batches, int RecurringAlerts, int Notifications, int InboundEmails);
 
 /// <summary>Upozornění v aplikaci (nízký zůstatek, nesplněné podmínky, chybějící platby) – plní je denní kontrola.</summary>
 public class NotificationService(AppDbContext db, RecurringService recurring, ForecastService forecast, ConditionService conditions,
-    InboxService inbox, TimeProvider time) : IDailyCheck
+    InboxService inbox, InboundEmailService emails, TimeProvider time) : IDailyCheck
 {
     public async Task RunAsync(CancellationToken ct)
     {
@@ -81,7 +81,8 @@ public class NotificationService(AppDbContext db, RecurringService recurring, Fo
         await inbox.CountAsync(),
         await db.ImportBatches.CountAsync(b => b.State != BatchState.Confirmed),
         (await recurring.AlertsAsync()).Count(a => a.Kind == "missing") + await db.RecurringPayments.CountAsync(r => r.Status == RecurringStatus.Suggested),
-        await db.Notifications.CountAsync(n => n.DismissedAt == null));
+        await db.Notifications.CountAsync(n => n.DismissedAt == null),
+        await emails.NeedsAttentionCountAsync());
 }
 
 /// <summary>Export pohybů do CSV (středník, UTF-8 s BOM – otevře se rovnou v Excelu).</summary>

@@ -168,6 +168,7 @@ public partial class HouseholdService(AppDbContext db, AccountService accounts, 
         db.InvestmentTrades.RemoveRange(db.InvestmentTrades);
         db.InvestmentValues.RemoveRange(db.InvestmentValues);
         db.Notifications.RemoveRange(db.Notifications);
+        db.InboundEmails.RemoveRange(db.InboundEmails);
         db.MemberPreferences.RemoveRange(db.MemberPreferences);
         await db.SaveChangesAsync();
         db.AccountConditions.RemoveRange(db.AccountConditions);

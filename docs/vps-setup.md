@@ -35,6 +35,8 @@ Po nasazení Invoiceru s touto změnou Caddy načítá site bloky z `/opt/caddy/
 |---|---|---|
 | A | `pampeliska` | IP adresa VPS |
 | AAAA | `pampeliska` | IPv6 VPS (jen pokud funguje) |
+| MX | `pampeliska` | `pampeliska.nadrasky.cz.`, priorita 10 – příjem e-mailů z bank (kap. 7) |
+| TXT | `pampeliska` | `v=spf1 -all` – z této subdomény se nic neodesílá |
 
 ## 3. Google OAuth klient
 
@@ -78,6 +80,26 @@ sudo ./svc.sh install deploy && sudo ./svc.sh start
 
 GitHub → Actions → **Deploy** → *Run workflow* (větev `main`). Po doběhnutí otevřete `https://pampeliska.nadrasky.cz`,
 přihlaste se Googlem (e-mail z `OWNER_EMAILS`) a projděte průvodce prvním spuštěním.
+
+## 7. Příjem e-mailů z bank
+
+Aplikace sama přijímá poštu na adresu `banky-<token>@pampeliska.nadrasky.cz` (návrh: `docs/email-notifikace.md`).
+SMTP poslouchá v kontejneru na 2525, compose ho vystaví na portu 25 hostitele. Nic dál nepřeposílá, cizí adresáty odmítne.
+
+1. DNS: záznamy MX a TXT z kap. 2.
+2. Port 25 na hostiteli musí být volný a otevřený:
+   ```bash
+   sudo ss -ltnp | grep ':25 '     # nic nesmí poslouchat (případně vypnout postfix: sudo systemctl disable --now postfix)
+   sudo ufw allow 25/tcp
+   ```
+   Některé hostingy blokují i příchozí port 25 – ověřit z jiného stroje: `nc -vz pampeliska.nadrasky.cz 25` (po nasazení).
+3. STARTTLS: služba `certsync` kopíruje certifikát, který pro doménu už spravuje Caddy, ze svazku Invoiceru.
+   Ověřit název svazku (`docker volume ls | grep caddy_data`); když není `invoicer_caddy_data`, nastavit proměnnou
+   variable `CADDY_DATA_VOLUME` v GitHub environment **production** (deploy workflow ji zapíše do `.env`).
+4. Po nasazení: `docker compose logs app | grep -i "e-mail"` má ukázat „Příjem e-mailů běží … (STARTTLS)“.
+   Adresu domácnosti ukáže aplikace v **Přijaté e-maily → Nastavení příjmu**.
+
+Vypnout příjem jde proměnnou `EMAIL_ENABLED=false` v `.env` (port 25 pak zůstane zavřený jen na úrovni aplikace).
 
 ## Zálohy a obnova
 

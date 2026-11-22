@@ -4,12 +4,14 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Pampeliska.Api;
+using Pampeliska.Api.Email;
 using Pampeliska.Api.Endpoints;
 using Pampeliska.Api.Mcp;
 using Pampeliska.Api.OAuth;
 using Pampeliska.Core;
 using Pampeliska.Core.Data;
 using Pampeliska.Core.Integrations;
+using Pampeliska.Core.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 var config = builder.Configuration;
@@ -37,6 +39,9 @@ builder.Services.AddScoped<DemoSeeder>();
 builder.Services.AddPampeliskaCore();
 builder.Services.AddHttpClient<CnbRates>(c => { c.BaseAddress = new Uri(CnbRates.BaseUrl); c.Timeout = TimeSpan.FromSeconds(15); });
 builder.Services.AddMemoryCache();
+builder.Services.Configure<InboundEmailOptions>(config.GetSection("Email"));
+if (config.GetValue<bool>("Email:Enabled"))
+    builder.Services.AddHostedService<SmtpListener>();
 if (config.GetValue("BackgroundJobs:Enabled", true))
 {
     builder.Services.AddHostedService<FxRateSyncService>();

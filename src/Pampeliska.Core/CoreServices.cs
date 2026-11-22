@@ -37,6 +37,9 @@ public static class CoreServices
         services.AddScoped<NotificationService>();
         services.AddScoped<IDailyCheck>(sp => sp.GetRequiredService<NotificationService>());
         services.AddScoped<ExportService>();
+        services.AddOptions<InboundEmailOptions>();
+        services.AddScoped<InboundEmailService>();
+        services.AddScoped<IDailyCheck>(sp => sp.GetRequiredService<InboundEmailService>());
         return services;
     }
 }

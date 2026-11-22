@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import clsx from 'clsx'
 import {
-  ArrowDownToLine, ChartLine, ChevronLeft, Eye, EyeOff, Inbox, Layers, LayoutGrid, List, Menu, Moon, PieChart, Plus, Repeat, Scissors, SlidersHorizontal,
+  ArrowDownToLine, ChartLine, ChevronLeft, Eye, EyeOff, Inbox, Layers, LayoutGrid, List, Mail, Menu, Moon, PieChart, Plus, Repeat, Scissors, SlidersHorizontal,
   Sun, Target, TrendingUp, Users, Wallet, Wand2, Workflow, type LucideIcon,
 } from 'lucide-react'
 import type { ReactNode } from 'react'
@@ -17,6 +17,7 @@ export interface Badges {
   inbox: number
   batches: number
   recurringAlerts: number
+  inboundEmails: number
 }
 
 interface NavDef {
@@ -37,6 +38,7 @@ export const NAV: NavDef[] = [
   { to: '/prijmy', label: 'Příjmy', icon: ArrowDownToLine },
   { to: '/trideni', label: 'Ke kategorizaci', icon: Inbox, group: 'Třídění', badge: 'inbox' },
   { to: '/davky', label: 'Dávky', icon: Layers, badge: 'batches' },
+  { to: '/emaily', label: 'Přijaté e-maily', icon: Mail, badge: 'inboundEmails' },
   { to: '/kategorie', label: 'Kategorie', icon: Workflow },
   { to: '/pravidla', label: 'Pravidla', icon: Wand2 },
   { to: '/pravidelne', label: 'Pravidelné platby', icon: Repeat, group: 'Plánování', badge: 'recurringAlerts', danger: true },
@@ -49,7 +51,7 @@ export const NAV: NavDef[] = [
 ]
 
 /** Hotové obrazovky (přibývají s milníky). */
-export const ENABLED = new Set<string>(['/', '/vydaje', '/prijmy', '/ucty', '/pohyby', '/trideni', '/davky', '/kategorie', '/pravidla', '/pravidelne', '/predikce', '/rozpocty', '/usetrit', '/investice', '/clenove', '/nastaveni'])
+export const ENABLED = new Set<string>(['/', '/vydaje', '/prijmy', '/ucty', '/pohyby', '/trideni', '/davky', '/emaily', '/kategorie', '/pravidla', '/pravidelne', '/predikce', '/rozpocty', '/usetrit', '/investice', '/clenove', '/nastaveni'])
 
 export const navItems = () => NAV.filter((n) => ENABLED.has(n.to))
 
