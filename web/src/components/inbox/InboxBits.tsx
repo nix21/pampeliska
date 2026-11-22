@@ -1,5 +1,5 @@
 import clsx from 'clsx'
-import { Check, Copy, HelpCircle, Sparkles, Wand2, Zap } from 'lucide-react'
+import { Check, Copy, FileX, HelpCircle, Sparkles, Wand2, Zap } from 'lucide-react'
 import { useAccounts } from '../../lib/accounts'
 import { useCategories } from '../../lib/categories'
 import { dateShort } from '../../lib/format'
@@ -74,6 +74,27 @@ export function SuggestionCell({ item, eff, compact }: { item: InboxItem; eff: E
 
 export function DupPill() {
   return <span className={s.dupPill}><Copy size={11} /> Možná duplicita</span>
+}
+
+export function NotInStatementPill() {
+  return <span className={s.dupPill}><FileX size={11} /> Není ve výpisu</span>
+}
+
+/** Předběžný pohyb z e-mailové notifikace, který výpis za své období neobsahuje. */
+export function NotInStatementBlock({ item, onResolve, busy }: { item: InboxItem; onResolve: (keep: boolean) => void; busy?: boolean }) {
+  return (
+    <div className={s.dup}>
+      <span className={s.dupTitle}><FileX size={13} /> Není ve výpisu</span>
+      <span style={{ fontSize: 13, lineHeight: 1.45 }}>
+        Platbu oznámila banka e-mailem ({dateShort(item.tx.date)}), ale výpis za toto období ji neobsahuje. Nejspíš jde o zrušenou blokaci
+        nebo vrácenou platbu.
+      </span>
+      <div className="row wrap">
+        <Button variant="dark" size="sm" disabled={busy} onClick={() => onResolve(false)}>Smazat pohyb</Button>
+        <Button size="sm" disabled={busy} onClick={() => onResolve(true)}>Je skutečný, ponechat</Button>
+      </div>
+    </div>
+  )
 }
 
 const batchSrc = (src?: string) => (src === 'Mcp' ? 'MCP' : src === 'Manual' ? 'ruční' : src === 'EnableBanking' ? 'banka' : src === 'Email' ? 'e-mail' : 'import')

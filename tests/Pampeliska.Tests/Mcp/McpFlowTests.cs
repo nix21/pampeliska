@@ -34,6 +34,7 @@ public class PampeliskaFactory : WebApplicationFactory<Program>
         builder.UseSetting("Storage:Root", _storage);
         builder.UseSetting("Auth:OwnerEmails", "test@example.com");
         builder.UseSetting("BackgroundJobs:Enabled", "false");
+        builder.UseSetting("Email:Enabled", "false"); // SMTP zapíná jen SmtpFactory na volném portu
         builder.UseSetting("Auth:DevBypass", "true");
         builder.ConfigureTestServices(services =>
         {

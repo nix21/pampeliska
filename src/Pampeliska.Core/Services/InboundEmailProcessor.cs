@@ -258,7 +258,7 @@ public partial class InboundEmailProcessor(AppDbContext db, ImportService import
         var batchId = await db.ImportBatches.Where(b => b.Source == BatchSource.Email && b.State == BatchState.Uploaded && b.Note == batchNote)
             .OrderByDescending(b => b.Id).Select(b => (int?)b.Id).FirstOrDefaultAsync(ct);
         var created = new List<int>();
-        var skipped = 0;
+        int skipped = 0, suspected = 0;
         try
         {
             foreach (var g in items.GroupBy(x => x.AccountId))
@@ -268,6 +268,7 @@ public partial class InboundEmailProcessor(AppDbContext db, ImportService import
                 batchId = r.BatchId;
                 created.AddRange(r.TransactionIds);
                 skipped += r.SkippedDuplicates;
+                suspected += r.SuspectedDuplicates;
             }
         }
         catch (DomainException ex)
@@ -286,7 +287,8 @@ public partial class InboundEmailProcessor(AppDbContext db, ImportService import
             t.Provisional = true;
             t.InboundEmailId = e.Id;
         }
-        var note = created.Count == 0 && skipped > 0 ? "Pohyb už v evidenci byl, nic nového se nezapsalo." : null;
+        var note = created.Count == 0 && skipped > 0 ? "Pohyb už v evidenci byl, nic nového se nezapsalo."
+            : suspected > 0 ? "Stejný pohyb už v evidenci je – zkontrolujte v Ke kategorizaci, jestli nejde o duplicitu." : null;
         return await FinishAsync(e, InboundEmailState.Imported, note, ct);
     }
 

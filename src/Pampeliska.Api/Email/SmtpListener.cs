@@ -53,6 +53,11 @@ public class SmtpListener(IServiceScopeFactory scopes, IOptions<InboundEmailOpti
         catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
         {
         }
+        catch (Exception e)
+        {
+            // Např. obsazený port – příjem e-mailů nepoběží, ale zbytek aplikace ano
+            log.LogError(e, "Příjem e-mailů se nepodařilo spustit na portu {Port}", o.Port);
+        }
     }
 
     /// <summary>Přijímá jen poštu pro adresu domácnosti.</summary>

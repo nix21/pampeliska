@@ -11,7 +11,7 @@ import { useUi } from '../../state/ui'
 import { CategoryList, SplitEditor, useEffectiveNeed } from '../category'
 import { Money } from '../common'
 import { Button, IconButton, Pill, Popover, tokenColor } from '../ui'
-import { DuplicateBlock } from './InboxBits'
+import { DuplicateBlock, NotInStatementBlock } from './InboxBits'
 import s from './inbox.module.css'
 
 export interface InboxDetailProps {
@@ -24,6 +24,7 @@ export interface InboxDetailProps {
   onNext?: () => void
   onExclude: () => void
   onResolveDuplicate: (keep: boolean) => void
+  onResolveNotInStatement: (keep: boolean) => void
   busy?: boolean
   /** Mobil: rozbalený detail uvnitř karty (bez hlavičky, kompaktní). */
   inline?: boolean
@@ -42,7 +43,7 @@ const NEEDS: { value: NeedType; label: string }[] = [
 ]
 
 /** Detail platby ve frontě: návrh AI, výběr kategorie / rozdělení, typ výdaje, člen, pravidlo a potvrzení. */
-export function InboxDetail({ item, draft, setDraft, onConfirm, onSkip, onPrev, onNext, onExclude, onResolveDuplicate, busy, inline }: InboxDetailProps) {
+export function InboxDetail({ item, draft, setDraft, onConfirm, onSkip, onPrev, onNext, onExclude, onResolveDuplicate, onResolveNotInStatement, busy, inline }: InboxDetailProps) {
   const tx = item.tx
   const d = draft ?? {}
   const eff = effective(item, draft)
@@ -185,6 +186,7 @@ export function InboxDetail({ item, draft, setDraft, onConfirm, onSkip, onPrev, 
     return (
       <div className={clsx(s.detail, s.inline)}>
         {tx.suspectedDuplicateOfId != null && <DuplicateBlock item={item} onResolve={onResolveDuplicate} busy={busy} />}
+        {tx.notInStatement && <NotInStatementBlock item={item} onResolve={onResolveNotInStatement} busy={busy} />}
         {reason}
         {categorySection}
         {needSeg}
@@ -231,6 +233,7 @@ export function InboxDetail({ item, draft, setDraft, onConfirm, onSkip, onPrev, 
       </div>
 
       {tx.suspectedDuplicateOfId != null && <DuplicateBlock item={item} onResolve={onResolveDuplicate} busy={busy} />}
+      {tx.notInStatement && <NotInStatementBlock item={item} onResolve={onResolveNotInStatement} busy={busy} />}
       {reason}
 
       <div className={s.section}>

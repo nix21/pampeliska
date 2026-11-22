@@ -6,7 +6,8 @@ namespace Pampeliska.Core.Services;
 
 public record BatchSummary(int Id, DateTimeOffset CreatedAt, BatchSource Source, string? ClientName, string? CreatedBy,
     BatchState State, DateTimeOffset? CategorizedAt, DateTimeOffset? ConfirmedAt, int Count, int Confirmed, int Pending,
-    int DuplicateCount, int SuspectedCount, IReadOnlyList<string> Accounts, string? Note);
+    int DuplicateCount, int SuspectedCount, IReadOnlyList<string> Accounts, string? Note, int ReconciledCount = 0, DateOnly? PeriodFrom = null,
+    DateOnly? PeriodTo = null);
 
 public record BatchItem(int Id, DateOnly Date, string Counterparty, decimal Amount, string Currency, decimal AmountCzk,
     string Account, TransactionKind Kind, TransactionStatus Status, string? Category, CategorySource? Source, int? AiConfidence,
@@ -66,7 +67,8 @@ public class BatchService(AppDbContext db, TimeProvider time)
             return new BatchSummary(b.Id, b.CreatedAt, b.Source, b.ClientName,
                 b.CreatedByMemberId is { } m ? members.GetValueOrDefault(m) : null, b.State, b.CategorizedAt, b.ConfirmedAt,
                 count, confirmed, count - confirmed, b.DuplicateCount, s.Sum(x => x.Suspected),
-                s.Select(x => accounts.TryGetValue(x.AccountId, out var a) ? $"{a.Institution?.Abbrev ?? ""} {a.Name}".Trim() : "?").ToList(), b.Note);
+                s.Select(x => accounts.TryGetValue(x.AccountId, out var a) ? $"{a.Institution?.Abbrev ?? ""} {a.Name}".Trim() : "?").ToList(), b.Note,
+                b.ReconciledCount, b.PeriodFrom, b.PeriodTo);
         }).ToList();
     }
 

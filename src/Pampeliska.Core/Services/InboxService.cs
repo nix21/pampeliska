@@ -4,12 +4,12 @@ using Pampeliska.Core.Domain;
 
 namespace Pampeliska.Core.Services;
 
-public enum InboxFilter { All, AiUnsure, NoSuggestion, SplitSuggestion, Duplicates }
+public enum InboxFilter { All, AiUnsure, NoSuggestion, SplitSuggestion, Duplicates, NotInStatement }
 
 public record InboxItem(TxRow Tx, string? RawText, string? AiReason, IReadOnlyList<AiAlternative> Alternatives, string? Rule, TxRef? DuplicateOf,
     string? BatchSource, DateTimeOffset? ImportedAt);
 
-public record InboxCounts(int All, int AiUnsure, int NoSuggestion, int SplitSuggestion, int Duplicates);
+public record InboxCounts(int All, int AiUnsure, int NoSuggestion, int SplitSuggestion, int Duplicates, int NotInStatement = 0);
 
 public record InboxResult(IReadOnlyList<InboxItem> Items, InboxCounts Counts);
 
@@ -28,7 +28,8 @@ public class InboxService(AppDbContext db, TransactionService txs)
     private IQueryable<Transaction> Base(int? memberId) =>
         db.Transactions.AsNoTracking()
             .Where(t => (t.Status == TransactionStatus.Suggested && (t.BetweenMembers || t.Kind != TransactionKind.Transfer
-                         && t.Kind != TransactionKind.InvestmentTransfer && t.Kind != TransactionKind.Correction)) || t.SuspectedDuplicateOfId != null)
+                         && t.Kind != TransactionKind.InvestmentTransfer && t.Kind != TransactionKind.Correction)) || t.SuspectedDuplicateOfId != null
+                        || t.NotInStatement)
             .Where(t => memberId == null || t.Shares.Any(s => s.MemberId == memberId && s.Percent > 0));
 
     public async Task<InboxResult> ListAsync(InboxFilter filter, int? memberId, string? search)
@@ -44,13 +45,15 @@ public class InboxService(AppDbContext db, TransactionService txs)
         bool NoSuggestion(Transaction t) => !t.IsCategorized;
         bool Split(Transaction t) => t.IsSplit;
         bool Dup(Transaction t) => t.SuspectedDuplicateOfId != null;
-        var counts = new InboxCounts(all.Count, all.Count(Unsure), all.Count(NoSuggestion), all.Count(Split), all.Count(Dup));
+        bool Missing(Transaction t) => t.NotInStatement;
+        var counts = new InboxCounts(all.Count, all.Count(Unsure), all.Count(NoSuggestion), all.Count(Split), all.Count(Dup), all.Count(Missing));
         var filtered = filter switch
         {
             InboxFilter.AiUnsure => all.Where(Unsure),
             InboxFilter.NoSuggestion => all.Where(NoSuggestion),
             InboxFilter.SplitSuggestion => all.Where(Split),
             InboxFilter.Duplicates => all.Where(Dup),
+            InboxFilter.NotInStatement => all.Where(Missing),
             _ => all,
         };
         var ruleIds = all.Where(t => t.AppliedRuleId != null).Select(t => t.AppliedRuleId!.Value).Distinct().ToList();
@@ -71,7 +74,7 @@ public class InboxService(AppDbContext db, TransactionService txs)
     public async Task<int> ConfirmConfidentAsync(int minConfidence, string actor)
     {
         var ids = await Base(null)
-            .Where(t => t.SuspectedDuplicateOfId == null && (t.CategoryId != null || t.Splits.Any())
+            .Where(t => t.SuspectedDuplicateOfId == null && !t.NotInStatement && (t.CategoryId != null || t.Splits.Any())
                         && (t.CategorySource == CategorySource.Rule || t.CategorySource == CategorySource.Manual || t.AiConfidence >= minConfidence))
             .Select(t => t.Id).ToListAsync();
         return await txs.ConfirmAsync(ids, actor);

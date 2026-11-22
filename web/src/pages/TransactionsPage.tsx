@@ -607,6 +607,8 @@ function TxListRow({ row, selected, open, onToggle, onSelect, accountFiltered }:
   if (excl) badges.push({ label: 'Nezapočítává se', tone: 'neutral', icon: Ban })
   if (tx.isRecurring) badges.push({ label: 'Pravidelná', tone: 'line', icon: Repeat })
   if (tx.suspectedDuplicateOfId) badges.push({ label: 'Duplicita?', tone: 'warn' })
+  if (tx.notInStatement) badges.push({ label: 'Není ve výpisu', tone: 'warn' })
+  else if (tx.provisional) badges.push({ label: 'Předběžný', tone: 'dashed' })
 
   const catTxt = isSplit
     ? tx.splits.map((p) => cats.nameOf(p.categoryId)).join(' + ')

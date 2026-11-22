@@ -1,13 +1,13 @@
 import { useQueryClient } from '@tanstack/react-query'
 import clsx from 'clsx'
-import { Check, ChevronDown, Copy, HelpCircle, Search, Sparkles, Split, X, type LucideIcon } from 'lucide-react'
+import { Check, ChevronDown, Copy, FileX, HelpCircle, Search, Sparkles, Split, X, type LucideIcon } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { PageHeader } from '../components/AppShell'
 import { CategoryList } from '../components/category'
 import { MemberSwitch, Money } from '../components/common'
 import { ImportHelpButton } from '../components/ImportHelp'
-import { DupPill, SuggestionCell } from '../components/inbox/InboxBits'
+import { DupPill, NotInStatementPill, SuggestionCell } from '../components/inbox/InboxBits'
 import { InboxDetail } from '../components/inbox/InboxDetail'
 import { Logo } from '../components/Logo'
 import { Button, Checkbox, Empty, Popover, Spinner } from '../components/ui'
@@ -29,6 +29,7 @@ const FILTERS: { value: InboxFilter; label: string; icon?: LucideIcon; key: keyo
   { value: 'NoSuggestion', label: 'Bez návrhu', icon: HelpCircle, key: 'noSuggestion' },
   { value: 'SplitSuggestion', label: 'Návrh rozdělení', icon: Split, key: 'splitSuggestion' },
   { value: 'Duplicates', label: 'Podezřelé duplicity', icon: Copy, key: 'duplicates' },
+  { value: 'NotInStatement', label: 'Není ve výpisu', icon: FileX, key: 'notInStatement' },
 ]
 const FILTER_VALUES = new Set<string>(FILTERS.map((f) => f.value))
 
@@ -141,6 +142,26 @@ export default function InboxPage() {
     try {
       await api.post(`/api/transactions/${id}/duplicate`, { keep })
       notifyOk(keep ? 'Ponechány obě platby' : 'Duplicita zahozena')
+      if (!keep) {
+        const next = nextAfter(id)
+        hide([id])
+        dropDrafts([id])
+        if (selected?.tx.id === id) setSelectedId(next)
+      }
+      await refresh()
+    } catch (e) {
+      notifyError(e)
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  const resolveNotInStatement = async (item: InboxItem, keep: boolean) => {
+    const id = item.tx.id
+    setBusy(id)
+    try {
+      await api.post(`/api/transactions/${id}/not-in-statement`, { keep })
+      notifyOk(keep ? 'Pohyb ponechán' : 'Pohyb smazán')
       if (!keep) {
         const next = nextAfter(id)
         hide([id])
@@ -296,6 +317,7 @@ export default function InboxPage() {
         onNext={idx < items.length - 1 ? () => setSelectedId(items[idx + 1].tx.id) : undefined}
         onExclude={() => toggleExclude(item)}
         onResolveDuplicate={(keep) => resolveDuplicate(item, keep)}
+        onResolveNotInStatement={(keep) => resolveNotInStatement(item, keep)}
       />
     )
   }
@@ -329,6 +351,7 @@ export default function InboxPage() {
                       <span className="row" style={{ gap: 6, minWidth: 0 }}>
                         <span className={s.cardName}>{tx.counterparty || 'Bez protistrany'}</span>
                         {tx.suspectedDuplicateOfId != null && <Copy size={13} color="var(--neg)" style={{ flexShrink: 0 }} aria-label="Možná duplicita" />}
+                        {tx.notInStatement && <FileX size={13} color="var(--warn)" style={{ flexShrink: 0 }} aria-label="Není ve výpisu" />}
                       </span>
                       <span className="faint" style={{ fontSize: 12 }}>{dateShort(tx.date)} · {accounts.byId.get(tx.accountId)?.name}</span>
                       <SuggestionCell item={item} eff={eff} compact />
@@ -400,6 +423,7 @@ export default function InboxPage() {
                   <div className={s.payTop}>
                     <span className={s.payName}>{tx.counterparty || 'Bez protistrany'}</span>
                     {tx.suspectedDuplicateOfId != null && <DupPill />}
+                    {tx.notInStatement && <NotInStatementPill />}
                   </div>
                   <span className={s.payMeta}>{[accountLabel(tx), memberLabel(eff.member)].filter(Boolean).join(' · ')}</span>
                 </div>

@@ -46,7 +46,12 @@ max. 5 pokusů). Ověření DKIM (`Integrations/Dkim.cs`, MimeKit + DnsClient), 
 účtu (i maskovaného), karty (`Account.CardSuffixes`) nebo jediného běžného účtu banky odesílatele. Zápis přes
 `ImportService` (`BatchSource.Email`, dávka „Notifikace d. M.“), pohyb `Provisional` + `InboundEmailId`.
 Výpisy v příloze se zatím jen poznají (stav Není pohyb), cizí měna skončí chybou a počká na výpis.
-Chybí: značka „Předběžný“ v seznamu Pohyby a párování s výpisem (fáze 3).
+
+**Stav fáze 3 (2026-11-22):** párování v `ImportService` (`StatementMatcher`), stav `Transaction.NotInStatement`, období
+dávky (`ImportBatch.PeriodFrom/To`, `ReconciledCount`), pokrytí účtu (`Account.StatementCoveredTo`), MCP
+`import_transactions` s `periodFrom/periodTo` a nástroj `resolve_not_in_statement`, ve webu filtr „Není ve výpisu“
+v Ke kategorizaci, štítek „Předběžný“ v Pohybech, „Výpisy do …“ u účtu a období a spárované pohyby u dávky.
+Druhá notifikace se stejným klíčem (dvě stejné platby za den) vznikne jako podezřelá duplicita, ne zahozená.
 
 ## 2. Příjem (Pampeliska.Api)
 
@@ -130,8 +135,9 @@ každém importu výpisu poslaly všechny páry do ruční fronty – to nechcem
 
 V `ImportService` před běžnou deduplikací:
 
-- Pro každou položku výpisu hledat **předběžný** pohyb na stejném účtu: stejná částka v okně ±5 dní, u plateb
-  kartou v cizí měně tolerance ±3 % a podobná protistrana (`Text.Similar`).
+- Pro každou položku výpisu hledat **předběžný** pohyb na stejném účtu: stejná částka, notifikace nejvýš 7 dní před
+  a 2 dny po zaúčtování (přednost podobné protistraně a bližšímu datu); u plateb kartou tolerance ±3 % a podobná
+  protistrana (`Text.Similar`). Jen u výpisů (MCP, banka), ne u notifikací a ručních pohybů.
 - Shoda → předběžný pohyb **převezme data z výpisu** (datum zaúčtování, texty, `ExternalId`), ponechá kategorii
   a potvrzení, `Provisional = false`. Nový pohyb nevznikne.
 - Logika párování je čistá statická funkce (jako `RuleEngine`) kvůli testům.
@@ -146,10 +152,11 @@ klidně 35 dní, a je to v pořádku. Nepotvrzenost se proto posuzuje **podle ob
 - Na účtu se eviduje **pokrytí výpisy** (`Account.StatementCoveredTo` = konec posledního importovaného období).
 - Předběžné pohyby **po** konci pokrytí jsou normální stav – žádné upozornění, jen značka „z notifikace“.
 - Po importu výpisu se zkontrolují předběžné pohyby **uvnitř** jeho období, které se nespárovaly:
-  - s datem nejvýš 5 dní před koncem období (`PeriodTo − 5`) → fronta Ke kategorizaci jako **„Není ve výpisu“**
+  - s datem od `PeriodFrom − 7` do `PeriodTo − 7` → fronta Ke kategorizaci jako **„Není ve výpisu“**
     (zrušená blokace, vrácená platba, chyba vytěžení). Uživatel ho smaže, nebo ponechá jako skutečný.
-  - s datem v posledních 5 dnech období → zatím nic: blokace z 29. 11. se zaúčtuje 2. 12. a objeví se až ve výpisu
-    za prosinec. Posoudí se po dalším výpisu (párování proto hledá i předběžné pohyby z konce předchozího období).
+  - s datem v posledních 7 dnech období → zatím nic: blokace z 29. 11. se zaúčtuje 2. 12. a objeví se až ve výpisu
+    za prosinec. Posoudí se po dalším výpisu (proto spodní okraj o 7 dní dřív než začátek období).
+  - Výpis nahraný po částech: pohyb označený po první části zruší pozdější část, která ho spáruje.
 - Pohyby z výpisu, ke kterým notifikace nebyla (poplatky, úroky, ztracený e-mail), se založí normálně jako dnes.
 
 Shrnutí stavů pohybu z notifikace: **předběžný** (čeká na výpis) → **potvrzený výpisem** (data z výpisu, značka

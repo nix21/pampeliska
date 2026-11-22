@@ -129,6 +129,10 @@ namespace Pampeliska.Core.Data.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("source");
 
+                    b.Property<DateOnly?>("StatementCoveredTo")
+                        .HasColumnType("date")
+                        .HasColumnName("statement_covered_to");
+
                     b.Property<int>("ValueTracking")
                         .HasColumnType("integer")
                         .HasColumnName("value_tracking");
@@ -612,6 +616,18 @@ namespace Pampeliska.Core.Data.Migrations
                     b.Property<string>("OAuthClientId")
                         .HasColumnType("text")
                         .HasColumnName("o_auth_client_id");
+
+                    b.Property<DateOnly?>("PeriodFrom")
+                        .HasColumnType("date")
+                        .HasColumnName("period_from");
+
+                    b.Property<DateOnly?>("PeriodTo")
+                        .HasColumnType("date")
+                        .HasColumnName("period_to");
+
+                    b.Property<int>("ReconciledCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("reconciled_count");
 
                     b.Property<int>("Source")
                         .HasColumnType("integer")
@@ -1831,6 +1847,10 @@ namespace Pampeliska.Core.Data.Migrations
                     b.Property<int?>("NeedOverride")
                         .HasColumnType("integer")
                         .HasColumnName("need_override");
+
+                    b.Property<bool>("NotInStatement")
+                        .HasColumnType("boolean")
+                        .HasColumnName("not_in_statement");
 
                     b.Property<string>("Note")
                         .HasColumnType("text")

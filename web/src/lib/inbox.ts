@@ -9,7 +9,7 @@ import type {
 
 // ---------- DTO ----------
 
-export type InboxFilter = 'All' | 'AiUnsure' | 'NoSuggestion' | 'SplitSuggestion' | 'Duplicates'
+export type InboxFilter = 'All' | 'AiUnsure' | 'NoSuggestion' | 'SplitSuggestion' | 'Duplicates' | 'NotInStatement'
 
 export interface AiAlternative {
   categoryId: number
@@ -32,6 +32,7 @@ export interface InboxCounts {
   noSuggestion: number
   splitSuggestion: number
   duplicates: number
+  notInStatement: number
 }
 
 export interface InboxResult {
@@ -52,6 +53,10 @@ export interface BatchSummary {
   confirmed: number
   pending: number
   duplicateCount: number
+  /** Předběžné pohyby z notifikací potvrzené tímto výpisem. */
+  reconciledCount?: number
+  periodFrom?: string
+  periodTo?: string
   suspectedCount: number
   accounts: string[]
   note?: string

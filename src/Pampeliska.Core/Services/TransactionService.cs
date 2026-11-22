@@ -38,7 +38,8 @@ public record TxRow(
     string Counterparty, string? Message, TransactionKind Kind, TransactionStatus Status, int? CategoryId, NeedType? NeedOverride,
     IReadOnlyList<SplitDto> Splits, IReadOnlyList<ShareDto> Shares, bool SharesOverridden, bool IsRecurring, bool ExcludeFromStats,
     CategorySource? CategorySource, int? AiConfidence, int? TransferPairId, int? TransferPairAccountId, int? RefundOfId,
-    int? SuspectedDuplicateOfId, int? BatchId, PaymentType PaymentType, int? RecurringPaymentId, string? Note, bool BetweenMembers);
+    int? SuspectedDuplicateOfId, int? BatchId, PaymentType PaymentType, int? RecurringPaymentId, string? Note, bool BetweenMembers,
+    bool Provisional = false, bool NotInStatement = false);
 
 public record TxEventDto(DateTimeOffset At, string Actor, string Text);
 
@@ -201,7 +202,7 @@ public class TransactionService(AppDbContext db, BatchService batches, RuleServi
         t.Shares.Select(s => new ShareDto(s.MemberId, s.Percent)).ToList(), t.SharesOverridden, t.IsRecurring, t.ExcludeFromStats,
         t.CategorySource, t.AiConfidence, t.TransferPairId,
         t.TransferPairId is { } p && pairAccounts is not null && pairAccounts.TryGetValue(p, out var pa) ? pa : t.TransferAccountId,
-        t.RefundOfId, t.SuspectedDuplicateOfId, t.BatchId, t.PaymentType, t.RecurringPaymentId, t.Note, t.BetweenMembers);
+        t.RefundOfId, t.SuspectedDuplicateOfId, t.BatchId, t.PaymentType, t.RecurringPaymentId, t.Note, t.BetweenMembers, t.Provisional, t.NotInStatement);
 
     public async Task<TxDetail> GetAsync(int id)
     {
@@ -493,6 +494,28 @@ public class TransactionService(AppDbContext db, BatchService batches, RuleServi
         {
             t.SuspectedDuplicateOfId = null;
             t.Events.Add(new TransactionEvent { At = time.GetUtcNow(), Actor = actor, Text = "Není duplicita – ponecháno" });
+        }
+        else
+        {
+            await DeleteInternalAsync(t);
+        }
+        await db.SaveChangesAsync();
+        await batches.RecomputeAsync([t.BatchId]);
+    }
+
+    /// <summary>
+    /// Předběžný pohyb z notifikace, který výpis neobsahuje: smazat (zrušená blokace, vrácená platba, chyba čtení e-mailu),
+    /// nebo ponechat jako skutečný pohyb.
+    /// </summary>
+    public async Task ResolveNotInStatementAsync(int id, bool keep, string actor)
+    {
+        var t = await db.Transactions.FirstOrDefaultAsync(x => x.Id == id) ?? throw new DomainException($"Pohyb {id} neexistuje.");
+        if (!t.NotInStatement) throw new DomainException("Pohyb nečeká na rozhodnutí, jestli je ve výpisu.");
+        if (keep)
+        {
+            t.NotInStatement = false;
+            t.Provisional = false;
+            t.Events.Add(new TransactionEvent { At = time.GetUtcNow(), Actor = actor, Text = "Ve výpisu chybí – ponecháno jako skutečný pohyb" });
         }
         else
         {

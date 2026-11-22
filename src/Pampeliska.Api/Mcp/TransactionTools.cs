@@ -30,26 +30,34 @@ public class TransactionTools(ImportService import, TransactionService txs, Inbo
     }
 
     public record ImportResponse(int BatchId, int Created, int SkippedDuplicates, int SuspectedDuplicates, int CategorizedByRule, int Transfers,
-        int Uncategorized, string Next);
+        int Uncategorized, int ReconciledWithNotifications, int NotInStatement, string Next);
 
     [McpServerTool(Name = "import_transactions", Title = "Importovat pohyby", ReadOnly = false, Destructive = false, Idempotent = true, OpenWorld = false)]
     [Description("Nahraje pohyby z výpisu na jeden účet do dávky (jako nepotvrzené). Přesné duplicity přeskočí (opakovaný import nevadí), " +
-                 "podobné označí k vyřešení, převody mezi vlastními účty spáruje a použije pravidla. Vrací dávku a počty. " +
+                 "podobné označí k vyřešení, převody mezi vlastními účty spáruje a použije pravidla. Předběžné pohyby z e-mailových " +
+                 "notifikací banky spáruje s výpisem (převezmou údaje z výpisu, nevzniknou znovu) a ty, které výpis za své období " +
+                 "neobsahuje, označí „Není ve výpisu“. Vrací dávku a počty. " +
                  "Více účtů = více volání; pro stejný výpis lze předat batch_id předchozí dávky.")]
     public Task<ImportResponse> ImportTransactions(
         [Description("Id účtu z list_accounts.")] int accountId,
         [Description("Pohyby (max 2000 v jednom volání).")] List<ImportTx> transactions,
         [Description("Id existující nepotvrzené dávky, do které se mají pohyby přidat (volitelné).")] int? batchId = null,
-        [Description("Poznámka k dávce, např. „Výpis Fio 09/2026“.")] string? note = null) => McpSetup.Guard(async () =>
+        [Description("Poznámka k dávce, např. „Výpis Fio 09/2026“.")] string? note = null,
+        [Description("Začátek období výpisu YYYY-MM-DD (z hlavičky výpisu). Vyplň vždy, když ho výpis uvádí.")] DateOnly? periodFrom = null,
+        [Description("Konec období výpisu YYYY-MM-DD (z hlavičky výpisu). Vyplň vždy, když ho výpis uvádí.")] DateOnly? periodTo = null) =>
+        McpSetup.Guard(async () =>
     {
         var member = await user.MemberAsync();
         var res = await import.ImportAsync(accountId,
             transactions.Select(t => new ImportItem(t.Date, t.Amount, t.Counterparty, t.Time, t.Currency, t.CounterpartyAccount, t.Message, t.RawText,
                 t.PaymentType, t.Mcc, t.ExternalId, t.CardHolderMemberId)).ToList(),
-            new ImportOptions(BatchSource.Mcp, await user.ActorAsync(), member?.Id, user.ClientId, user.ClientName, note, batchId));
+            new ImportOptions(BatchSource.Mcp, await user.ActorAsync(), member?.Id, user.ClientId, user.ClientName, note, batchId, periodFrom, periodTo));
+        var next = res.Uncategorized > 0 || res.CategorizedByRule > 0
+            ? "Pokračuj get_categorization_queue a suggest_categories." : "Vše je zařazeno, uživatel může dávku potvrdit.";
+        if (res.NotInStatement > 0)
+            next += $" {res.NotInStatement} předběžných pohybů z notifikací ve výpisu chybí – ukaž je uživateli (resolve_not_in_statement).";
         return new ImportResponse(res.BatchId, res.Created, res.SkippedDuplicates, res.SuspectedDuplicates, res.CategorizedByRule, res.Transfers,
-            res.Uncategorized, res.Uncategorized > 0 || res.CategorizedByRule > 0
-                ? "Pokračuj get_categorization_queue a suggest_categories." : "Vše je zařazeno, uživatel může dávku potvrdit.");
+            res.Uncategorized, res.Reconciled, res.NotInStatement, next);
     });
 
     [McpServerTool(Name = "get_categorization_queue", Title = "Fronta ke kategorizaci", ReadOnly = true, Idempotent = true, OpenWorld = false)]
@@ -138,6 +146,16 @@ public class TransactionTools(ImportService import, TransactionService txs, Inbo
         {
             await txs.ResolveDuplicateAsync(transactionId, keep, await user.ActorAsync());
             return keep ? "Ponecháno." : "Duplicita zahozena.";
+        });
+
+    [McpServerTool(Name = "resolve_not_in_statement", Title = "Vyřešit pohyb chybějící ve výpisu", ReadOnly = false, Destructive = true, Idempotent = false, OpenWorld = false)]
+    [Description("Předběžný pohyb z e-mailové notifikace, který výpis za své období neobsahuje (zrušená blokace, vrácená platba): " +
+                 "keep=false pohyb smaže, keep=true ho ponechá jako skutečný. Rozhoduje uživatel – nejdřív se ho zeptej.")]
+    public Task<string> ResolveNotInStatement([Description("Id pohybu.")] int transactionId, [Description("Ponechat jako skutečný pohyb.")] bool keep) =>
+        McpSetup.Guard(async () =>
+        {
+            await txs.ResolveNotInStatementAsync(transactionId, keep, await user.ActorAsync());
+            return keep ? "Ponecháno." : "Pohyb smazán.";
         });
 
     [McpServerTool(Name = "link_transfer", Title = "Spárovat převod", ReadOnly = false, Destructive = false, Idempotent = true, OpenWorld = false)]

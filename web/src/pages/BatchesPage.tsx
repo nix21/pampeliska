@@ -199,6 +199,13 @@ function BatchPanel({ b, detail, loading, busy, onRun }: { b: BatchSummary; deta
         </span>
         <span className={s.title}>Dávka {whenLabel(b.createdAt)}</span>
         {b.note && <span className="muted" style={{ fontSize: 13 }}>{b.note}</span>}
+        {(b.periodFrom || (b.reconciledCount ?? 0) > 0) && (
+          <span className="muted" style={{ fontSize: 13 }}>
+            {b.periodFrom && b.periodTo ? `Období ${dateShort(b.periodFrom)}–${dateShort(b.periodTo, true)}` : null}
+            {b.periodFrom && (b.reconciledCount ?? 0) > 0 ? ' · ' : null}
+            {(b.reconciledCount ?? 0) > 0 && `${count(b.reconciledCount!, 'pohyb spárován', 'pohyby spárovány', 'pohybů spárováno')} s notifikacemi z e-mailu`}
+          </span>
+        )}
       </div>
       <div className={s.pipe}>
         {pipe.map(([label, Icon, at], i) => {

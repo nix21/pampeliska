@@ -125,6 +125,15 @@ export function AccountDetail({ account: a, onEdit, korOpen, setKorOpen }: {
 
       <div className={s.meta}>
         <div><span>{inv ? 'Sledování hodnoty' : 'Zdroj pohybů'}</span><b>{sourceLabel(a)}</b></div>
+        {!inv && (a.statementCoveredTo || (a.provisionalCount ?? 0) > 0) && (
+          <div>
+            <span>Výpisy</span>
+            <b>
+              {a.statementCoveredTo ? `do ${dateLong(a.statementCoveredTo)}` : 'zatím žádný'}
+              {(a.provisionalCount ?? 0) > 0 && ` · ${count(a.provisionalCount!, 'předběžný pohyb', 'předběžné pohyby', 'předběžných pohybů')} z notifikací`}
+            </b>
+          </div>
+        )}
         <div><span>Člen se určuje</span><b>{memberRule(a)}</b></div>
         {!inv && <div><span>Započítávat do disponibilního zůstatku</span><b style={{ color: a.includeInDisposable ? 'var(--pos)' : 'var(--ink-3)' }}>{a.includeInDisposable ? 'Ano' : 'Ne'}</b></div>}
         <div><span>Započítávat do čistého jmění</span><b style={{ color: a.includeInNetWorth ? 'var(--pos)' : 'var(--ink-3)' }}>{a.includeInNetWorth ? 'Ano' : 'Ne'}</b></div>

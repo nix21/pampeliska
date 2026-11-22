@@ -26,7 +26,8 @@ public static class McpSetup
         2. Výpis sám rozparsuj a pošli pohyby přes import_transactions (pro každý účet zvlášť, klidně po dávkách do 500 pohybů).
            Vyplň date, amount (se znaménkem, v měně účtu), counterparty (obchodník / protistrana), message, raw_text (původní text řádku),
            counterparty_account, time a payment_type (Card u platby kartou – důležité pro podmínky účtů), external_id jen když ho výpis má.
-           Duplicity server pozná sám, opakovaný import stejného výpisu nevadí.
+           Duplicity server pozná sám, opakovaný import stejného výpisu nevadí. Vyplň period_from a period_to podle hlavičky výpisu
+           (období výpisu) – server podle něj spáruje předběžné pohyby z e-mailových notifikací banky a pozná, které ve výpisu chybí.
            Importuj jen pohyby z výpisu, který máš. Nedopočítávej protějšky převodů na účtech, jejichž výpis nemáš (třeba účet
            jiného člena) – převod se pozná podle protiúčtu i bez protějšku a do statistik se započítá správně.
         3. list_notes – poznámky ke kategorizaci, které sis ty nebo jiný klient uložili dřív (zvyklosti domácnosti, výjimky).

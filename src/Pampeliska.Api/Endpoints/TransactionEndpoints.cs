@@ -66,6 +66,11 @@ public static class TransactionEndpoints
             await svc.ResolveDuplicateAsync(id, i.Keep, await user.ActorAsync());
             return Results.NoContent();
         });
+        api.MapPost("/transactions/{id:int}/not-in-statement", async (int id, DuplicateInput i, TransactionService svc, CurrentUser user) =>
+        {
+            await svc.ResolveNotInStatementAsync(id, i.Keep, await user.ActorAsync());
+            return Results.NoContent();
+        });
         api.MapPost("/transactions/{id:int}/unpair", async (int id, TransferMatcher m) =>
         {
             await m.UnpairAsync(id);

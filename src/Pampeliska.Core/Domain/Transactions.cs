@@ -18,6 +18,11 @@ public class ImportBatch
     public int Count { get; set; }
     public int DuplicateCount { get; set; }
     public int SuspectedCount { get; set; }
+    /// <summary>Kolik předběžných pohybů z e-mailových notifikací potvrdil tento výpis.</summary>
+    public int ReconciledCount { get; set; }
+    /// <summary>Období výpisu (z hlavičky výpisu, jinak první a poslední pohyb). Jen u výpisů.</summary>
+    public DateOnly? PeriodFrom { get; set; }
+    public DateOnly? PeriodTo { get; set; }
     public string? Note { get; set; }
     public List<SkippedDuplicate> SkippedDuplicates { get; set; } = [];
 }
@@ -94,6 +99,8 @@ public class Transaction
     public string? ExternalId { get; set; }
     /// <summary>Pohyb z e-mailové notifikace, který ještě nepotvrdil výpis (docs/email-notifikace.md kap. 4).</summary>
     public bool Provisional { get; set; }
+    /// <summary>Předběžný pohyb, který výpis za jeho období neobsahuje – čeká na rozhodnutí uživatele.</summary>
+    public bool NotInStatement { get; set; }
     /// <summary>E-mail, ze kterého pohyb vznikl.</summary>
     public int? InboundEmailId { get; set; }
     public string DedupKey { get; set; } = "";

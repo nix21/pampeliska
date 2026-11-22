@@ -15,6 +15,8 @@ public class Account
     public string? Iban { get; set; }
     /// <summary>Poslední 4 číslice karet k účtu – podle nich se přiřadí platby kartou z e-mailových notifikací.</summary>
     public List<string> CardSuffixes { get; set; } = [];
+    /// <summary>Konec období posledního importovaného výpisu – předběžné pohyby po tomto datu na výpis teprve čekají.</summary>
+    public DateOnly? StatementCoveredTo { get; set; }
     public string Currency { get; set; } = "CZK";
     /// <summary>Vlastník; null = společný účet (podíly v <see cref="Shares"/>).</summary>
     public int? OwnerMemberId { get; set; }

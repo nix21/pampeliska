@@ -22,11 +22,19 @@ public record ImportItem(
     int? CardHolderMemberId = null,
     string? Note = null);
 
+/// <param name="PeriodFrom">Začátek období výpisu (z hlavičky výpisu); bez něj první pohyb.</param>
+/// <param name="PeriodTo">Konec období výpisu; bez něj poslední pohyb.</param>
 public record ImportOptions(BatchSource Source, string Actor, int? MemberId = null, string? ClientId = null, string? ClientName = null,
-    string? Note = null, int? BatchId = null);
+    string? Note = null, int? BatchId = null, DateOnly? PeriodFrom = null, DateOnly? PeriodTo = null)
+{
+    /// <summary>Výpis z účtu (MCP, banka) – páruje předběžné pohyby z notifikací a hodnotí, co ve výpisu chybí.</summary>
+    public bool IsStatement => Source is BatchSource.Mcp or BatchSource.EnableBanking;
+}
 
+/// <param name="Reconciled">Předběžné pohyby z notifikací, které výpis potvrdil (nevznikly znovu).</param>
+/// <param name="NotInStatement">Předběžné pohyby uvnitř období výpisu, které ve výpisu chybí.</param>
 public record ImportResult(int BatchId, int Created, int SkippedDuplicates, int SuspectedDuplicates, int CategorizedByRule,
-    int Transfers, int Uncategorized, IReadOnlyList<int> TransactionIds);
+    int Transfers, int Uncategorized, IReadOnlyList<int> TransactionIds, int Reconciled = 0, int NotInStatement = 0);
 
 /// <summary>
 /// Jediná vstupní brána pohybů (MCP, ruční zadání, později Enable Banking): deduplikace, převody, pravidla,
@@ -52,6 +60,8 @@ public class ImportService(AppDbContext db, FxService fx, TransferMatcher transf
                 throw new DomainException($"Pohyb {i.Date:d. M.} {i.Counterparty} je v {c}, účet {account.Name} je v {account.Currency}. Pošli částku v měně účtu.");
         }
 
+        if (opt.PeriodFrom is { } pf && opt.PeriodTo is { } pt && pt < pf) throw new DomainException("Konec období výpisu je před jeho začátkem.");
+
         var settings = (await db.Households.AsNoTracking().FirstAsync()).Settings;
         var now = time.GetUtcNow();
         var batch = opt.BatchId is { } bid
@@ -72,8 +82,11 @@ public class ImportService(AppDbContext db, FxService fx, TransferMatcher transf
 
         // ---- Deduplikace ----
         var keys = items.Select(i => DedupKey(accountId, i.Date, i.Amount, i.Counterparty)).Distinct().ToList();
+        // Předběžné pohyby z notifikací řeší u výpisu párování (níže). Další notifikace se stejným klíčem (dvě stejné platby za den)
+        // vznikne a označí se jako podezřelá duplicita – opakované doručení téhož e-mailu zachytí už Message-ID.
+        var skipProvisional = opt.IsStatement || opt.Source == BatchSource.Email;
         var existingByKey = (await db.Transactions.AsNoTracking()
-                .Where(t => t.AccountId == accountId && keys.Contains(t.DedupKey))
+                .Where(t => t.AccountId == accountId && keys.Contains(t.DedupKey) && !(skipProvisional && t.Provisional))
                 .Select(t => new { t.Id, t.DedupKey, t.ExternalId }).ToListAsync())
             .GroupBy(t => t.DedupKey).ToDictionary(g => g.Key, g => g.ToList());
         var externalIds = items.Where(i => i.ExternalId is { Length: > 0 }).Select(i => i.ExternalId!).Distinct().ToList();
@@ -91,7 +104,18 @@ public class ImportService(AppDbContext db, FxService fx, TransferMatcher transf
         var maxDate = items.Max(i => i.Date).AddDays(settings.DedupWindowDays);
         var nearby = await db.Transactions.AsNoTracking()
             .Where(t => t.AccountId == accountId && t.Date >= minDate && t.Date <= maxDate)
-            .Select(t => new { t.Id, t.Date, t.Amount, t.Counterparty, t.DedupKey }).ToListAsync();
+            .Select(t => new { t.Id, t.Date, t.Amount, t.Counterparty, t.DedupKey, t.Provisional }).ToListAsync();
+
+        // ---- Předběžné pohyby z e-mailových notifikací (jen u výpisu) ----
+        var provisional = new List<Transaction>();
+        if (opt.IsStatement)
+        {
+            var pFrom = items.Min(i => i.Date).AddDays(-StatementMatcher.DaysBefore);
+            var pTo = items.Max(i => i.Date).AddDays(StatementMatcher.DaysAfter);
+            provisional = await db.Transactions.Include(t => t.Splits)
+                .Where(t => t.AccountId == accountId && t.Provisional && t.Date >= pFrom && t.Date <= pTo).ToListAsync();
+        }
+        var reconciled = new HashSet<int>();
 
         foreach (var item in items.OrderBy(i => i.Date).ThenBy(i => i.Time))
         {
@@ -101,6 +125,14 @@ public class ImportService(AppDbContext db, FxService fx, TransferMatcher transf
             {
                 if (existingExternal.TryGetValue(ext, out var exId)) duplicateOf = exId;
                 else if (!seenExternal.Add(ext)) duplicateOf = 0;
+            }
+            if (duplicateOf is null && provisional.Count > 0
+                && StatementMatcher.Match(item, provisional.Where(p => !reconciled.Contains(p.Id))
+                    .Select(p => new StatementMatcher.Candidate(p.Id, p.Date, p.Amount, p.Counterparty, p.PaymentType))) is { } pid)
+            {
+                await ReconcileAsync(provisional.First(p => p.Id == pid), item, account, settings.FxMode, opt.Actor, now);
+                reconciled.Add(pid);
+                continue;
             }
             if (duplicateOf is null)
             {
@@ -143,7 +175,7 @@ public class ImportService(AppDbContext db, FxService fx, TransferMatcher transf
             } });
 
             // Podobná platba v okně dnů (jiný den nebo mírně jiný text) = podezřelá duplicita k ručnímu vyřešení
-            var similar = nearby.FirstOrDefault(n => n.DedupKey != key && n.Amount == item.Amount
+            var similar = nearby.FirstOrDefault(n => (n.DedupKey != key || skipProvisional && n.Provisional) && n.Amount == item.Amount && !reconciled.Contains(n.Id)
                                                       && Math.Abs(n.Date.DayNumber - item.Date.DayNumber) <= settings.DedupWindowDays
                                                       && Text.Similar(n.Counterparty, item.Counterparty));
             if (similar is not null)
@@ -193,14 +225,76 @@ public class ImportService(AppDbContext db, FxService fx, TransferMatcher transf
         batch.Count += created.Count;
         batch.DuplicateCount += skipped;
         batch.SuspectedCount += suspected;
+        batch.ReconciledCount += reconciled.Count;
         await db.SaveChangesAsync();
         TransferMatcher.FixPairIds(pairs);
+
+        // ---- Co výpis za své období neobsahuje ----
+        var missing = 0;
+        if (opt.IsStatement)
+        {
+            var from = opt.PeriodFrom ?? items.Min(i => i.Date);
+            var to = opt.PeriodTo ?? items.Max(i => i.Date);
+            batch.PeriodFrom = batch.PeriodFrom is { } bf && bf < from ? bf : from;
+            batch.PeriodTo = batch.PeriodTo is { } bt && bt > to ? bt : to;
+            if (account.StatementCoveredTo is null || account.StatementCoveredTo < to) account.StatementCoveredTo = to;
+            var lower = from.AddDays(-StatementMatcher.DaysBefore);
+            var upper = to.AddDays(-StatementMatcher.TailDays);
+            var unmatched = await db.Transactions
+                .Where(t => t.AccountId == accountId && t.Provisional && !t.NotInStatement && t.Date >= lower && t.Date <= upper).ToListAsync();
+            foreach (var t in unmatched.Where(t => StatementMatcher.IsMissing(t.Date, from, to)))
+            {
+                t.NotInStatement = true;
+                t.Events.Add(new TransactionEvent { At = now, Actor = opt.Actor, Text = $"Není ve výpisu za {from:d. M.}–{to:d. M. yyyy}" });
+                missing++;
+            }
+        }
+
         await BatchService.RecomputeStateAsync(db, batch, now);
         await db.SaveChangesAsync();
 
         var uncategorized = created.Count(t => !t.IsCategorized && t.NeedsCategory);
         return new ImportResult(batch.Id, created.Count, skipped, suspected, byRule, transferCount, uncategorized,
-            created.Select(t => t.Id).ToList());
+            created.Select(t => t.Id).ToList(), reconciled.Count, missing);
+    }
+
+    /// <summary>
+    /// Předběžný pohyb z notifikace převezme údaje z výpisu (datum zaúčtování, texty, částka, id) a přestane být předběžný.
+    /// Kategorie, podíly a potvrzení zůstanou.
+    /// </summary>
+    private async Task ReconcileAsync(Transaction t, ImportItem item, Account account, FxMode fxMode, string actor, DateTimeOffset now)
+    {
+        var oldAmount = t.Amount;
+        t.Date = item.Date;
+        if (item.Time is { } time) t.Time = time;
+        if (t.Amount != item.Amount)
+        {
+            t.Amount = item.Amount;
+            t.FxRate = await fx.RateAsync(account.Currency, item.Date, fxMode);
+            t.AmountCzk = Math.Round(item.Amount * t.FxRate, 2);
+            if (t.Splits.Count > 0)
+            {
+                // Rozdělení by po změně částky nesedělo – zůstane hlavní kategorie
+                t.CategoryId ??= t.Splits.OrderByDescending(s => Math.Abs(s.Amount)).First().CategoryId;
+                db.TransactionSplits.RemoveRange(t.Splits);
+                t.Splits.Clear();
+            }
+        }
+        if (Clean(item.Counterparty) is { } cp) t.Counterparty = cp;
+        t.Message = Clean(item.Message) ?? t.Message;
+        t.RawText = Clean(item.RawText) ?? t.RawText;
+        t.CounterpartyAccount = Clean(item.CounterpartyAccount) ?? t.CounterpartyAccount;
+        t.ExternalId = Clean(item.ExternalId) ?? t.ExternalId;
+        t.Mcc = Clean(item.Mcc) ?? t.Mcc;
+        if (item.PaymentType is { } pt) t.PaymentType = pt;
+        t.DedupKey = DedupKey(t.AccountId, t.Date, t.Amount, t.Counterparty);
+        t.Provisional = false;
+        t.NotInStatement = false;
+        t.Events.Add(new TransactionEvent
+        {
+            At = now, Actor = actor,
+            Text = oldAmount == t.Amount ? "Potvrzeno výpisem" : $"Potvrzeno výpisem, částka upravena z {oldAmount.ToString("0.##", CultureInfo.GetCultureInfo("cs-CZ"))}",
+        });
     }
 
     private static string? Clean(string? s) => string.IsNullOrWhiteSpace(s) ? null : s.Trim();

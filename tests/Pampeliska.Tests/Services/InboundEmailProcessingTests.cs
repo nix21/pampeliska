@@ -243,15 +243,18 @@ public class InboundEmailProcessingTests
     }
 
     [Fact]
-    public async Task Same_movement_twice_is_not_duplicated()
+    public async Task Same_movement_twice_is_flagged_as_suspected_duplicate()
     {
         using var c = new Ctx();
         c.Ai.Handler = _ => Movements(Card(-349, "Albert Brno", account: "2900111222"));
         await c.Processor.ProcessAsync(await c.ReceiveAsync());
         var second = await c.ReceiveAsync();
         Assert.Equal(InboundEmailState.Imported, await c.Processor.ProcessAsync(second));
-        Assert.Contains("už v evidenci", (await c.Emails.DetailAsync(second)).Note);
-        Assert.Equal(1, await c.Env.FreshDb().Transactions.CountAsync(t => t.InboundEmailId != null));
+        Assert.Contains("duplicitu", (await c.Emails.DetailAsync(second)).Note);
+        // Dvě stejné platby za den jsou možné – druhá vznikne, ale čeká na rozhodnutí jako podezřelá duplicita
+        var txs = await c.Env.FreshDb().Transactions.Where(t => t.InboundEmailId != null).OrderBy(t => t.Id).ToListAsync();
+        Assert.Equal(2, txs.Count);
+        Assert.Equal(txs[0].Id, txs[1].SuspectedDuplicateOfId);
     }
 
     private sealed class FailingExtractor : INotificationExtractor

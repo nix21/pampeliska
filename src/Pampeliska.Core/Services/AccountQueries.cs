@@ -18,7 +18,7 @@ public record AccountSummary(
     decimal Balance, decimal BalanceCzk, IReadOnlyList<decimal> Sparkline, AccountSource Source, DateTimeOffset? LastImportAt,
     decimal? LowBalanceLimit, decimal? InterestRate, InvestmentKind? InvestmentKind, int? FundingAccountId, ValueTracking ValueTracking,
     bool IncludeInDisposable, bool IncludeInNetWorth, decimal OpeningBalance, DateOnly OpeningDate, decimal? OpeningDeposits,
-    bool Archived, IReadOnlyList<ConditionDto> Conditions, int TransactionCount);
+    bool Archived, IReadOnlyList<ConditionDto> Conditions, int TransactionCount, DateOnly? StatementCoveredTo = null, int ProvisionalCount = 0);
 
 /// <summary>Čtecí pohled na účty (web i MCP).</summary>
 public class AccountQueries(AppDbContext db, BalanceService balances, TimeProvider time)
@@ -43,6 +43,8 @@ public class AccountQueries(AppDbContext db, BalanceService balances, TimeProvid
         var stats = (await db.Transactions.AsNoTracking().GroupBy(t => t.AccountId)
                 .Select(g => new { g.Key, Count = g.Count(), Last = g.Max(t => (DateTimeOffset?)t.CreatedAt) }).ToListAsync())
             .ToDictionary(x => x.Key);
+        var provisional = (await db.Transactions.AsNoTracking().Where(t => t.Provisional).GroupBy(t => t.AccountId)
+            .Select(g => new { g.Key, Count = g.Count() }).ToListAsync()).ToDictionary(x => x.Key, x => x.Count);
         var today = time.Today();
         var result = new List<AccountSummary>();
         foreach (var a in accounts)
@@ -55,7 +57,7 @@ public class AccountQueries(AppDbContext db, BalanceService balances, TimeProvid
                 a.Source, stats.GetValueOrDefault(a.Id)?.Last, a.LowBalanceLimit, a.InterestRate, a.InvestmentKind, a.FundingAccountId,
                 a.ValueTracking, a.IncludeInDisposable, a.IncludeInNetWorth, a.OpeningBalance, a.OpeningDate, a.OpeningDeposits, a.Archived,
                 a.Conditions.OrderBy(c => c.SortOrder).Select(c => new ConditionDto(c.Id, c.Type, c.Target, c.Benefit)).ToList(),
-                stats.GetValueOrDefault(a.Id)?.Count ?? 0));
+                stats.GetValueOrDefault(a.Id)?.Count ?? 0, a.StatementCoveredTo, provisional.GetValueOrDefault(a.Id)));
         }
         return result;
     }

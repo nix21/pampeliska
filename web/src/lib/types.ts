@@ -108,6 +108,10 @@ export interface Account {
   sparkline: number[]
   source: AccountSource
   lastImportAt?: string
+  /** Konec období posledního výpisu. */
+  statementCoveredTo?: string
+  /** Předběžné pohyby z notifikací (čekají na výpis). */
+  provisionalCount?: number
   lowBalanceLimit?: number
   interestRate?: number
   investmentKind?: InvestmentKind
@@ -181,6 +185,10 @@ export interface TxRow {
   note?: string
   /** Převod mezi vlastními účty dvou různých členů – kategorizuje se, počítá se jen v pohledu člena. */
   betweenMembers: boolean
+  /** Pohyb z e-mailové notifikace, který ještě nepotvrdil výpis. */
+  provisional?: boolean
+  /** Předběžný pohyb, který výpis za své období neobsahuje. */
+  notInStatement?: boolean
 }
 
 export interface TxRef {

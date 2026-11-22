@@ -32,7 +32,7 @@ public class HouseholdTools(AppDbContext db, FxService fx, AccountQueries accoun
 
     public record AccountInfo(int Id, string Name, string Kind, string Institution, string InstitutionKey, string? AccountNumber, string Currency,
         string Owner, IReadOnlyList<ShareDto> Ratio, decimal Balance, decimal BalanceCzk, decimal? LowBalanceLimit, bool IncludeInDisposable,
-        string Source, int TransactionCount, DateTimeOffset? LastImportAt, bool Archived);
+        string Source, int TransactionCount, DateTimeOffset? LastImportAt, bool Archived, DateOnly? StatementCoveredTo, int ProvisionalCount);
 
     [McpServerTool(Name = "list_accounts", Title = "Účty", ReadOnly = true, Idempotent = true, OpenWorld = false)]
     [Description("Účty domácnosti: id, banka, číslo účtu, měna, vlastník (nebo společný s poměrem), zůstatek. Podle čísla účtu a banky " +
@@ -43,7 +43,7 @@ public class HouseholdTools(AppDbContext db, FxService fx, AccountQueries accoun
         return (await accountQueries.ListAsync(includeArchived, sparklines: false)).Select(a => new AccountInfo(a.Id, a.Name, a.Kind.ToString(),
             a.Institution.Name, a.Institution.Key, a.Iban, a.Currency, a.Joint ? "společný" : members.GetValueOrDefault(a.OwnerMemberId ?? 0) ?? "?",
             a.Ratio, a.Balance, a.BalanceCzk, a.LowBalanceLimit, a.IncludeInDisposable, a.Source.ToString(), a.TransactionCount, a.LastImportAt,
-            a.Archived)).ToList();
+            a.Archived, a.StatementCoveredTo, a.ProvisionalCount)).ToList();
     });
 
     [McpServerTool(Name = "get_account", Title = "Detail účtu", ReadOnly = true, Idempotent = true, OpenWorld = false)]
