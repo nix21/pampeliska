@@ -1,6 +1,6 @@
 namespace Pampeliska.Core.Domain;
 
-public enum BatchSource { Mcp, Manual, EnableBanking, Email }
+public enum BatchSource { Mcp, Manual, EnableBanking, Email, EmailStatement }
 public enum BatchState { Uploaded, Categorized, Confirmed }
 
 /// <summary>Dávka importu: nahráno → kategorizováno → potvrzeno.</summary>

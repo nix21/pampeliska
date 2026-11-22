@@ -29,7 +29,7 @@ public record InboundAccountRow(int Id, string Name, string Institution, string?
 /// přiřazení k účtu a zápis přes <see cref="ImportService"/> jako předběžné pohyby (docs/email-notifikace.md kap. 3).
 /// </summary>
 public partial class InboundEmailProcessor(AppDbContext db, ImportService import, INotificationExtractor extractor, DkimChecker dkim,
-    TimeProvider time, ILogger<InboundEmailProcessor> log)
+    StatementPasswordService passwords, TimeProvider time, ILogger<InboundEmailProcessor> log)
 {
     public const int MaxAttempts = 5;
     private const int MaxDaysBack = 45;
@@ -182,11 +182,7 @@ public partial class InboundEmailProcessor(AppDbContext db, ImportService import
         }
         catch (TransientExtractionException ex)
         {
-            e.Error = ex.Message;
-            await db.SaveChangesAsync(ct);
-            log.LogWarning("Vytažení pohybů z e-mailu {Id} se nepovedlo (pokus {N}): {Error}", id, e.Attempts, ex.Message);
-            if (e.Attempts >= MaxAttempts) return await FinishAsync(e, InboundEmailState.Failed, ex.Message, ct);
-            return e.State;
+            return await TransientAsync(e, ex, ct);
         }
         catch (InvalidOperationException ex)
         {
@@ -195,9 +191,7 @@ public partial class InboundEmailProcessor(AppDbContext db, ImportService import
         e.ExtractedJson = JsonSerializer.Serialize(result, ClaudeNotificationExtractor.Json);
         e.Error = null;
 
-        if (result.Kind == "statement")
-            return await FinishAsync(e, InboundEmailState.NotMovement,
-                "Výpis z účtu. Načítání výpisů z e-mailu připravujeme – zatím ho předejte Claudovi přes MCP.", ct);
+        if (result.Kind == "statement") return await ProcessStatementAsync(e, msg, ct);
         if (result.Kind != "movements" || result.Movements.Count == 0)
             return await FinishAsync(e, InboundEmailState.NotMovement, result.Reason ?? "E-mail neoznamuje pohyb na účtu.", ct);
 
@@ -210,6 +204,15 @@ public partial class InboundEmailProcessor(AppDbContext db, ImportService import
         var e = await db.InboundEmails.FirstOrDefaultAsync(x => x.Id == id, ct) ?? throw new DomainException($"E-mail {id} neexistuje.");
         if (e.State != InboundEmailState.NeedsAccount || e.ExtractedJson is null) throw new DomainException("U tohoto e-mailu se účet nevybírá.");
         var account = await db.Accounts.FirstOrDefaultAsync(a => a.Id == accountId, ct) ?? throw new DomainException($"Účet {accountId} neexistuje.");
+        if (e.StatementJson is { } sj)
+        {
+            var parts = JsonSerializer.Deserialize<List<StatementPart>>(sj, ClaudeNotificationExtractor.Json)!;
+            // Zapamatovat číslo účtu z výpisu, když ho účet ještě nemá (příště se přiřadí sám)
+            if (rememberCard && string.IsNullOrWhiteSpace(account.Iban) && parts.Count == 1 && parts[0].Account.AccountNumber is { } num
+                && AccountNumber.Normalize(num) is { } canon && !num.Any(c => c is '*' or '•' or 'x' or 'X'))
+                account.Iban = canon;
+            return await ImportStatementAsync(e, parts, account.Id, ct);
+        }
         var result = JsonSerializer.Deserialize<ExtractedNotification>(e.ExtractedJson, ClaudeNotificationExtractor.Json)!;
         if (rememberCard)
         {

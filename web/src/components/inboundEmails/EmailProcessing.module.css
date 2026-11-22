@@ -9,6 +9,14 @@
 button.row:hover { background: color-mix(in oklch, var(--surface-2) 60%, var(--surface)); }
 .assign { display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: var(--radius-sm); background: var(--surface-2); }
 .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.statement { display: flex; flex-direction: column; gap: 10px; padding: 14px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface); font-size: 13px; }
+.stats { display: flex; gap: 6px 16px; flex-wrap: wrap; color: var(--ink-2); }
+.stats b { color: var(--ink); font-weight: 800; }
+.balanceOk { display: inline-flex; align-items: center; gap: 6px; color: var(--pos); font-weight: 700; }
+.balanceOk > span { color: var(--ink); }
+.pwRow { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); }
+.pwForm { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; padding-top: 12px; border-top: 1px solid var(--line); }
+.pwForm > :last-child { grid-column: 1 / -1; display: flex; gap: 8px; flex-wrap: wrap; }
 .actions:empty { display: none; }
 
 /* Nastavení příjmu */
@@ -25,6 +33,7 @@ button.row:hover { background: color-mix(in oklch, var(--surface-2) 60%, var(--s
 .cardInput { width: 96px; }
 
 @media (max-width: 767px) {
+  .pwForm { grid-template-columns: minmax(0, 1fr); }
   .row { grid-template-columns: 44px minmax(0, 1fr) auto; }
   .row > :nth-child(3) { display: none; }
 }

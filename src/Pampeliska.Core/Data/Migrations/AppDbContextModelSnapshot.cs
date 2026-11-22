@@ -748,6 +748,14 @@ namespace Pampeliska.Core.Data.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("state");
 
+                    b.Property<string>("StatementJson")
+                        .HasColumnType("text")
+                        .HasColumnName("statement_json");
+
+                    b.Property<string>("StatementResultJson")
+                        .HasColumnType("text")
+                        .HasColumnName("statement_result_json");
+
                     b.Property<string>("Subject")
                         .HasColumnType("text")
                         .HasColumnName("subject");
@@ -1718,6 +1726,50 @@ namespace Pampeliska.Core.Data.Migrations
                         .HasDatabaseName("ix_skipped_duplicates_batch_id");
 
                     b.ToTable("skipped_duplicates", (string)null);
+                });
+
+            modelBuilder.Entity("Pampeliska.Core.Domain.StatementPassword", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("label");
+
+                    b.Property<DateTimeOffset?>("LastUsedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_used_at");
+
+                    b.Property<string>("LastUsedDomain")
+                        .HasMaxLength(253)
+                        .HasColumnType("character varying(253)")
+                        .HasColumnName("last_used_domain");
+
+                    b.Property<string>("ProtectedValue")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("protected_value");
+
+                    b.Property<string>("SenderDomain")
+                        .HasMaxLength(253)
+                        .HasColumnType("character varying(253)")
+                        .HasColumnName("sender_domain");
+
+                    b.HasKey("Id")
+                        .HasName("pk_statement_passwords");
+
+                    b.ToTable("statement_passwords", (string)null);
                 });
 
             modelBuilder.Entity("Pampeliska.Core.Domain.Transaction", b =>

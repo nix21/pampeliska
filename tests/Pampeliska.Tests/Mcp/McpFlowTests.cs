@@ -236,6 +236,37 @@ public class McpFlowTests(PampeliskaFactory factory) : IClassFixture<PampeliskaF
         var tipTxs = await browser.GetFromJsonAsync<JsonElement>($"/api/transactions?tip={tipId}");
         Assert.Equal(netflixId, tipTxs.GetProperty("items")[0].GetProperty("id").GetInt32());
 
+        // E-maily z bank: nastavení, heslo k výpisům (hodnota se nevrací), nahraný e-mail s přílohou a její text
+        Assert.Contains("read_inbound_email_attachment", tools);
+        var pw = await Call(mcp, "add_statement_password", new() { ["label"] = "Telefon", ["password"] = "777123456" });
+        Assert.False(pw.TryGetProperty("password", out _));
+        var settings = await Call(mcp, "get_inbound_email_settings", new());
+        Assert.StartsWith("banky-", settings.GetProperty("address").GetProperty("address").GetString());
+        Assert.Equal("Telefon", settings.GetProperty("statementPasswords")[0].GetProperty("label").GetString());
+        Assert.DoesNotContain("777123456", settings.GetRawText());
+
+        var mail = new MimeKit.MimeMessage();
+        mail.From.Add(MimeKit.MailboxAddress.Parse("vypisy@fio.cz"));
+        mail.To.Add(MimeKit.MailboxAddress.Parse("banky@pampeliska.test"));
+        mail.Subject = "Výpis z účtu";
+        mail.Date = DateTimeOffset.Now;
+        var bodyBuilder = new MimeKit.BodyBuilder { TextBody = "V příloze je výpis." };
+        bodyBuilder.Attachments.Add("vypis.pdf", Pampeliska.Tests.Services.PdfTextTests.Pdf(["Vypis 09/2026", "Lidl -99,90"], "777123456"),
+            MimeKit.ContentType.Parse("application/pdf"));
+        mail.Body = bodyBuilder.ToMessageBody();
+        using var eml = new MemoryStream();
+        mail.WriteTo(eml);
+        var uploaded = await browser.PostAsync("/api/inbound-emails", new ByteArrayContent(eml.ToArray()));
+        Assert.Equal(HttpStatusCode.OK, uploaded.StatusCode);
+        var emailId = (await uploaded.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
+        var listed = await Call(mcp, "list_inbound_emails", new());
+        Assert.Contains(listed.EnumerateArray(), e => e.GetProperty("id").GetInt32() == emailId);
+        var detail = await Call(mcp, "get_inbound_email", new() { ["emailId"] = emailId });
+        Assert.Equal("vypis.pdf", detail.GetProperty("attachments")[0].GetProperty("name").GetString());
+        var attachment = await Call(mcp, "read_inbound_email_attachment", new() { ["emailId"] = emailId, ["index"] = 0 });
+        Assert.Contains("Lidl", attachment.GetProperty("text").GetString());
+        Assert.Equal("Telefon", attachment.GetProperty("passwordLabel").GetString());
+
         // Odpojení v Nastavení → token přestane platit
         var connectionId = connections.EnumerateArray().First(c => c.GetProperty("clientName").GetString() == "Test klient").GetProperty("id").GetInt32();
         Assert.Equal(HttpStatusCode.NoContent, (await browser.DeleteAsync($"/api/mcp/connections/{connectionId}")).StatusCode);

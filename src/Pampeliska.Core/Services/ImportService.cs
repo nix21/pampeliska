@@ -27,8 +27,8 @@ public record ImportItem(
 public record ImportOptions(BatchSource Source, string Actor, int? MemberId = null, string? ClientId = null, string? ClientName = null,
     string? Note = null, int? BatchId = null, DateOnly? PeriodFrom = null, DateOnly? PeriodTo = null)
 {
-    /// <summary>Výpis z účtu (MCP, banka) – páruje předběžné pohyby z notifikací a hodnotí, co ve výpisu chybí.</summary>
-    public bool IsStatement => Source is BatchSource.Mcp or BatchSource.EnableBanking;
+    /// <summary>Výpis z účtu (MCP, banka, e-mail) – páruje předběžné pohyby z notifikací a hodnotí, co ve výpisu chybí.</summary>
+    public bool IsStatement => Source is BatchSource.Mcp or BatchSource.EnableBanking or BatchSource.EmailStatement;
 }
 
 /// <param name="Reconciled">Předběžné pohyby z notifikací, které výpis potvrdil (nevznikly znovu).</param>
@@ -171,6 +171,7 @@ public class ImportService(AppDbContext db, FxService fx, TransferMatcher transf
                 BatchSource.Mcp => $"Importováno přes MCP{(opt.ClientName is { } cn ? $" ({cn})" : "")}",
                 BatchSource.EnableBanking => "Staženo z banky (Enable Banking)",
                 BatchSource.Email => "Z e-mailové notifikace banky",
+                BatchSource.EmailStatement => "Z výpisu poslaného e-mailem",
                 _ => "Přidáno ručně",
             } });
 

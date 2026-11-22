@@ -24,7 +24,7 @@ const STATE_LABEL: Record<BatchState, string> = {
   Confirmed: 'Potvrzeno',
 }
 const STATE_COLOR: Record<BatchState, string> = { Uploaded: 'var(--warn)', Categorized: 'var(--ink)', Confirmed: 'var(--pos)' }
-const SRC_ICON: Record<BatchSummary['source'], LucideIcon> = { Mcp: Plug, Manual: FileText, EnableBanking: Landmark, Email: Mail }
+const SRC_ICON: Record<BatchSummary['source'], LucideIcon> = { Mcp: Plug, Manual: FileText, EnableBanking: Landmark, Email: Mail, EmailStatement: FileText }
 
 const ITEMS_PREVIEW = 8
 

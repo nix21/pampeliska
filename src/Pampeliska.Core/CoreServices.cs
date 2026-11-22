@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -46,6 +47,9 @@ public static class CoreServices
         services.AddScoped<DkimChecker>();
         services.AddScoped<InboundEmailProcessor>();
         services.AddScoped<InboundEmailService>();
+        services.AddScoped<StatementPasswordService>();
+        // Šifrování hesel k výpisům; API navíc ukládá klíče na disk (Program.cs)
+        services.AddDataProtection();
         services.AddScoped<IDailyCheck>(sp => sp.GetRequiredService<InboundEmailService>());
         return services;
     }

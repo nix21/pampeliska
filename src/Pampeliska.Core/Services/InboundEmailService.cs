@@ -39,7 +39,11 @@ public record InboundAttachment(string Name, string ContentType, long SizeBytes)
 
 public record InboundEmailDetail(InboundEmailRow Email, string? EnvelopeFrom, string? EnvelopeTo, string? RemoteIp, DateTimeOffset? SentAt,
     string? MessageId, string? TextBody, string? Error, bool HasRaw, DateTimeOffset? RawPurgedAt, IReadOnlyList<InboundAttachment> Attachments,
-    string? DkimDomain, bool SenderAllowed, string? Note, ExtractedNotification? Extracted, IReadOnlyList<InboundTx> Transactions, bool ExtractionAvailable);
+    string? DkimDomain, bool SenderAllowed, string? Note, ExtractedNotification? Extracted, IReadOnlyList<InboundTx> Transactions, bool ExtractionAvailable,
+    IReadOnlyList<StatementAccountOutcome>? Statement = null, IReadOnlyList<StatementPartInfo>? StatementParts = null);
+
+/// <summary>Účet z výpisu, který ještě není zapsaný (např. čeká na výběr účtu).</summary>
+public record StatementPartInfo(string FileName, string? AccountNumber, string Currency, string? PeriodFrom, string? PeriodTo, int Movements);
 
 /// <summary>Pohyb zapsaný z e-mailu.</summary>
 public record InboundTx(int Id, DateOnly Date, string Counterparty, decimal Amount, string Currency, string Account, bool Provisional, TransactionStatus Status);
@@ -58,7 +62,8 @@ public partial class InboundEmailService(AppDbContext db, IOptions<InboundEmailO
 {
     private const string TokenChars = "abcdefghijkmnpqrstuvwxyz23456789";
     private const int TextLimit = 200_000;
-    private static readonly InboundEmailState[] NeedsAttention = [InboundEmailState.Quarantined, InboundEmailState.NeedsAccount, InboundEmailState.Failed];
+    private static readonly InboundEmailState[] NeedsAttention =
+        [InboundEmailState.Quarantined, InboundEmailState.NeedsAccount, InboundEmailState.Failed, InboundEmailState.NeedsPassword];
 
     private InboundEmailOptions Opt => options.Value;
 
@@ -173,7 +178,11 @@ public partial class InboundEmailService(AppDbContext db, IOptions<InboundEmailO
         return new InboundEmailDetail(
             new InboundEmailRow(m.Id, m.ReceivedAt, m.Source, m.FromName, m.FromAddress, m.Subject, m.State, m.SizeBytes, m.AttachmentCount, m.Preview),
             m.EnvelopeFrom, m.EnvelopeTo, m.RemoteIp, m.SentAt, m.MessageId, m.TextBody, m.Error, m.RawMime is not null, m.RawPurgedAt, attachments,
-            m.DkimDomain, allowed, m.Note, extracted, txs, extractor.Available);
+            m.DkimDomain, allowed, m.Note, extracted, txs, extractor.Available,
+            m.StatementResultJson is { } sr ? JsonSerializer.Deserialize<List<StatementAccountOutcome>>(sr, ClaudeNotificationExtractor.Json) : null,
+            m.StatementJson is { } sj ? JsonSerializer.Deserialize<List<StatementPart>>(sj, ClaudeNotificationExtractor.Json)!
+                .Select(p => new StatementPartInfo(p.FileName, p.Account.AccountNumber, p.Account.Currency, p.Account.PeriodFrom, p.Account.PeriodTo,
+                    p.Account.Movements.Count)).ToList() : null);
     }
 
     /// <summary>Surový e-mail ke stažení (.eml).</summary>

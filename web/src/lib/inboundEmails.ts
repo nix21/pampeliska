@@ -2,7 +2,7 @@
 import { useQuery, type QueryClient } from '@tanstack/react-query'
 import { api } from './api'
 
-export type InboundEmailState = 'Received' | 'Imported' | 'Statement' | 'NotMovement' | 'Quarantined' | 'NeedsAccount' | 'Failed'
+export type InboundEmailState = 'Received' | 'Imported' | 'Statement' | 'NotMovement' | 'Quarantined' | 'NeedsAccount' | 'Failed' | 'NeedsPassword'
 export type InboundEmailSource = 'Smtp' | 'Upload'
 
 export interface InboundEmailRow {
@@ -43,6 +43,41 @@ export interface InboundEmailDetail {
   extracted?: ExtractedNotification
   transactions: InboundTx[]
   extractionAvailable: boolean
+  /** Výpis z přílohy zapsaný po účtech. */
+  statement?: StatementAccountOutcome[]
+  /** Účty z výpisu (i nezapsané – čekají na výběr účtu). */
+  statementParts?: StatementPartInfo[]
+}
+
+export interface StatementAccountOutcome {
+  fileName: string
+  accountId?: number
+  accountName?: string
+  accountNumber?: string
+  currency: string
+  periodFrom?: string
+  periodTo?: string
+  openingBalance?: number
+  closingBalance?: number
+  movements: number
+  batchId?: number
+  created: number
+  reconciled: number
+  notInStatement: number
+  skipped: number
+  suspected: number
+  /** Zůstatek účtu v aplikaci ke konci období. */
+  balanceInApp?: number
+  passwordLabel?: string
+}
+
+export interface StatementPartInfo {
+  fileName: string
+  accountNumber?: string
+  currency: string
+  periodFrom?: string
+  periodTo?: string
+  movements: number
 }
 
 export interface InboundAddress {
@@ -65,10 +100,11 @@ export const STATE_META: Record<InboundEmailState, [string, string]> = {
   Quarantined: ['Karanténa', 'var(--warn)'],
   NeedsAccount: ['Vyberte účet', 'var(--warn)'],
   Failed: ['Nepřečteno', 'var(--neg)'],
+  NeedsPassword: ['Chybí heslo', 'var(--warn)'],
 }
 
 const FILTER_STATES: Record<Exclude<EmailFilter, 'all'>, InboundEmailState[]> = {
-  todo: ['Quarantined', 'NeedsAccount', 'Failed'],
+  todo: ['Quarantined', 'NeedsAccount', 'Failed', 'NeedsPassword'],
   done: ['Imported', 'Statement'],
   not: ['NotMovement'],
 }
@@ -91,7 +127,7 @@ export function useInboundAddress() {
 }
 
 export function invalidateInboundEmails(qc: QueryClient) {
-  return Promise.all(['inbound-emails', 'inbound-email', 'inbound-address', 'inbound-senders', 'inbound-accounts', 'badges', 'transactions', 'inbox', 'batches'].map((k) => qc.invalidateQueries({ queryKey: [k] })))
+  return Promise.all(['inbound-emails', 'inbound-email', 'inbound-address', 'inbound-senders', 'inbound-accounts', 'statement-passwords', 'badges', 'transactions', 'inbox', 'batches'].map((k) => qc.invalidateQueries({ queryKey: [k] })))
 }
 
 export function senderLabel(e: Pick<InboundEmailRow, 'fromName' | 'fromAddress'>) {
@@ -158,4 +194,21 @@ export function useInboundSenders() {
 
 export function useInboundAccounts() {
   return useQuery({ queryKey: ['inbound-accounts'], queryFn: () => api.get<InboundAccount[]>('/api/inbound-emails/accounts') })
+}
+
+// ---------- Hesla k výpisům (fáze 4) ----------
+
+/** Uložené heslo k zamčeným PDF výpisům – hodnota se nikdy nevrací. */
+export interface StatementPassword {
+  id: number
+  label: string
+  senderDomain?: string
+  senderName?: string
+  lastUsedAt?: string
+  lastUsedDomain?: string
+  createdAt: string
+}
+
+export function useStatementPasswords() {
+  return useQuery({ queryKey: ['statement-passwords'], queryFn: () => api.get<StatementPassword[]>('/api/inbound-emails/passwords') })
 }

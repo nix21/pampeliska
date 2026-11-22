@@ -272,7 +272,7 @@ export function NeedsCard({ stats, mobile, className }: { stats?: OverviewStats;
 
 // ---------- Ke kategorizaci ----------
 
-const SOURCE: Record<BatchSource, string> = { Mcp: 'MCP', Manual: 'ruční', EnableBanking: 'z banky', Email: 'e-mail' }
+const SOURCE: Record<BatchSource, string> = { Mcp: 'MCP', Manual: 'ruční', EnableBanking: 'z banky', Email: 'e-mail', EmailStatement: 'výpis e-mailem' }
 const STATE: Record<BatchState, string> = { Uploaded: 'nahráno', Categorized: 'kategorizováno', Confirmed: 'potvrzeno' }
 
 export function InboxCard({ mobile, className }: { mobile?: boolean; className?: string }) {

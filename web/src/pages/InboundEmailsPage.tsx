@@ -5,7 +5,7 @@ import { useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { PageHeader } from '../components/AppShell'
 import { EmailProcessing, SenderAuth } from '../components/inboundEmails/EmailProcessing'
-import { AccountsCard, SendersCard } from '../components/inboundEmails/SenderSettings'
+import { AccountsCard, PasswordsCard, SendersCard } from '../components/inboundEmails/SenderSettings'
 import { Button, Callout, Card, Dialog, Empty, Segmented, Spinner } from '../components/ui'
 import { api, notifyError, notifyOk } from '../lib/api'
 import { count, num } from '../lib/format'
@@ -313,6 +313,7 @@ function SettingsTab() {
       </div>
       <div className="col" style={{ gap: 'var(--gap)', minWidth: 0 }}>
       <AccountsCard />
+      <PasswordsCard />
       <Card>
         <div className={s.cardHead}><Check size={18} /><h2>Jak to zapnout</h2></div>
         <ol className={s.steps}>

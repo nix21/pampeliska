@@ -1,12 +1,12 @@
 import { useQueryClient } from '@tanstack/react-query'
-import { AlertTriangle, Play, ShieldAlert, ShieldCheck } from 'lucide-react'
+import { AlertTriangle, FileText, KeyRound, Play, ShieldAlert, ShieldCheck } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Money } from '../common'
 import { Button, Callout, Checkbox, Pill, Select } from '../ui'
 import { api, notifyError, notifyOk } from '../../lib/api'
-import { dateShort } from '../../lib/format'
-import { invalidateInboundEmails, useInboundAccounts, type InboundEmailDetail, type InboundEmailState } from '../../lib/inboundEmails'
+import { count, dateShort } from '../../lib/format'
+import { invalidateInboundEmails, useInboundAccounts, type InboundEmailDetail, type InboundEmailState, type StatementAccountOutcome } from '../../lib/inboundEmails'
 import s from './EmailProcessing.module.css'
 
 const STATE_DONE: Record<InboundEmailState, string> = {
@@ -17,6 +17,7 @@ const STATE_DONE: Record<InboundEmailState, string> = {
   Quarantined: 'E-mail je v karanténě',
   NeedsAccount: 'Vyberte účet',
   Failed: 'E-mail se nepodařilo zpracovat',
+  NeedsPassword: 'Výpis je zamčený heslem',
 }
 
 function useRun() {
@@ -54,7 +55,7 @@ export function SenderAuth({ d }: { d: InboundEmailDetail }) {
 }
 
 function stateTone(st: InboundEmailState): 'warn' | 'danger' | 'neutral' | 'pos' {
-  if (st === 'Quarantined' || st === 'NeedsAccount') return 'warn'
+  if (st === 'Quarantined' || st === 'NeedsAccount' || st === 'NeedsPassword') return 'warn'
   if (st === 'Failed') return 'danger'
   if (st === 'Imported' || st === 'Statement') return 'pos'
   return 'neutral'
@@ -80,7 +81,18 @@ export function EmailProcessing({ d }: { d: InboundEmailDetail }) {
 
   return (
     <>
-      {note && <Callout tone={stateTone(st)} icon={st === 'Failed' || st === 'Quarantined' ? <AlertTriangle size={16} /> : undefined}>{note}</Callout>}
+      {note && st !== 'Statement' && (
+        <Callout tone={stateTone(st)} icon={st === 'NeedsPassword' ? <KeyRound size={16} /> : st === 'Failed' || st === 'Quarantined' ? <AlertTriangle size={16} /> : undefined}>
+          {note}
+        </Callout>
+      )}
+
+      {d.statement && d.statement.length > 0 && (
+        <div className="col" style={{ gap: 8 }}>
+          <h3 className={s.h3}>Načtený výpis</h3>
+          {d.statement.map((o, i) => <StatementOutcomeCard key={i} o={o} />)}
+        </div>
+      )}
 
       {d.transactions.length > 0 && (
         <div className="col" style={{ gap: 8 }}>
@@ -135,7 +147,10 @@ export function EmailProcessing({ d }: { d: InboundEmailDetail }) {
         {st === 'Quarantined' && d.extractionAvailable && (
           <Button loading={busy === 'force'} onClick={() => process(true)}>Zpracovat přesto</Button>
         )}
-        {(st === 'Failed' || st === 'NotMovement') && d.extractionAvailable && (
+        {st === 'NeedsPassword' && (
+          <Button variant="primary" icon={<KeyRound size={15} />} onClick={() => nav('/emaily/nastaveni#hesla')}>Přidat heslo k výpisům</Button>
+        )}
+        {(st === 'Failed' || st === 'NotMovement' || st === 'NeedsPassword') && d.extractionAvailable && (
           <Button loading={busy === 'process'} onClick={() => process(false)}>Zpracovat znovu</Button>
         )}
       </div>
@@ -150,25 +165,80 @@ function AssignAccount({ d, busy, run }: {
 }) {
   const accounts = useInboundAccounts().data ?? []
   const [accountId, setAccountId] = useState<string | null>(null)
-  const card = d.extracted?.movements.map((m) => m.cardSuffix?.replace(/\D/g, '').slice(-4)).find((c) => c && c.length === 4)
+  const part = d.statementParts?.length === 1 ? d.statementParts[0] : undefined
+  const isStatement = !!d.statementParts?.length
+  const card = isStatement ? undefined : d.extracted?.movements.map((m) => m.cardSuffix?.replace(/\D/g, '').slice(-4)).find((c) => c && c.length === 4)
+  const rememberText = card ? `Zapamatovat kartu •• ${card} k tomuto účtu`
+    : part?.accountNumber && !/[*•xX]/.test(part.accountNumber) ? `Zapamatovat číslo účtu ${part.accountNumber}, když ho účet nemá` : null
   const [remember, setRemember] = useState(true)
   return (
     <div className={s.assign}>
-      <span style={{ fontSize: 13, fontWeight: 700 }}>Ke kterému účtu pohyb patří?</span>
+      <span style={{ fontSize: 13, fontWeight: 700 }}>
+        {isStatement ? `Ke kterému účtu výpis${part?.accountNumber ? ` ${part.accountNumber}` : ''} patří?` : 'Ke kterému účtu pohyb patří?'}
+      </span>
+      {part && (
+        <span className="muted" style={{ fontSize: 12 }}>
+          {part.fileName} · {count(part.movements, 'pohyb', 'pohyby', 'pohybů')}{part.periodFrom && part.periodTo ? ` · ${dateShort(part.periodFrom)} – ${dateShort(part.periodTo)}` : ''}
+        </span>
+      )}
       <Select value={accountId} onChange={setAccountId} placeholder="Vyberte účet" aria-label="Účet"
         options={accounts.map((a) => ({ value: String(a.id), label: `${a.name} · ${a.institution}${a.currency !== 'CZK' ? ` · ${a.currency}` : ''}` }))} />
-      {card && (
+      {rememberText && (
         <label className="row" style={{ gap: 8, fontSize: 13, cursor: 'pointer', minHeight: 32 }}>
-          <Checkbox checked={remember} onChange={setRemember} label={`Zapamatovat kartu •• ${card} k tomuto účtu`} />
-          <span>Zapamatovat kartu •• {card} k tomuto účtu</span>
+          <Checkbox checked={remember} onChange={setRemember} label={rememberText} />
+          <span>{rememberText}</span>
         </label>
       )}
       <div>
         <Button variant="primary" disabled={!accountId} loading={busy}
-          onClick={() => run('assign', () => api.post(`/api/inbound-emails/${d.email.id}/assign`, { accountId: Number(accountId), rememberCard: !!card && remember }))}>
-          Zapsat pohyb
+          onClick={() => run('assign', () => api.post(`/api/inbound-emails/${d.email.id}/assign`, { accountId: Number(accountId), rememberCard: !!rememberText && remember }))}>
+          {isStatement ? 'Zapsat výpis' : 'Zapsat pohyb'}
         </Button>
       </div>
+    </div>
+  )
+}
+
+/** Souhrn načteného výpisu jednoho účtu: období, spárováno s notifikacemi, nově, chybí, kontrola zůstatku. */
+function StatementOutcomeCard({ o }: { o: StatementAccountOutcome }) {
+  const nav = useNavigate()
+  const diff = o.closingBalance != null && o.balanceInApp != null ? o.balanceInApp - o.closingBalance : null
+  const balanceOk = diff != null && Math.abs(diff) < 0.01
+  const stats: [string, number, string?][] = [
+    ['spárováno s notifikacemi', o.reconciled, 'var(--pos)'],
+    ['nově zapsáno', o.created],
+    ['už v evidenci', o.skipped],
+    ['z notifikací ve výpisu chybí', o.notInStatement, 'var(--warn)'],
+  ]
+  return (
+    <div className={s.statement}>
+      <div className="row" style={{ gap: 10, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+        <FileText size={18} style={{ flexShrink: 0, marginTop: 2 }} />
+        <div className="col grow" style={{ gap: 2, minWidth: 0 }}>
+          <b>{o.accountName ?? o.accountNumber ?? 'Účet'}</b>
+          <span className="muted" style={{ fontSize: 12 }}>
+            {o.periodFrom && o.periodTo ? `${dateShort(o.periodFrom)} – ${dateShort(o.periodTo)}` : ''} · {count(o.movements, 'pohyb', 'pohyby', 'pohybů')}
+            {' · '}{o.fileName}{o.passwordLabel ? ` · odemčeno heslem „${o.passwordLabel}“` : ''}
+          </span>
+        </div>
+        {o.batchId != null && <Button size="sm" onClick={() => nav(`/davky/${o.batchId}`)}>Otevřít dávku</Button>}
+      </div>
+      <div className={s.stats}>
+        {stats.filter(([, n]) => n > 0).map(([label, n, color]) => (
+          <span key={label}><b style={color ? { color } : undefined}>{n}</b> {label}</span>
+        ))}
+      </div>
+      {o.closingBalance != null && (
+        balanceOk
+          ? <span className={s.balanceOk}><ShieldCheck size={14} /> Zůstatek sedí s výpisem: <Money value={o.closingBalance} currency={o.currency} /></span>
+          : diff != null && (
+            <Callout tone="warn" icon={<AlertTriangle size={16} />}>
+              Zůstatek v Pampelišce ke konci období je <Money value={o.balanceInApp!} currency={o.currency} />, výpis uvádí{' '}
+              <Money value={o.closingBalance} currency={o.currency} /> (rozdíl <Money value={diff} currency={o.currency} />). Nejspíš chybí
+              nebo přebývá pohyb před obdobím výpisu, nebo nesedí počáteční zůstatek účtu.
+            </Callout>
+          )
+      )}
     </div>
   )
 }

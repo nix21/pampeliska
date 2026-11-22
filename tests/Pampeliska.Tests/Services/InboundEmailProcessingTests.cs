@@ -26,6 +26,15 @@ public class FakeExtractor : INotificationExtractor
         Calls.Add(input);
         return Task.FromResult(Handler(input));
     }
+
+    public Func<StatementInput, ExtractedStatement> StatementHandler { get; set; } = _ => new([], "Není výpis");
+    public List<StatementInput> StatementCalls { get; } = [];
+
+    public Task<ExtractedStatement> ExtractStatementAsync(StatementInput input, CancellationToken ct = default)
+    {
+        StatementCalls.Add(input);
+        return Task.FromResult(StatementHandler(input));
+    }
 }
 
 /// <summary>DNS s veřejnými klíči DKIM testovacích domén.</summary>
@@ -72,7 +81,8 @@ public class InboundEmailProcessingTests
         public void Dispose() => Env.Dispose();
 
         /// <summary>Uloží notifikaci; <paramref name="signedBy"/> = doména, která e-mail podepíše DKIM (null = bez podpisu).</summary>
-        public async Task<int> ReceiveAsync(string? signedBy = "fio.cz", string from = "automat@fio.cz", string text = "Pohyb na účtu")
+        public async Task<int> ReceiveAsync(string? signedBy = "fio.cz", string from = "automat@fio.cz", string text = "Pohyb na účtu",
+            params (string Name, byte[] Data, string Mime)[] attachments)
         {
             var msg = new MimeMessage();
             msg.From.Add(MailboxAddress.Parse(from));
@@ -80,7 +90,9 @@ public class InboundEmailProcessingTests
             msg.Subject = "Pohyb na účtu";
             msg.Date = new DateTimeOffset(2026, 9, 28, 9, 0, 0, TimeSpan.FromHours(2));
             msg.MessageId = MimeKit.Utils.MimeUtils.GenerateMessageId("test");
-            msg.Body = new TextPart("plain") { Text = text };
+            var body = new BodyBuilder { TextBody = text };
+            foreach (var (name, data, mime) in attachments) body.Attachments.Add(name, data, ContentType.Parse(mime));
+            msg.Body = body.ToMessageBody();
             if (signedBy is not null)
             {
                 msg.Prepare(EncodingConstraint.SevenBit);
@@ -262,6 +274,8 @@ public class InboundEmailProcessingTests
         public bool Available => true;
         public Task<ExtractedNotification> ExtractAsync(ExtractionInput input, CancellationToken ct = default) =>
             throw new TransientExtractionException("Claude API je přetížené.");
+        public Task<ExtractedStatement> ExtractStatementAsync(StatementInput input, CancellationToken ct = default) =>
+            throw new TransientExtractionException("Claude API je přetížené.");
     }
 
     [Fact]
@@ -338,5 +352,156 @@ public class InboundEmailProcessingTests
         var n = Movements(Card(-1, "X", account: "1"));
         var back = JsonSerializer.Deserialize<ExtractedNotification>(JsonSerializer.Serialize(n, ClaudeNotificationExtractor.Json), ClaudeNotificationExtractor.Json);
         Assert.Equal(n.Movements[0], back!.Movements[0]);
+    }
+
+    // ---------- Výpisy v příloze (fáze 4) ----------
+
+    private static readonly ExtractedNotification StatementMail = new("statement", [], "Výpis z účtu za září");
+
+    private static StatementMovement SMove(string date, decimal amount, string counterparty, string type = "Card", string? id = null) =>
+        new(date, null, amount, counterparty, null, null, null, type, null, id);
+
+    private static ExtractedStatement Statement(string? account, decimal? open, decimal? close, params StatementMovement[] moves) =>
+        new([new StatementAccount(account, "CZK", "2026-09-01", "2026-09-27", open, close, [.. moves])], null);
+
+    private static (string, byte[], string) PdfAttachment(string? password = null) =>
+        ("vypis-2026-09.pdf", PdfTextTests.Pdf(["Vypis z uctu 2900111222/2010", "05.09.2026 Lidl -99,90", "10.09.2026 Albert -250,00"], password),
+            "application/pdf");
+
+    [Fact]
+    public async Task Locked_statement_waits_for_password_then_reconciles_notification()
+    {
+        using var c = new Ctx();
+        // Předběžný pohyb z notifikace
+        c.Ai.Handler = _ => Movements(Card(-99.90m, "LIDL", account: "2900111222", date: "2026-09-04"));
+        Assert.Equal(InboundEmailState.Imported, await c.Processor.ProcessAsync(await c.ReceiveAsync()));
+
+        c.Ai.Handler = _ => StatementMail;
+        c.Ai.StatementHandler = i => Statement("2900111222/2010", 5000, 4650.10m,
+            SMove("2026-09-05", -99.90m, "Lidl Brno"), SMove("2026-09-10", -250, "Albert"));
+        var id = await c.ReceiveAsync(text: "V příloze zasíláme výpis.", attachments: PdfAttachment("2468"));
+
+        Assert.Equal(InboundEmailState.NeedsPassword, await c.Processor.ProcessAsync(id));
+        Assert.Contains("zamčená heslem", (await c.Emails.DetailAsync(id)).Note);
+        Assert.Empty(c.Ai.StatementCalls);
+
+        var passwords = c.Env.Get<StatementPasswordService>();
+        await passwords.AddAsync("Telefon", "777000111", null);
+        Assert.Equal(InboundEmailState.NeedsPassword, await c.Processor.ProcessAsync(id));
+        Assert.Contains("žádné z uložených hesel nesedí", (await c.Emails.DetailAsync(id)).Note);
+
+        await passwords.AddAsync("RČ – poslední 4", "2468", "csas.cz");
+        Assert.Equal(InboundEmailState.Statement, await c.Processor.ProcessAsync(id));
+        Assert.Contains("Lidl", c.Ai.StatementCalls.Single().Text);
+
+        var d = await c.Emails.DetailAsync(id);
+        var o = Assert.Single(d.Statement!);
+        Assert.Equal(c.Env.Spolecny.Id, o.AccountId);
+        Assert.Equal((2, 1, 1, 0), (o.Movements, o.Reconciled, o.Created, o.NotInStatement));
+        Assert.Equal(4650.10m, o.BalanceInApp);
+        Assert.Equal("RČ – poslední 4", o.PasswordLabel);
+        Assert.Contains("1 spárováno s notifikacemi", d.Note);
+        Assert.DoesNotContain("Zůstatek", d.Note);
+
+        var db = c.Env.FreshDb();
+        var batch = await db.ImportBatches.SingleAsync(b => b.Id == o.BatchId);
+        Assert.Equal(BatchSource.EmailStatement, batch.Source);
+        Assert.Equal(new DateOnly(2026, 9, 27), batch.PeriodTo);
+        Assert.Equal(new DateOnly(2026, 9, 27), (await db.Accounts.SingleAsync(a => a.Id == c.Env.Spolecny.Id)).StatementCoveredTo);
+        Assert.False(await db.Transactions.AnyAsync(t => t.Provisional));
+        // Heslo, které zabralo, se příště u Fio zkusí jako první
+        Assert.Equal("RČ – poslední 4", (await passwords.ListAsync()).Single(p => p.LastUsedDomain == "fio.cz").Label);
+        Assert.Equal("2468", (await passwords.CandidatesAsync("fio.cz"))[0].Password);
+    }
+
+    [Fact]
+    public async Task Statement_whose_movements_do_not_add_up_is_not_imported()
+    {
+        using var c = new Ctx();
+        c.Ai.Handler = _ => StatementMail;
+        c.Ai.StatementHandler = _ => Statement("2900111222/2010", 5000, 4000, SMove("2026-09-05", -99.90m, "Lidl"));
+        var id = await c.ReceiveAsync(attachments: PdfAttachment());
+
+        Assert.Equal(InboundEmailState.Failed, await c.Processor.ProcessAsync(id));
+        Assert.Contains("nesedí se zůstatky", (await c.Emails.DetailAsync(id)).Note);
+        Assert.False(await c.Env.FreshDb().Transactions.AnyAsync());
+    }
+
+    [Fact]
+    public async Task Statement_reports_balance_difference_against_app()
+    {
+        using var c = new Ctx();
+        // V aplikaci chybí pohyb z 2. 9., který výpis nemá (např. hotovost zapsaná ručně dvakrát) → zůstatek nesedí
+        await c.Env.ImportAsync(c.Env.Spolecny, TestEnv.Tx("2026-09-02", -500, "Hotovost"));
+        c.Ai.Handler = _ => StatementMail;
+        c.Ai.StatementHandler = _ => Statement("2900111222/2010", 5000, 4900.10m, SMove("2026-09-05", -99.90m, "Lidl"));
+        var id = await c.ReceiveAsync(attachments: PdfAttachment());
+
+        Assert.Equal(InboundEmailState.Statement, await c.Processor.ProcessAsync(id));
+        var note = (await c.Emails.DetailAsync(id)).Note!;
+        Assert.Contains("Zůstatek v Pampelišce k 27. 9.", note);
+        Assert.Contains("výpis uvádí 4", note);
+    }
+
+    [Fact]
+    public async Task Statement_for_unknown_account_waits_for_choice()
+    {
+        using var c = new Ctx();
+        c.Ai.Handler = _ => StatementMail;
+        c.Ai.StatementHandler = _ => Statement("111222333/2010", null, null, SMove("2026-09-05", -99.90m, "Lidl"));
+        var id = await c.ReceiveAsync(attachments: PdfAttachment());
+
+        Assert.Equal(InboundEmailState.NeedsAccount, await c.Processor.ProcessAsync(id));
+        Assert.Equal("111222333/2010", (await c.Emails.DetailAsync(id)).StatementParts!.Single().AccountNumber);
+
+        Assert.Equal(InboundEmailState.Statement, await c.Processor.AssignAccountAsync(id, c.Env.Spolecny.Id, rememberCard: true));
+        var db = c.Env.FreshDb();
+        Assert.Equal(1, await db.Transactions.CountAsync(t => t.AccountId == c.Env.Spolecny.Id));
+        // Účet číslo má – nepřepíše se
+        Assert.Equal("2900111222/2010", (await db.Accounts.SingleAsync(a => a.Id == c.Env.Spolecny.Id)).Iban);
+    }
+
+    [Fact]
+    public async Task Statement_mail_without_attachment_is_not_a_movement()
+    {
+        using var c = new Ctx();
+        c.Ai.Handler = _ => StatementMail;
+        var id = await c.ReceiveAsync(text: "Váš výpis je připraven v internetovém bankovnictví.");
+        Assert.Equal(InboundEmailState.NotMovement, await c.Processor.ProcessAsync(id));
+        Assert.Contains("odkazem", (await c.Emails.DetailAsync(id)).Note);
+    }
+
+    [Fact]
+    public async Task Csv_attachment_in_windows_1250_is_decoded()
+    {
+        using var c = new Ctx();
+        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+        var csv = System.Text.Encoding.GetEncoding(1250).GetBytes("Datum;Částka;Protistrana\n05.09.2026;-99,90;Řeznictví Šťastný\n");
+        c.Ai.Handler = _ => StatementMail;
+        c.Ai.StatementHandler = _ => Statement("2900111222/2010", null, null, SMove("2026-09-05", -99.90m, "Řeznictví Šťastný"));
+        var id = await c.ReceiveAsync(attachments: ("vypis.csv", csv, "text/csv"));
+
+        Assert.Equal(InboundEmailState.Statement, await c.Processor.ProcessAsync(id));
+        Assert.Contains("Řeznictví Šťastný", c.Ai.StatementCalls.Single().Text);
+        var text = await c.Processor.AttachmentTextAsync(id, 0);
+        Assert.Equal("text", text.Kind);
+        Assert.Contains("Částka", text.Text);
+    }
+
+    [Fact]
+    public async Task Passwords_are_stored_encrypted_and_never_listed()
+    {
+        using var c = new Ctx();
+        var svc = c.Env.Get<StatementPasswordService>();
+        await svc.AddAsync("Klientské číslo", "C-998877", "kb.cz");
+        await svc.AddAsync("Obecné", "1111", null);
+
+        var stored = await c.Env.FreshDb().StatementPasswords.ToListAsync();
+        Assert.DoesNotContain(stored, p => p.ProtectedValue.Contains("998877"));
+        Assert.Equal("Komerční banka", (await svc.ListAsync()).Single(p => p.Label == "Klientské číslo").SenderName);
+        // U KB se nejdřív zkusí heslo KB, u jiné banky obecné
+        Assert.Equal("C-998877", (await svc.CandidatesAsync("info.kb.cz"))[0].Password);
+        Assert.Equal("1111", (await svc.CandidatesAsync("fio.cz"))[0].Password);
+        await Assert.ThrowsAsync<DomainException>(() => svc.AddAsync(" ", "x", null));
     }
 }

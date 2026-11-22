@@ -97,7 +97,7 @@ export function NotInStatementBlock({ item, onResolve, busy }: { item: InboxItem
   )
 }
 
-const batchSrc = (src?: string) => (src === 'Mcp' ? 'MCP' : src === 'Manual' ? 'ruční' : src === 'EnableBanking' ? 'banka' : src === 'Email' ? 'e-mail' : 'import')
+const batchSrc = (src?: string) => (src === 'Mcp' ? 'MCP' : src === 'Manual' ? 'ruční' : src === 'EnableBanking' ? 'banka' : src === 'Email' ? 'e-mail' : src === 'EmailStatement' ? 'výpis e-mailem' : 'import')
 
 /** Podezřelá duplicita: obě platby vedle sebe + Zahodit / Ponechat obě. */
 export function DuplicateBlock({ item, onResolve, busy }: { item: InboxItem; onResolve: (keep: boolean) => void; busy?: boolean }) {

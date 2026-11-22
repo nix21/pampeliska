@@ -18,7 +18,7 @@ export type TransactionKind = 'Expense' | 'Income' | 'Transfer' | 'InvestmentTra
 export type TransactionStatus = 'Suggested' | 'Confirmed'
 export type CategorySource = 'Rule' | 'Ai' | 'Manual' | 'Auto'
 export type PaymentType = 'Other' | 'Card' | 'Transfer' | 'DirectDebit' | 'StandingOrder' | 'Cash' | 'Fee' | 'Interest'
-export type BatchSource = 'Mcp' | 'Manual' | 'EnableBanking' | 'Email'
+export type BatchSource = 'Mcp' | 'Manual' | 'EnableBanking' | 'Email' | 'EmailStatement'
 export type BatchState = 'Uploaded' | 'Categorized' | 'Confirmed'
 export type ShareRecalcMode = 'NewOnly' | 'All' | 'FromDate'
 

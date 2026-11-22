@@ -7,6 +7,7 @@ public record ProcessInput(bool Force);
 public record AssignInput(int AccountId, bool RememberCard);
 public record SenderInput(string Domain, bool Enabled, string? Name);
 public record CardsInput(List<string> CardSuffixes);
+public record PasswordInput(string Label, string? Value, string? SenderDomain);
 
 /// <summary>Přijaté e-maily z bank (notifikace a výpisy) a adresa, na kterou chodí.</summary>
 public static class InboundEmailEndpoints
@@ -60,12 +61,39 @@ public static class InboundEmailEndpoints
             return Results.NoContent();
         });
 
+        // Hesla k zamčeným PDF výpisům – hodnota se nikdy nevrací
+        api.MapGet("/inbound-emails/passwords", (StatementPasswordService svc) => svc.ListAsync());
+        api.MapPost("/inbound-emails/passwords", async (PasswordInput input, StatementPasswordService svc, CurrentUser user) =>
+        {
+            await RequireOwnerAsync(user, "Hesla k výpisům může spravovat jen vlastník domácnosti.");
+            return await svc.AddAsync(input.Label, input.Value ?? "", input.SenderDomain);
+        });
+        api.MapPut("/inbound-emails/passwords/{id:int}", async (int id, PasswordInput input, StatementPasswordService svc, CurrentUser user) =>
+        {
+            await RequireOwnerAsync(user, "Hesla k výpisům může spravovat jen vlastník domácnosti.");
+            await svc.UpdateAsync(id, input.Label, input.Value, input.SenderDomain);
+            return Results.NoContent();
+        });
+        api.MapDelete("/inbound-emails/passwords/{id:int}", async (int id, StatementPasswordService svc, CurrentUser user) =>
+        {
+            await RequireOwnerAsync(user, "Hesla k výpisům může spravovat jen vlastník domácnosti.");
+            await svc.DeleteAsync(id);
+            return Results.NoContent();
+        });
+        api.MapGet("/inbound-emails/{id:int}/attachments/{index:int}/text", (int id, int index, InboundEmailProcessor p, CancellationToken ct) =>
+            p.AttachmentTextAsync(id, index, ct));
+
         api.MapGet("/inbound-emails/address", (InboundEmailService svc) => svc.AddressAsync());
         api.MapPost("/inbound-emails/address/regenerate", async (InboundEmailService svc, CurrentUser user) =>
         {
-            var me = await user.RequireMemberAsync();
-            if (me.Role != MemberRole.Owner) throw new DomainException("Novou adresu může vytvořit jen vlastník domácnosti.");
+            await RequireOwnerAsync(user, "Novou adresu může vytvořit jen vlastník domácnosti.");
             return await svc.RegenerateAsync();
         });
+    }
+
+    public static async Task RequireOwnerAsync(CurrentUser user, string message)
+    {
+        var me = await user.RequireMemberAsync();
+        if (me.Role != MemberRole.Owner) throw new DomainException(message);
     }
 }

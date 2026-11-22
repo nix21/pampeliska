@@ -1,10 +1,10 @@
 namespace Pampeliska.Core.Domain;
 
 /// <summary>
-/// Stav přijatého e-mailu. Ve fázi 1 zůstávají e-maily ve stavu <see cref="Received"/>, další stavy doplní
-/// vytěžení pohybů (docs/email-notifikace.md).
+/// Stav přijatého e-mailu (docs/email-notifikace.md). <see cref="Statement"/> = výpis z přílohy načten,
+/// <see cref="NeedsPassword"/> = PDF výpisu je zamčené a žádné uložené heslo nesedí.
 /// </summary>
-public enum InboundEmailState { Received, Imported, Statement, NotMovement, Quarantined, NeedsAccount, Failed }
+public enum InboundEmailState { Received, Imported, Statement, NotMovement, Quarantined, NeedsAccount, Failed, NeedsPassword }
 
 public enum InboundEmailSource { Smtp, Upload }
 
@@ -42,6 +42,10 @@ public class InboundEmail
     public string? ExtractedJson { get; set; }
     /// <summary>Vysvětlení stavu pro uživatele (proč karanténa, proč nejde o pohyb…).</summary>
     public string? Note { get; set; }
+    /// <summary>Výpis vytažený z přílohy (JSON <c>ExtractedStatement</c>).</summary>
+    public string? StatementJson { get; set; }
+    /// <summary>Výsledek načtení výpisu po účtech (JSON <c>StatementOutcome</c>).</summary>
+    public string? StatementResultJson { get; set; }
     public DateTimeOffset? ProcessedAt { get; set; }
     public int Attempts { get; set; }
 }
@@ -56,5 +60,23 @@ public class InboundSender
     public required string Domain { get; set; }
     public string? Name { get; set; }
     public bool Enabled { get; set; } = true;
+    public DateTimeOffset CreatedAt { get; set; }
+}
+
+/// <summary>
+/// Heslo k zamčeným PDF výpisům (poslední čísla rodného čísla, telefon, klientské číslo…). Hodnota je zašifrovaná
+/// přes Data Protection, v aplikaci se po uložení nikdy neukáže a nejde do AI ani do logů.
+/// </summary>
+public class StatementPassword
+{
+    public int Id { get; set; }
+    /// <summary>Popisek pro uživatele, např. „RČ – poslední 4 číslice“.</summary>
+    public required string Label { get; set; }
+    public required string ProtectedValue { get; set; }
+    /// <summary>Banka (doména odesílatele), u které se heslo zkouší jako první. Null = u všech.</summary>
+    public string? SenderDomain { get; set; }
+    /// <summary>Kde heslo naposledy otevřelo výpis – příště se tam zkusí hned.</summary>
+    public string? LastUsedDomain { get; set; }
+    public DateTimeOffset? LastUsedAt { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
 }

@@ -26,7 +26,7 @@ public static class McpSetup
         2. Výpis sám rozparsuj a pošli pohyby přes import_transactions (pro každý účet zvlášť, klidně po dávkách do 500 pohybů).
            Vyplň date, amount (se znaménkem, v měně účtu), counterparty (obchodník / protistrana), message, raw_text (původní text řádku),
            counterparty_account, time a payment_type (Card u platby kartou – důležité pro podmínky účtů), external_id jen když ho výpis má.
-           Duplicity server pozná sám, opakovaný import stejného výpisu nevadí. Vyplň period_from a period_to podle hlavičky výpisu
+           Duplicity server pozná sám, opakovaný import stejného výpisu nevadí. Vyplň periodFrom a periodTo podle hlavičky výpisu
            (období výpisu) – server podle něj spáruje předběžné pohyby z e-mailových notifikací banky a pozná, které ve výpisu chybí.
            Importuj jen pohyby z výpisu, který máš. Nedopočítávej protějšky převodů na účtech, jejichž výpis nemáš (třeba účet
            jiného člena) – převod se pozná podle protiúčtu i bez protějšku a do statistik se započítá správně.
@@ -59,6 +59,16 @@ public static class McpSetup
         2. Sezónní výdaje, které predikce nezná (Vánoce, dovolená, vyúčtování energií), najdi v loňských pohybech a přidej přes
            add_expected_payment (yearly=true, poznámka „odhad z loňska“). Nejdřív zkontroluj ExpectedPayments, ať je nepřidáš dvakrát.
 
+        E-maily z bank (banky posílají notifikace o pohybech a výpisy na adresu z get_inbound_email_settings):
+        - Server je čte sám: notifikace zapíše jako předběžné pohyby, výpis z přílohy (PDF i zamčené, CSV) zapíše jako výpis
+          a spáruje s předběžnými pohyby. Ty pak jen kategorizuješ jako ostatní pohyby.
+        - Co čeká na uživatele: list_inbound_emails s needsAttention=true, detail přes get_inbound_email. NeedsAccount vyřeš
+          přes assign_inbound_email_account (účet podle čísla účtu nebo karty, nejisté se zeptej), Quarantined jen po potvrzení
+          uživatele přes process_inbound_email s force=true, NeedsPassword uložením hesla (add_statement_password – heslo ti musí
+          dát uživatel, nehádej ho). Failed: přečti důvod; výpis, který server nepřečetl, si přečti přes read_inbound_email_attachment
+          a importuj sám přes import_transactions.
+        - Nový odesílatel (jiná banka) → set_inbound_sender, karty k účtům → set_account_cards.
+
         Důležité:
         - Před založením, přejmenováním, sloučením nebo smazáním kategorie či pravidla a před přímým potvrzením
           (categorize_transactions s confirm=true, confirm_transactions) shrň uživateli změny a počkej na souhlas.
@@ -89,6 +99,7 @@ public static class McpSetup
             .WithTools<PlanningTools>(JsonOptions)
             .WithTools<SavingTools>(JsonOptions)
             .WithTools<PredictionTools>(JsonOptions)
+            .WithTools<InboundEmailTools>(JsonOptions)
             .WithRequestFilters(f => f.AddCallToolFilter(next => async (request, ct) =>
             {
                 var services = request.Services!;

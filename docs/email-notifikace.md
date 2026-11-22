@@ -53,6 +53,19 @@ dávky (`ImportBatch.PeriodFrom/To`, `ReconciledCount`), pokrytí účtu (`Accou
 v Ke kategorizaci, štítek „Předběžný“ v Pohybech, „Výpisy do …“ u účtu a období a spárované pohyby u dávky.
 Druhá notifikace se stejným klíčem (dvě stejné platby za den) vznikne jako podezřelá duplicita, ne zahozená.
 
+**Stav fáze 4 (2026-11-22):** e-mail, který Haiku označí jako výpis, se čte z přílohy (PDF přes PdfPig, CSV/TXT/XML
+jako text, CSV ve Windows-1250 se pozná). Zamčené PDF se zkusí otevřít uloženými hesly (`StatementPassword`, hodnota
+šifrovaná přes Data Protection, nejdřív heslo, které u té banky naposledy zabralo); když žádné nesedí → stav
+`NeedsPassword` a po přidání hesla se e-mail zpracuje znovu sám. Text výpisu čte Haiku (streamování, max. 64k tokenů)
+do `ExtractedStatement` (účty, období, zůstatky, pohyby). Kód zkontroluje data, období a **počáteční zůstatek + pohyby
+= konečný** (jinak `Failed`, nic se nezapíše), přiřadí účet (číslo účtu → karty → jediný účet banky, jinak
+`NeedsAccount`) a zapíše dávku `BatchSource.EmailStatement` s obdobím – tím proběhne párování z fáze 3. Po zápisu porovná
+zůstatek v aplikaci ke konci období s konečným zůstatkem výpisu a rozdíl ukáže v detailu e-mailu.
+MCP: `list_inbound_emails`, `get_inbound_email`, `read_inbound_email_attachment` (text přílohy, PDF odemčené uloženými
+hesly), `process_inbound_email`, `assign_inbound_email_account`, `delete_inbound_email`, `get_inbound_email_settings`,
+`set_inbound_sender`, `remove_inbound_sender`, `set_account_cards`, `add_statement_password`, `delete_statement_password`,
+`regenerate_inbound_address`. Hesla a novou adresu spravuje jen vlastník domácnosti.
+
 ## 2. Příjem (Pampeliska.Api)
 
 - `SmtpListener : BackgroundService` – knihovna **SmtpServer** (cosullivan), jen příjem, žádné předávání dál
@@ -122,7 +135,7 @@ Stejná adresa přijímá i měsíční výpisy. Rozliší se podle přílohy:
 - **Příloha PDF** → Haiku 5.5 přečte PDF (dokument jako `document` blok) a vrátí účet, období a pohyby ve stejném
   tvaru jako `import_transactions`. U dlouhých výpisů po stránkách / dávkách, kontrola: součet pohybů =
   konečný − počáteční zůstatek z hlavičky výpisu (když nesedí → `Failed`, nic se nezapíše).
-- **Zamčené PDF** heslem → `Failed` s výzvou nahrát odemčený soubor (heslo neukládáme).
+- **Zamčené PDF** heslem → zkusí se uložená hesla k výpisům (Nastavení příjmu); když žádné nesedí → `NeedsPassword`.
 - Zápis jde do **jedné dávky** `BatchSource.EmailStatement` s obdobím; dávka čeká na potvrzení jako dnešní import
   přes MCP. Spustí párování s předběžnými pohyby (kap. 4).
 - Výpis bez přílohy (jen odkaz do bankovnictví) → `NotMovement` s poznámkou, že ho banka posílá jen odkazem.
